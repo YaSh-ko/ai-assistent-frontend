@@ -1,0 +1,258 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.16.1"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Delёz Frontend: Delёz Frontend — документация</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<script type="text/javascript" src="clipboard.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<script type="text/javascript" src="cookie.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="doxygen_custom.css" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">Delёz Frontend<span id="projectnumber">&#160;0.1.0</span>
+   </div>
+   <div id="projectbrief">SPA на React 19 + Vite — чат-интерфейс персонального ИИ-ассистента Delёz</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- Создано системой Doxygen 1.16.1 -->
+<script type="text/javascript">
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+</script>
+<script type="text/javascript">
+$(function() { codefold.init(); });
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+$(function() {
+  initMenu('',true,false,'search.php','Поиск',true);
+  $(function() { init_search(); });
+});
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+$(function(){initNavTree('index.html','',''); });
+</script>
+<div id="container">
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">Загрузка...</div>
+<div class="SRStatus" id="Searching">Поиск...</div>
+<div class="SRStatus" id="NoMatches">Не найдено</div>
+</div>
+</div>
+</div>
+</div>
+
+<div><div class="header">
+  <div class="headertitle"><div class="title">Delёz Frontend — документация </div></div>
+</div><!--header-->
+<div class="contents">
+<div class="textblock"><h1 class="doxsection"><a class="anchor" id="intro"></a>
+Что это такое</h1>
+<p>Delёz Frontend — SPA на базе React 19 + Vite, реализующий пользовательский интерфейс персонального ИИ-ассистента Delёz. Приложение подключается к LangGraph Server API и предоставляет чат-интерфейс, историю диалогов, 3D-визуализацию ризомы и страницы управления событиями, целями и экспериментами.</p>
+<p>Название и концепция вдохновлены философией ризомы Жиля Делёза: вместо линейного дневника пользователь получает живой граф, где события, эмоции и выводы связаны между собой.</p>
+<p>Production-домен: <a href="https://delez.tech">https://delez.tech</a></p>
+<h1 class="doxsection"><a class="anchor" id="arch"></a>
+Архитектура</h1>
+<p>Фронтенд следует слоистой архитектуре с чётким разделением ответственности:</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Слой  </th><th class="markdownTableHeadNone">Путь  </th><th class="markdownTableHeadNone">Назначение  </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Routing  </td><td class="markdownTableBodyNone"><a class="el" href="main_8tsx.html">src/main.tsx</a>  </td><td class="markdownTableBodyNone">BrowserRouter + защищённые маршруты  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Pages  </td><td class="markdownTableBodyNone">src/pages/  </td><td class="markdownTableBodyNone">Страницы приложения (Landing, Chat, Graph, Auth...)  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Providers  </td><td class="markdownTableBodyNone">src/providers/  </td><td class="markdownTableBodyNone">StreamProvider, ThreadProvider — состояние и SDK  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Components  </td><td class="markdownTableBodyNone">src/components/  </td><td class="markdownTableBodyNone">UI-компоненты чата, истории, сообщений  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Hooks  </td><td class="markdownTableBodyNone">src/hooks/  </td><td class="markdownTableBodyNone">useMediaQuery, useSpeechRecognition, useHints  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Lib  </td><td class="markdownTableBodyNone">src/lib/  </td><td class="markdownTableBodyNone">Утилиты, API-клиент, логгер, auth-хелперы  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">UI Kit  </td><td class="markdownTableBodyNone">src/components/ui/  </td><td class="markdownTableBodyNone">Базовые компоненты на Radix UI + Tailwind  </td></tr>
+</table>
+<h1 class="doxsection"><a class="anchor" id="pages"></a>
+Страницы приложения</h1>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Маршрут  </th><th class="markdownTableHeadNone">Компонент  </th><th class="markdownTableHeadNone">Описание  </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">/  </td><td class="markdownTableBodyNone">Landing  </td><td class="markdownTableBodyNone">Лендинг с описанием продукта  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">/sign-in  </td><td class="markdownTableBodyNone">SignIn  </td><td class="markdownTableBodyNone">Вход в аккаунт  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">/beta-test  </td><td class="markdownTableBodyNone">BetaTest  </td><td class="markdownTableBodyNone">Запись на бета-тестирование  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">/forgot-password  </td><td class="markdownTableBodyNone">ForgotPassword  </td><td class="markdownTableBodyNone">Сброс пароля  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">/reset-password  </td><td class="markdownTableBodyNone">ResetPassword  </td><td class="markdownTableBodyNone">Установка нового пароля  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">/verify-email  </td><td class="markdownTableBodyNone">VerifyEmail  </td><td class="markdownTableBodyNone">Подтверждение email  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">/chat  </td><td class="markdownTableBodyNone">App (protected)  </td><td class="markdownTableBodyNone">Основной чат с ИИ  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">/graph  </td><td class="markdownTableBodyNone">GraphPage (protected)  </td><td class="markdownTableBodyNone">3D-визуализация ризомы  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">/events  </td><td class="markdownTableBodyNone">EventsPage (protected)  </td><td class="markdownTableBodyNone">Список событий  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">/goals  </td><td class="markdownTableBodyNone">GoalsPage (protected)  </td><td class="markdownTableBodyNone">Цели и желания  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">/experiments  </td><td class="markdownTableBodyNone">ExperimentsPage (protected)  </td><td class="markdownTableBodyNone">Эксперименты над собой  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">/report  </td><td class="markdownTableBodyNone">ReportPage (protected)  </td><td class="markdownTableBodyNone">Аналитический отчёт  </td></tr>
+</table>
+<h1 class="doxsection"><a class="anchor" id="providers"></a>
+Провайдеры состояния</h1>
+<h2 class="doxsection"><a class="anchor" id="stream"></a>
+StreamProvider</h2>
+<p>Файл: <a class="el" href="Stream_8tsx.html">src/providers/Stream.tsx</a></p>
+<p>Создаёт потоковую сессию через useStream из @langchain/langgraph-sdk/react. Управляет конфигурацией подключения (apiUrl, assistantId, apiKey), обрабатывает кастомные UI-события и синхронизирует threadId с URL.</p>
+<h2 class="doxsection"><a class="anchor" id="thread"></a>
+ThreadProvider</h2>
+<p>Файл: <a class="el" href="Thread_8tsx.html">src/providers/Thread.tsx</a></p>
+<p>Загружает список диалогов через chatApi.getConversations() и адаптирует формат нашего API к формату Thread из LangGraph SDK. Предоставляет getThreads(), threads, threadsLoading через контекст.</p>
+<h1 class="doxsection"><a class="anchor" id="chat"></a>
+Компоненты чата</h1>
+<h2 class="doxsection"><a class="anchor" id="thread_comp"></a>
+Thread (основной layout)</h2>
+<p>Файл: <a class="el" href="index_8tsx.html">src/components/thread/index.tsx</a></p>
+<p>Двухпанельный layout: боковая история диалогов + основная область сообщений. Обрабатывает отправку сообщений, голосовой ввод, подсказки от LLM, регенерацию ответов и автопрокрутку.</p>
+<h2 class="doxsection"><a class="anchor" id="messages"></a>
+Сообщения</h2>
+<ul>
+<li><a class="el" href="human_8tsx.html">src/components/thread/messages/human.tsx</a> — сообщение пользователя с редактированием</li>
+<li><a class="el" href="ai_8tsx.html">src/components/thread/messages/ai.tsx</a> — ответ ассистента с Markdown, tool calls, interrupts</li>
+<li><a class="el" href="tool-calls_8tsx.html">src/components/thread/messages/tool-calls.tsx</a> — детальный вывод вызовов инструментов</li>
+<li><a class="el" href="reactions_8tsx.html">src/components/thread/messages/reactions.tsx</a> — реакции на сообщения</li>
+</ul>
+<h2 class="doxsection"><a class="anchor" id="history"></a>
+История диалогов</h2>
+<p>Файл: <a class="el" href="history_2index_8tsx.html">src/components/thread/history/index.tsx</a></p>
+<p>Загружает и отображает список диалогов. На больших экранах — фиксированная боковая панель, на мобильных — выдвижной Sheet (Radix UI).</p>
+<h1 class="doxsection"><a class="anchor" id="api"></a>
+API-клиент</h1>
+<p>Файл: <a class="el" href="api-client_8ts.html">src/lib/api-client.ts</a></p>
+<p>Централизованный HTTP-клиент с поддержкой Bearer-токена из localStorage и Basic Auth для прокси. Содержит специализированные объекты:</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Объект  </th><th class="markdownTableHeadNone">Назначение  </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">authApi  </td><td class="markdownTableBodyNone">Вход, регистрация, сброс пароля, верификация email  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">chatApi  </td><td class="markdownTableBodyNone">Диалоги, сообщения, реакции, контекст треда  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">graphApi  </td><td class="markdownTableBodyNone">Ризома (граф), поиск по графу  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">entriesApi  </td><td class="markdownTableBodyNone">Записи дневника и их анализ  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">goalsApi  </td><td class="markdownTableBodyNone">Цели и связанные записи  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">experimentsApi  </td><td class="markdownTableBodyNone">Эксперименты и метрики интенсивности  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">hintsApi  </td><td class="markdownTableBodyNone">Динамические подсказки от LLM  </td></tr>
+</table>
+<h1 class="doxsection"><a class="anchor" id="hooks"></a>
+Хуки</h1>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Хук  </th><th class="markdownTableHeadNone">Файл  </th><th class="markdownTableHeadNone">Описание  </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">useMediaQuery  </td><td class="markdownTableBodyNone"><a class="el" href="useMediaQuery_8tsx.html">hooks/useMediaQuery.tsx</a>  </td><td class="markdownTableBodyNone">Адаптивное поведение по CSS media query  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">useSpeechRecognition  </td><td class="markdownTableBodyNone"><a class="el" href="useSpeechRecognition_8tsx.html">hooks/useSpeechRecognition.tsx</a>  </td><td class="markdownTableBodyNone">Голосовой ввод через Web Speech API  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">useHints  </td><td class="markdownTableBodyNone"><a class="el" href="useHints_8ts.html">hooks/useHints.ts</a>  </td><td class="markdownTableBodyNone">Динамические подсказки-вопросы от LLM  </td></tr>
+</table>
+<h1 class="doxsection"><a class="anchor" id="stack"></a>
+Технологический стек</h1>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Технология  </th><th class="markdownTableHeadNone">Назначение  </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">React 19  </td><td class="markdownTableBodyNone">Основной UI-фреймворк  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Vite 6  </td><td class="markdownTableBodyNone">Бандлер и дев-сервер  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">TypeScript 5  </td><td class="markdownTableBodyNone">Статическая типизация  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">React Router DOM  </td><td class="markdownTableBodyNone">Маршрутизация  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">nuqs  </td><td class="markdownTableBodyNone">Query-параметры как состояние  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Tailwind CSS 4  </td><td class="markdownTableBodyNone">Утилитарная система стилей  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Radix UI  </td><td class="markdownTableBodyNone">Headless UI-компоненты  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Framer Motion  </td><td class="markdownTableBodyNone">Анимации  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">@langchain/langgraph-sdk  </td><td class="markdownTableBodyNone">Клиент LangGraph Server  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">React Markdown + KaTeX  </td><td class="markdownTableBodyNone">Рендер Markdown и формул  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">React Force Graph 3D  </td><td class="markdownTableBodyNone">3D-визуализация ризомы  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Sonner  </td><td class="markdownTableBodyNone">Toast-уведомления  </td></tr>
+</table>
+<dl class="section author"><dt>Автор</dt><dd>Команда Delёz </dd></dl>
+<dl class="section date"><dt>Дата</dt><dd>2026 </dd></dl>
+</div></div><!-- PageDoc -->
+<a href="doxygen_crawl.html"></a>
+</div><!-- contents -->
+</div><!-- doc-content -->
+</div><!-- container -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="footer">Создано системой <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.16.1 </li>
+  </ul>
+</div>
+</body>
+</html>

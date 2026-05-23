@@ -1,0 +1,659 @@
+/* Backup of current auth.css styles */
+/* Auth Pages Styles */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
+/* Ограничиваем reset только для страниц аутентификации */
+.auth-page * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Shantell Sans', 'Poppins', sans-serif;
+}
+
+.auth-body {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 80px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #000019, #000019, #000019);
+  overflow: hidden;
+  perspective: 1000px;
+  position: relative;
+}
+
+#particles-js {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 480px;
+  padding: 20px;
+  position: relative;
+  z-index: 10;
+  perspective: 1000px;
+}
+
+.form-box {
+  background: transparent;
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.4), inset 0 0 16px rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transform-style: preserve-3d;
+  animation: fadeInSmooth 1s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInSmooth {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.auth-title {
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 10px;
+  font-family: 'Shantell Sans', 'Cinzel', serif;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+  animation: glow 2s infinite alternate;
+  font-size: 20px;
+  line-height: 1.2;
+  word-wrap: break-word;
+  hyphens: auto;
+  white-space: nowrap;
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.3);
+  }
+
+  to {
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+  }
+}
+
+.auth-subtitle {
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.auth-form {
+  width: 100%;
+}
+
+.input-group {
+  position: relative;
+  margin-bottom: 25px;
+  transform: translateZ(10px);
+  animation: fadeInUp 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+.input-field {
+  width: 100%;
+  padding: 12px 0;
+  font-size: 15px;
+  color: #ffffff;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  outline: none;
+  transition: 0.3s;
+  z-index: 1;
+  position: relative;
+  font-family: 'Shantell Sans', 'Rajdhani', sans-serif;
+  /* Ограничиваем текст внутри поля */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Общие стили для автозаполненных полей (все браузеры) */
+.input-field:-webkit-autofill,
+.input-field:-webkit-autofill:hover,
+.input-field:-webkit-autofill:focus,
+.input-field:-webkit-autofill:active,
+.input-field:-moz-autofill,
+.input-field:-moz-autofill:hover,
+.input-field:-moz-autofill:focus {
+  color: #ffffff !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4) !important;
+  font-family: 'Shantell Sans', 'Rajdhani', sans-serif !important;
+  font-size: 15px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Специфичные стили для WebKit (Chrome, Safari, Edge) */
+.input-field:-webkit-autofill,
+.input-field:-webkit-autofill:hover,
+.input-field:-webkit-autofill:focus,
+.input-field:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #000019 inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Специфичные стили для Firefox */
+.input-field:-moz-autofill,
+.input-field:-moz-autofill:hover,
+.input-field:-moz-autofill:focus {
+  background-color: transparent !important;
+}
+
+.input-field:focus {
+  border-bottom-color: transparent;
+}
+
+.glow-line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), #ffffff, rgba(255, 255, 255, 0.5), transparent);
+  transition: 0.4s;
+  z-index: 0;
+}
+
+.input-field:focus~.glow-line {
+  width: 100%;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -100% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.input-group label {
+  position: absolute;
+  top: 12px;
+  left: 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 15px;
+  pointer-events: none;
+  transition: 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  white-space: normal;
+  line-height: 1.3;
+  max-width: 100%;
+}
+
+.input-field:focus~label,
+.input-field:valid~label {
+  top: -20px;
+  font-size: 12px;
+  color: #ffffff;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+  letter-spacing: 1px;
+}
+
+.remember-forgot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  font-size: 13px;
+  animation: fadeInUp 0.8s ease-out forwards;
+  animation-delay: 0.5s;
+  opacity: 0;
+}
+
+.remember {
+  display: flex;
+  align-items: center;
+}
+
+.remember input {
+  margin-right: 5px;
+  accent-color: #ffffff;
+}
+
+.remember label,
+.forgot {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+}
+
+.forgot {
+  text-decoration: none;
+  transition: 0.3s;
+  position: relative;
+}
+
+.forgot:hover {
+  color: #ffffff;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.forgot::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 1px;
+  bottom: -2px;
+  left: 0;
+  background-color: #ffffff;
+  transition: 0.3s;
+}
+
+.forgot:hover::after {
+  width: 100%;
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+}
+
+.auth-btn {
+  width: 100%;
+  padding: 12px 0;
+  background: transparent;
+  border: 1px solid #ffffff;
+  border-radius: 25px;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.5s;
+  position: relative;
+  overflow: hidden;
+  transform: translateZ(20px);
+  font-family: 'Shantell Sans', 'Cinzel', serif;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInUp 0.8s ease-out forwards;
+  animation-delay: 0.6s;
+  opacity: 0;
+}
+
+.auth-btn span {
+  position: relative;
+  z-index: 1;
+  transition: 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-glow {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.2), transparent);
+  transition: 0.5s;
+}
+
+.auth-btn:hover .btn-glow {
+  left: 100%;
+}
+
+.auth-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.3);
+  transform: translateZ(20px) scale(1.05);
+}
+
+.auth-btn:hover span {
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+}
+
+.auth-btn:active {
+  transform: translateZ(20px) scale(0.98);
+}
+
+.auth-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.auth-link {
+  text-align: center;
+  margin-top: 20px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  animation: fadeInUp 0.8s ease-out forwards;
+  animation-delay: 0.7s;
+  opacity: 0;
+}
+
+.auth-link a {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: 0.3s;
+  position: relative;
+}
+
+.auth-link a:hover {
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+}
+
+.auth-link a::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 1px;
+  bottom: -2px;
+  left: 0;
+  background-color: #ffffff;
+  transition: 0.3s;
+}
+
+.auth-link a:hover::after {
+  width: 100%;
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+}
+
+.error-message {
+  background: rgba(255, 107, 107, 0.15);
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+  color: #fff;
+  font-size: 14px;
+  text-align: center;
+}
+
+.success-message {
+  background: rgba(78, 205, 196, 0.15);
+  border: 1px solid rgba(78, 205, 196, 0.4);
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+  color: #6ee6dd;
+  font-size: 14px;
+  text-align: center;
+}
+
+.success-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.success-icon svg {
+  width: 64px;
+  height: 64px;
+  color: #6ee6dd;
+  opacity: 1;
+}
+
+.error-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.error-icon svg {
+  width: 64px;
+  height: 64px;
+  color: #ffcccc;
+}
+
+/* 3D hover effect for the entire form */
+.form-box:hover {
+  transform: rotateX(5deg) rotateY(5deg);
+  transition: transform 0.5s ease;
+}
+
+/* Additional animations for form elements */
+.input-group:nth-child(1) {
+  animation-delay: 0.2s;
+}
+
+.input-group:nth-child(2) {
+  animation-delay: 0.3s;
+}
+
+.input-group:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .auth-container {
+    max-width: 90%;
+    padding: 15px;
+  }
+
+  .form-box {
+    padding: 30px 20px;
+    border-radius: 20px;
+  }
+
+  .auth-title {
+    font-size: 18px;
+    letter-spacing: 1px;
+    line-height: 1.3;
+  }
+
+  .auth-subtitle {
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  .input-field {
+    font-size: 14px;
+    padding: 10px 0;
+  }
+
+  .input-group label {
+    font-size: 14px;
+  }
+
+  .auth-btn {
+    font-size: 14px;
+    padding: 10px 0;
+  }
+
+  .remember-forgot {
+    font-size: 12px;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .auth-link {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-container {
+    max-width: 95%;
+    padding: 10px;
+  }
+
+  .form-box {
+    padding: 25px 15px;
+    border-radius: 16px;
+  }
+
+  .auth-title {
+    font-size: 16px;
+    letter-spacing: 0.5px;
+    line-height: 1.4;
+  }
+
+  .auth-subtitle {
+    font-size: 12px;
+    margin-bottom: 15px;
+  }
+
+  .input-group {
+    margin-bottom: 20px;
+  }
+
+  .input-field {
+    font-size: 13px;
+    padding: 8px 0;
+  }
+
+  .input-group label {
+    font-size: 13px;
+  }
+
+  .auth-btn {
+    font-size: 13px;
+    padding: 8px 0;
+    letter-spacing: 1px;
+  }
+
+  .remember-forgot {
+    font-size: 11px;
+  }
+
+  .auth-link {
+    font-size: 11px;
+    margin-top: 15px;
+  }
+
+  .error-message,
+  .success-message {
+    font-size: 12px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .auth-container {
+    padding: 5px;
+  }
+
+  .form-box {
+    padding: 20px 12px;
+  }
+
+  .auth-title {
+    font-size: 14px;
+    letter-spacing: 0px;
+    line-height: 1.5;
+  }
+
+  .auth-subtitle {
+    font-size: 11px;
+  }
+
+  .input-field {
+    font-size: 12px;
+  }
+
+  .input-group label {
+    font-size: 12px;
+  }
+
+  .auth-btn {
+    font-size: 12px;
+  }
+}
+
+/* Checkbox styles for beta test form */
+.form-instruction {
+  color: rgba(255, 255, 255, 0.85);
+  text-align: justify;
+  margin-bottom: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: 0.5px;
+  animation: fadeInUp 0.8s ease-out forwards;
+  animation-delay: 0.2s;
+  opacity: 0;
+}
+
+.checkbox-group {
+  margin-bottom: 25px;
+  animation: fadeInUp 0.8s ease-out forwards;
+  animation-delay: 0.3s;
+  opacity: 0;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.checkbox-input {
+  margin-right: 10px;
+  margin-top: 2px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #ffffff;
+  flex-shrink: 0;
+}
+
+.checkbox-text {
+  flex: 1;
+}
+
+.policy-link {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: 0.3s;
+  position: relative;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.policy-link:hover {
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+  border-bottom-color: #ffffff;
+}
+
+.input-field:focus ~ label,
+.input-field:not(:placeholder-shown) ~ label {
+  top: -20px;
+  font-size: 12px;
+  color: #ffffff;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+  letter-spacing: 1px;
+}

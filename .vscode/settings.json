@@ -1,0 +1,7 @@
+{
+    "typescript.autoClosingTags": false,
+    "sonarlint.connectedMode.project": {
+        "connectionId": "https-sonar-delez-repo-ru",
+        "projectKey": "root_frontend_ae550020-aeb5-45dc-8ce2-75491e105f3a"
+    }
+}

@@ -1,0 +1,31 @@
+services:
+  frontend:
+    image: frontend-staging:latest
+    container_name: staging_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    networks:
+      - staging_bridge
+      - philosophy_shared_network
+
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.1.0
+    container_name: staging_nginx_exporter
+    restart: unless-stopped
+    command:
+      - "--nginx.scrape-uri=http://staging_frontend:80/nginx_status"
+    ports:
+      - "9113:9113"
+    networks:
+      - staging_bridge
+      - philosophy_shared_network
+    depends_on:
+      - frontend
+
+networks:
+  staging_bridge:
+    external: true
+  philosophy_shared_network:
+    external: true
+    name: philosophy_shared_network

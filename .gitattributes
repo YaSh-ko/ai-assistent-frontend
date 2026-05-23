@@ -1,0 +1,26 @@
+# Автоматическое управление переносами строк
+# Git сам нормализует LF/CRLF — убирает предупреждения на Windows
+* text=auto
+
+# Явно указываем текстовые файлы — всегда LF в репозитории
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.js    text eol=lf
+*.jsx   text eol=lf
+*.css   text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.html  text eol=lf
+*.sh    text eol=lf
+
+# Бинарные файлы — не трогать
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.ttf   binary
+*.woff  binary
+*.woff2 binary

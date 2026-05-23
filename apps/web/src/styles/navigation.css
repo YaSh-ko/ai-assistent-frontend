@@ -1,0 +1,453 @@
+/* ═══════════════════════════════════════════════════════════
+   Navigation Page — стиль строго в духе лендинга Delёz
+   Шрифт: Shantell Sans | Фон: #000019 | Акцент: белый
+   ═══════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Shantell+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+
+/* ─── Reset scope ───────────────────────────────────────── */
+.navpage,
+.navpage * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Shantell Sans', 'Segoe UI', sans-serif;
+}
+
+/* ─── Root ──────────────────────────────────────────────── */
+.navpage {
+  height: 100vh;
+  overflow: hidden;
+  background: #000019;
+  color: #ffffff;
+  position: relative;
+}
+
+/* Частицы — фиксированный фон, как на лендинге */
+.navpage canvas {
+  position: fixed !important;
+  inset: 0;
+  z-index: 0 !important;
+  pointer-events: auto;
+}
+
+/* Весь контент поверх частиц */
+.navpage__inner {
+  position: relative;
+  z-index: 10;
+  max-width: 960px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 28px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Header ────────────────────────────────────────────── */
+.navpage__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0 14px;
+  flex-shrink: 0;
+}
+
+.navpage__logo {
+  font-size: 22px;
+  font-weight: 500;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.01em;
+}
+
+.navpage__profile-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: #0d0d26;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b3b3cc;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.navpage__profile-btn:hover {
+  border-color: #ffffff;
+  color: #ffffff;
+  background: #1a1a3a;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+.navpage__profile-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* ─── Banner ────────────────────────────────────────────── */
+.navpage-banner {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 0;
+  padding: 0;
+  border-radius: 18px;
+  margin-bottom: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  max-height: 130px;
+  flex-shrink: 0;
+}
+
+.navpage-banner:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 32px rgba(255, 255, 255, 0.06);
+}
+
+.navpage-banner__left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 22px;
+  flex: 1;
+  justify-content: center;
+}
+
+.navpage-banner__label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.navpage-banner__title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #ffffff;
+  line-height: 1.3;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+.navpage-banner__sub {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.5;
+  margin-bottom: 2px;
+}
+
+/* Кнопка баннера — теперь внутри левой части */
+.navpage-banner__btn {
+  align-self: flex-start;
+  padding: 7px 20px;
+  border-radius: 25px;
+  border: 1.5px solid #ffffff;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 12px;
+  font-family: 'Shantell Sans', 'Segoe UI', sans-serif;
+  font-weight: 500;
+  background: transparent;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  display: inline-block;
+  margin-top: 2px;
+}
+
+.navpage-banner__btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Пингвин справа */
+.navpage-banner__penguin {
+  flex-shrink: 0;
+  width: 130px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.navpage-banner__penguin-img {
+  height: 130px;
+  width: auto;
+  object-fit: contain;
+  object-position: bottom;
+  display: block;
+}
+
+/* ─── Section label ─────────────────────────────────────── */
+.navpage__section-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+/* ─── Grid ──────────────────────────────────────────────── */
+.navpage__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 10px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ─── Card ──────────────────────────────────────────────── */
+.navpage-card {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 18px 20px 16px;
+  border-radius: 16px;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  height: 100%;
+}
+
+.navpage-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.08);
+  transform: translateY(-3px);
+}
+
+/* ─── Card icon ─────────────────────────────────────────── */
+.navpage-card__icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #0f1030;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  align-self: flex-end;
+}
+
+.navpage-card__icon-wrap svg {
+  width: 26px;
+  height: 26px;
+}
+
+.navpage-card:hover .navpage-card__icon-wrap {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+/* ─── Card text ─────────────────────────────────────────── */
+.navpage-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-self: flex-end;
+}
+
+.navpage-card__title {
+  font-size: 17px;
+  font-weight: 500;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+}
+
+.navpage-card__subtitle {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.02em;
+}
+
+/* ─── Wide chat button ──────────────────────────────────── */
+.navpage__chat-wide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px 32px;
+  border-radius: 16px;
+  border: 1.5px solid #ffffff;
+  background: transparent;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 14px;
+  font-family: 'Shantell Sans', 'Segoe UI', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  margin-bottom: 16px;
+}
+
+.navpage__chat-wide:hover {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.navpage__chat-wide-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* ─── Responsive ────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .navpage__inner {
+    padding: 0 18px;
+  }
+
+  .navpage__header {
+    padding: 14px 0 10px;
+  }
+
+  .navpage__logo {
+    font-size: 18px;
+  }
+
+  .navpage-banner {
+    max-height: 120px;
+    margin-bottom: 12px;
+  }
+
+  .navpage-banner__left {
+    padding: 14px 16px;
+  }
+
+  .navpage-banner__title {
+    font-size: 14px;
+  }
+
+  .navpage-banner__penguin {
+    width: 100px;
+  }
+
+  .navpage-banner__penguin-img {
+    height: 120px;
+  }
+
+  .navpage__grid {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .navpage-card {
+    min-height: 95px;
+    padding: 14px 16px 12px;
+  }
+
+  .navpage-card__icon-wrap {
+    width: 46px;
+    height: 46px;
+  }
+
+  .navpage-card__icon-wrap svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .navpage-card__title {
+    font-size: 14px;
+  }
+
+  .navpage__chat-wide {
+    padding: 13px 20px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navpage__inner {
+    padding: 0 12px;
+  }
+
+  .navpage-banner {
+    max-height: 105px;
+    border-radius: 14px;
+  }
+
+  .navpage-banner__left {
+    padding: 12px 14px;
+    gap: 3px;
+  }
+
+  .navpage-banner__title {
+    font-size: 12px;
+  }
+
+  .navpage-banner__sub {
+    font-size: 10px;
+  }
+
+  .navpage-banner__btn {
+    font-size: 10px;
+    padding: 5px 14px;
+  }
+
+  .navpage-banner__penguin {
+    width: 80px;
+  }
+
+  .navpage-banner__penguin-img {
+    height: 105px;
+  }
+
+  .navpage__grid {
+    gap: 7px;
+    margin-bottom: 7px;
+  }
+
+  .navpage-card {
+    min-height: 85px;
+    padding: 12px 14px 10px;
+    border-radius: 14px;
+  }
+
+  .navpage-card__icon-wrap {
+    width: 40px;
+    height: 40px;
+  }
+
+  .navpage-card__icon-wrap svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .navpage-card__title {
+    font-size: 12px;
+  }
+
+  .navpage-card__subtitle {
+    font-size: 10px;
+  }
+
+  .navpage__chat-wide {
+    padding: 12px 16px;
+    font-size: 12px;
+    border-radius: 14px;
+  }
+}

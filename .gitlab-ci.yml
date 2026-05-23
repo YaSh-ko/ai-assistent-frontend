@@ -1,0 +1,74 @@
+image: node:20-alpine
+
+stages:
+  - prepare
+  - sonarqube
+  - deploy
+
+test:
+  stage: prepare
+  only:
+    - main
+    - develop
+    - merge_requests
+  script:
+    - npm ci
+    - npm run test:coverage -w apps/web
+    - ls -la apps/web/coverage/lcov.info
+  artifacts:
+    paths:
+      - apps/web/coverage/lcov.info
+    expire_in: 1 hour
+  cache:
+    key: "${CI_COMMIT_REF_SLUG}"
+    paths:
+      - node_modules/
+    policy: pull-push
+
+sonarqube-check:
+  stage: sonarqube
+  needs: [test]
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  variables:
+    SONAR_HOST_URL: "https://sonar.delez-repo.ru"
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+  before_script:
+    - rm -rf Project_files
+    - git config --global --add safe.directory /builds/root/frontend
+    - echo "=== Проверка coverage ==="
+    - ls -la apps/web/coverage/lcov.info
+    - grep -c '^SF:' apps/web/coverage/lcov.info
+    - head -20 apps/web/coverage/lcov.info
+  script:
+    - sonar-scanner -Dsonar.host.url=https://sonar.delez-repo.ru -Dsonar.projectKey=root_frontend_ae550020-aeb5-45dc-8ce2-75491e105f3a -Dsonar.login=$SONAR_TOKEN
+  allow_failure: true
+  only:
+    - main
+    - develop
+    - merge_requests
+
+deploy_frontend:
+  stage: deploy
+  only:
+    - main
+  before_script:
+    - apk add --no-cache openssh-client rsync
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile=/dev/null" > ~/.ssh/config
+  script:
+    - npm ci
+    - echo "VITE_API_USERNAME=$VITE_API_USERNAME" > apps/web/.env
+    - echo "VITE_API_PASSWORD=$VITE_API_PASSWORD" >> apps/web/.env
+    - npm run build
+    - rsync -avz --delete apps/web/dist/ root@$SSH_HOST:/var/www/delez.tech/
+    - ssh root@$SSH_HOST "chown -R root:root /var/www/delez.tech && chmod -R 755 /var/www/delez.tech"
+  cache:
+    key: "${CI_COMMIT_REF_SLUG}"
+    paths:
+      - node_modules/
+    policy: pull

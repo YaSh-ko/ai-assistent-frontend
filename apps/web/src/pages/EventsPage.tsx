@@ -1,7 +1,7 @@
 // src/pages/EventsPage.tsx
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Link2, Plus, CalendarDays } from 'lucide-react';
+import { ArrowRight, Link2, Plus, Network } from 'lucide-react';
 import { entriesApi } from '@/lib/api-client';
 import RadialPulseLoader from '@/components/ui/loading-animation';
 import Breadcrumbs from '@/components/Breadcrumbs';
@@ -25,34 +25,36 @@ function EventCard({ entry }: { readonly entry: Entry }) {
   return (
     <Link
       to={`/event/${entry.id}`}
-      className="flex flex-col rounded-2xl p-5 transition-all hover:scale-[1.01] cursor-pointer"
+      className="flex flex-col rounded-xl p-5 transition-all hover:-translate-y-px cursor-pointer"
       style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        background: '#211D25',
+        border: '1px solid rgba(255,255,255,0.06)',
       }}
     >
       {/* Тег */}
       <div className="mb-3">
         <span
-          className="text-xs font-medium px-2 py-1 rounded"
-          style={{ background: 'rgba(239,68,68,0.25)', color: '#f87171' }}
+          className="text-xs font-medium px-2 py-1 rounded-md"
+          style={{ background: 'rgba(128,255,181,0.1)', color: '#80FFB5' }}
         >
-          Событие
+          Опыт
         </span>
       </div>
 
       {/* Заголовок */}
-      <h3 className="text-white font-semibold text-base mb-2 line-clamp-2">{title}</h3>
+      <h3 className="font-semibold text-sm mb-2 line-clamp-2" style={{ color: '#ffffff' }}>
+        {title}
+      </h3>
 
       {/* Описание */}
-      <p className="text-gray-400 text-sm leading-relaxed line-clamp-5 flex-1">
+      <p className="text-sm leading-relaxed line-clamp-4 flex-1" style={{ color: '#A1A1AA' }}>
         {entry.description}
       </p>
 
       {/* Дата */}
       <div
         className="mt-4 pt-3 flex items-center gap-2 text-xs"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.3)' }}
+        style={{ borderTop: '1px solid rgba(255,255,255,0.06)', color: 'rgba(161,161,170,0.5)' }}
       >
         <Link2 className="w-3 h-3 shrink-0" />
         <span className="truncate">{date}</span>
@@ -77,51 +79,65 @@ export default function EventsPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#000019]">
-        <RadialPulseLoader text="Загрузка событий..." size={120} color="#ffffff" />
+      <div className="flex h-screen w-full items-center justify-center" style={{ background: '#171717' }}>
+        <RadialPulseLoader text="Загрузка..." size={120} color="#80FFB5" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#000019] text-white">
+    <div className="min-h-screen" style={{ background: '#171717', color: '#C1BEC6' }}>
       {/* Хедер */}
-      <div className="flex items-start justify-between px-8 pt-8 pb-6">
+      <div
+        className="flex items-start justify-between px-8 pt-8 pb-6"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+      >
         <div>
-          <Breadcrumbs crumbs={[{ label: 'Главная', to: '/navigation' }, { label: 'События' }]} />
-          <h1 className="text-4xl font-bold mt-2 mb-1">События</h1>
-          <p className="text-gray-500 text-sm">Все записи о твоих событиях</p>
+          <Breadcrumbs crumbs={[{ label: 'Главная', to: '/navigation' }, { label: 'Опыт' }]} />
+          <h1 className="text-3xl font-bold mt-2 mb-1 tracking-tight" style={{ color: '#ffffff' }}>
+            Опыт
+          </h1>
+          <p className="text-sm" style={{ color: '#A1A1AA' }}>Всё, что ты пережил и из чего вырос</p>
         </div>
         <div className="flex items-center gap-3">
           <Link
             to="/chat"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90"
-            style={{ background: 'rgba(255,255,255,0.9)', color: '#000' }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+            style={{
+              background: 'rgba(128,255,181,0.1)',
+              border: '1px solid rgba(128,255,181,0.3)',
+              color: '#80FFB5',
+            }}
           >
-            Создать событие
+            Добавить
             <ArrowRight className="w-4 h-4" />
           </Link>
           <button
             onClick={() => navigate('/graph')}
-            className="p-2.5 rounded-xl transition-all hover:opacity-80"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-            title="Граф"
+            className="p-2 rounded-lg transition-all"
+            style={{
+              background: '#211D25',
+              border: '1px solid rgba(255,255,255,0.07)',
+              color: '#A1A1AA',
+            }}
+            title="Граф знаний"
           >
-            <CalendarDays className="w-4 h-4 text-gray-400" />
+            <Network className="w-4 h-4" />
           </button>
         </div>
       </div>
 
       {/* Контент */}
-      <div className="px-8 pb-16">
+      <div className="px-8 py-6 pb-16">
         {(() => {
           if (error) {
             return (
               <div className="flex flex-col items-center justify-center py-32 gap-4">
-                <p className="text-gray-500">{error}</p>
+                <p style={{ color: '#A1A1AA' }}>{error}</p>
                 <button
                   onClick={() => globalThis.location.reload()}
-                  className="text-sm text-gray-400 hover:text-white transition-colors"
+                  className="text-sm transition-colors"
+                  style={{ color: '#A1A1AA' }}
                 >
                   Повторить
                 </button>
@@ -131,16 +147,20 @@ export default function EventsPage() {
           if (entries.length === 0) {
             return (
               <div className="flex flex-col items-center justify-center py-32 gap-3">
-                <Plus className="w-10 h-10 text-gray-700" />
-                <p className="text-gray-500 text-sm">Событий пока нет</p>
-                <Link to="/chat" className="text-sm text-gray-400 hover:text-white transition-colors">
-                  Создать первое событие →
+                <Plus className="w-8 h-8" style={{ color: 'rgba(161,161,170,0.3)' }} />
+                <p className="text-sm" style={{ color: '#A1A1AA' }}>Опыта пока нет</p>
+                <Link
+                  to="/chat"
+                  className="text-sm transition-colors"
+                  style={{ color: '#80FFB5' }}
+                >
+                  Добавить первый опыт →
                 </Link>
               </div>
             );
           }
           return (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {entries.map((entry) => (
                 <EventCard key={entry.id} entry={entry} />
               ))}

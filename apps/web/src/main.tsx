@@ -1,12 +1,11 @@
-// src/main.tsx
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { NuqsAdapter } from "nuqs/adapters/react-router";
-import "./index.css"; // Подключение глобальных стилей (Tailwind + тема)
-import App from "./App.tsx"; // Чат с ИИ (agent-chat-ui)
-import GraphPage from "./pages/GraphPage.tsx"; // Страница с графом
-import Landing from "./pages/Landing.tsx"; // Landing страница
+import "./index.css";
+import App from "./App.tsx";
+import GraphPage from "./pages/GraphPage.tsx";
+import Landing from "./pages/Landing.tsx";
 import SignIn from "./pages/SignIn.tsx";
 import BetaTest from "./pages/BetaTest.tsx";
 import ForgotPassword from "./pages/ForgotPassword.tsx";
@@ -22,12 +21,10 @@ import ExperimentsPage from "./pages/ExperimentsPage.tsx";
 import Experiment from "./pages/Experiment.tsx";
 import Privacy from "./pages/Privacy.tsx";
 import Terms from "./pages/Terms.tsx";
-import MBTITestPage from "./pages/MBTITestPage.tsx";
 import ProfilePage from "./pages/ProfilePage.tsx";
 import RecordsPage from "./pages/RecordsPage.tsx";
 import NotebookEntriesPage from "./pages/NotebookEntriesPage.tsx";
 import DevelopmentPage from "./pages/DevelopmentPage.tsx";
-import MemoirsPage from "./pages/MemoirsPage.tsx";
 import VirtualFieldsPage from "./pages/VirtualFieldsPage.tsx";
 import { NotFoundPage } from "./pages/NotFound.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
@@ -76,9 +73,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/virtual-fields" element={<ProtectedRoute><VirtualFieldsPage /></ProtectedRoute>} />
           <Route path="/experiment/:id" element={<ProtectedRoute><Experiment /></ProtectedRoute>} />
           <Route path="/experiment" element={<ProtectedRoute><Experiment /></ProtectedRoute>} />
-          <Route path="/memoirs" element={<ProtectedRoute><MemoirsPage /></ProtectedRoute>} />
+          <Route path="/memoirs" element={<Navigate to="/report" replace />} />
           <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-          <Route path="/mbti-test" element={<ProtectedRoute><MBTITestPage /></ProtectedRoute>} />
+          {/* /mbti-test убран — редирект на профиль */}
+          <Route path="/mbti-test" element={<Navigate to="/profile" replace />} />
 
           <Route path="*" element={<NotFoundPage />} /> {/* 404 страница */}
         </Routes>

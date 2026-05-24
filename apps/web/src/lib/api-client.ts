@@ -1,5 +1,6 @@
 // API клиент для работы с backend
 import { logger } from "./logger";
+// import removed: URLs now handled by Vite proxy
 
 // Вспомогательная функция для декодирования JWT без внешних зависимостей
 const decodeJwt = (token: string) => {
@@ -25,16 +26,9 @@ export const clearAuthToken = (): void => {
     localStorage.removeItem("auth_token");
 };
 
-const API_BASE_URL = import.meta.env.PROD ? (import.meta.env.VITE_API_URL ?? "https://api.delez-repo.ru") : "";
 const getApiCredentials = () => {
-    const username = import.meta.env.VITE_API_USERNAME;
-    const password = import.meta.env.VITE_API_PASSWORD;
-    
-    if (!username || !password) {
-        return null;
-    }
-    
-    return { username, password };
+  // No Basic Auth needed in development; return null
+  return null;
 };
 
 // Создаем заголовки с авторизацией
@@ -84,7 +78,8 @@ export const apiRequest = async (
     endpoint: string, 
     options: RequestInit = {}
 ): Promise<Response> => {
-    const url = `${API_BASE_URL}${endpoint}`;
+    // Use relative endpoint; proxy will route based on path
+    const url = endpoint;
     const headers = createAuthHeaders(options.headers as Record<string, string>);
     
     if (!import.meta.env.PROD) {
@@ -504,6 +499,13 @@ export const graphApi = {
         if (!response.ok) {
             throw new Error(data?.detail || data?.message || response.statusText || 'Не удалось обновить узел');
         }
+        /*
+        '/ai': {
+          target: AI_SERVICE_URL,
+          changeOrigin: true,
+          secure: false,
+        },
+        */
         return data as {
             id: string;
             type: string;
@@ -512,8 +514,60 @@ export const graphApi = {
     },
 };
 
+/** AI service (python-ai-service) — proxied via /ai */
+const aiApiRequest = async (endpoint: string, options: RequestInit = {}) => {
+    const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+    return apiRequest(`/ai/api/v1${path}`, options);
+};
+
+// Detector API (entity confirmation chips)
+export const detectorApi = {
+    getProposal: async (threadId: string) => {
+        const response = await aiApiRequest(`/ai/detector/proposal/${encodeURIComponent(threadId)}`);
+        if (response.status === 404) return null;
+        const data = await parseResponseData(response);
+        if (!response.ok) return null;
+        if (!data?.show_chip) return null;
+        return data;
+    },
+
+    decline: async (threadId: string, pendingId: string, title?: string) => {
+        const response = await aiApiRequest("/ai/detector/decline", {
+            method: "POST",
+            body: JSON.stringify({ thread_id: threadId, pending_id: pendingId, title }),
+        });
+        if (!response.ok) {
+            const err = await parseResponseData(response);
+            throw new Error(parseFastApiDetail(err) || response.statusText);
+        }
+    },
+
+    runDetector: async (threadId: string) => {
+        const response = await aiApiRequest(
+            `/ai/detector/run/${encodeURIComponent(threadId)}`,
+            { method: "POST" },
+        );
+        const data = await parseResponseData(response);
+        if (!response.ok) return null;
+        if (!data?.show_chip) return null;
+        return data;
+    },
+};
+
 // Entries API
 export const entriesApi = {
+    create: async (body: { title?: string; description: string; event_date: string }) => {
+        const response = await apiRequest("/v1/entries", {
+            method: "POST",
+            body: JSON.stringify(body),
+        });
+        const data = await parseResponseData(response);
+        if (!response.ok) {
+            throw new Error(parseFastApiDetail(data) || response.statusText || "Не удалось создать запись");
+        }
+        return data as { id: string; title?: string };
+    },
+
     getAll: async (skip = 0, limit = 100) => {
         const response = await apiRequest(`/v1/entries?skip=${skip}&limit=${limit}`);
         return response.json();
@@ -556,8 +610,26 @@ function parseFastApiDetail(body: unknown): string {
     return "";
 }
 
-// Experiments API (Neo4j + PostgreSQL intensity_metrics)
+// Experiments API (PostgreSQL + Neo4j graph; intensity_metrics in PG)
 export const experimentsApi = {
+    create: async (body: {
+        title?: string;
+        description: string;
+        status?: string;
+        success?: number;
+        outcome?: string;
+    }) => {
+        const response = await apiRequest("/v1/experiments", {
+            method: "POST",
+            body: JSON.stringify(body),
+        });
+        const data = await parseResponseData(response);
+        if (!response.ok) {
+            throw new Error(parseFastApiDetail(data) || response.statusText || "Не удалось создать эксперимент");
+        }
+        return data as { id: string; title?: string };
+    },
+
     getById: async (id: string) => {
         const response = await apiRequest(`/v1/experiments/${id}`);
         if (!response.ok) {
@@ -594,8 +666,26 @@ export const experimentsApi = {
     },
 };
 
-// Goals API
+// Goals API (PostgreSQL + Neo4j graph)
 export const goalsApi = {
+    create: async (body: {
+        title?: string;
+        description: string;
+        status?: string;
+        priority?: string;
+        target_date?: string;
+    }) => {
+        const response = await apiRequest("/v1/goals", {
+            method: "POST",
+            body: JSON.stringify(body),
+        });
+        const data = await parseResponseData(response);
+        if (!response.ok) {
+            throw new Error(parseFastApiDetail(data) || response.statusText || "Не удалось создать цель");
+        }
+        return data as { id: string; title?: string };
+    },
+
     getAll: async () => {
         const response = await apiRequest('/v1/goals');
         return response.json();

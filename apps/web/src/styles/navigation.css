@@ -1,37 +1,32 @@
 /* ═══════════════════════════════════════════════════════════
-   Navigation Page — стиль строго в духе лендинга Delёz
-   Шрифт: Shantell Sans | Фон: #000019 | Акцент: белый
+   Navigation Page
+   Bg: #171717 | Surface: #19161D | Card: #211D25
+   Text: #C1BEC6 | Muted: #A1A1AA | Accent: #80FFB5
    ═══════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Shantell+Sans:ital,wght@0,300..800;1,300..800&display=swap');
-
-/* ─── Reset scope ───────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 .navpage,
 .navpage * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Shantell Sans', 'Segoe UI', sans-serif;
+  font-family: 'Montserrat', 'Segoe UI', sans-serif;
 }
 
 /* ─── Root ──────────────────────────────────────────────── */
 .navpage {
   height: 100vh;
   overflow: hidden;
-  background: #000019;
-  color: #ffffff;
+  background: #000000;
+  color: #C1BEC6;
   position: relative;
 }
 
-/* Частицы — фиксированный фон, как на лендинге */
+/* Убираем canvas частиц если вдруг остался */
 .navpage canvas {
-  position: fixed !important;
-  inset: 0;
-  z-index: 0 !important;
-  pointer-events: auto;
+  display: none !important;
 }
 
-/* Весь контент поверх частиц */
 .navpage__inner {
   position: relative;
   z-index: 10;
@@ -48,149 +43,125 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 0 14px;
+  padding: 20px 0 16px;
   flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 16px;
 }
 
 .navpage__logo {
-  font-size: 22px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   color: #ffffff;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-  letter-spacing: 0.01em;
 }
 
 .navpage__profile-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: #0d0d26;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #211D25;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #b3b3cc;
+  color: #A1A1AA;
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all 0.15s ease;
 }
 
 .navpage__profile-btn:hover {
-  border-color: #ffffff;
-  color: #ffffff;
-  background: #1a1a3a;
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+  border-color: rgba(128, 255, 181, 0.3);
+  color: #80FFB5;
+  background: rgba(128, 255, 181, 0.06);
 }
 
 .navpage__profile-icon {
-  width: 20px;
-  height: 20px;
+  width: 15px;
+  height: 15px;
 }
 
 /* ─── Banner ────────────────────────────────────────────── */
 .navpage-banner {
   display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 0;
-  padding: 0;
-  border-radius: 18px;
-  margin-bottom: 16px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
+  align-items: center;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 14px;
+  background: #19161D;
   overflow: hidden;
-  max-height: 130px;
+  max-height: 132px;
   flex-shrink: 0;
+  transition: border-color 0.15s ease;
 }
 
 .navpage-banner:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.25);
-  box-shadow: 0 8px 32px rgba(255, 255, 255, 0.06);
+  border-color: rgba(128, 255, 181, 0.28);
 }
 
 .navpage-banner__left {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 16px 22px;
+  gap: 3px;
   flex: 1;
   justify-content: center;
 }
 
 .navpage-banner__label {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.35);
+  font-size: 12px;
+  color: #80FFB5;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
+  font-weight: 500;
+  opacity: 0.7;
 }
 
 .navpage-banner__title {
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 18px;
+  font-weight: 600;
   color: #ffffff;
   line-height: 1.3;
-  text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+  letter-spacing: -0.02em;
 }
 
 .navpage-banner__sub {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  color: #A1A1AA;
   line-height: 1.5;
-  margin-bottom: 2px;
 }
 
-/* Кнопка баннера — теперь внутри левой части */
 .navpage-banner__btn {
-  align-self: flex-start;
-  padding: 7px 20px;
-  border-radius: 25px;
-  border: 1.5px solid #ffffff;
-  color: #ffffff;
+  align-self: flex-end;
+  padding: 10px 18px;
+  border-radius: 6px;
+  color: #80FFB5;
   text-decoration: none;
   font-size: 12px;
-  font-family: 'Shantell Sans', 'Segoe UI', sans-serif;
   font-weight: 500;
-  background: transparent;
-  transition: all 0.3s ease;
+  background: rgba(128, 255, 181, 0.08);
+  transition: all 0.15s ease;
   white-space: nowrap;
   display: inline-block;
-  margin-top: 2px;
 }
 
 .navpage-banner__btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 25px rgba(255, 255, 255, 0.4);
-  transform: translateY(-2px);
+  background: rgba(128, 255, 181, 0.15);
+  border-color: rgba(128, 255, 181, 0.55);
 }
 
-/* Пингвин справа */
 .navpage-banner__penguin {
-  flex-shrink: 0;
-  width: 130px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.navpage-banner__penguin-img {
-  height: 130px;
-  width: auto;
-  object-fit: contain;
-  object-position: bottom;
-  display: block;
+  display: none;
 }
 
 /* ─── Section label ─────────────────────────────────────── */
 .navpage__section-label {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.35);
+  font-size: 14px;
+  color: #A1A1AA;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  margin-bottom: 10px;
+  letter-spacing: 0.1em;
+  font-weight: 500;
+  margin-bottom: 8px;
   flex-shrink: 0;
+  opacity: 0.6;
 }
 
 /* ─── Grid ──────────────────────────────────────────────── */
@@ -198,8 +169,8 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: repeat(2, 1fr);
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 8px;
+  margin-bottom: 8px;
   flex: 1;
   min-height: 0;
 }
@@ -210,12 +181,12 @@
   flex-direction: row;
   align-items: flex-end;
   justify-content: space-between;
-  padding: 18px 20px 16px;
-  border-radius: 16px;
+  padding: 16px 16px 14px;
+  border-radius: 10px;
   text-decoration: none;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  transition: all 0.3s ease;
+  background: #211D25;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.15s ease;
   position: relative;
   overflow: hidden;
   cursor: pointer;
@@ -223,61 +194,57 @@
 }
 
 .navpage-card:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.08);
-  transform: translateY(-3px);
+  background: #261F2C;
+  transform: translateY(-1px);
 }
 
 /* ─── Card icon ─────────────────────────────────────────── */
 .navpage-card__icon-wrap {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: #0f1030;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.04);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  transition: all 0.3s ease;
+  color: #A1A1AA;
+  transition: all 0.15s ease;
   flex-shrink: 0;
   align-self: flex-end;
 }
 
 .navpage-card__icon-wrap svg {
-  width: 26px;
-  height: 26px;
+  width: 16px;
+  height: 16px;
 }
 
 .navpage-card:hover .navpage-card__icon-wrap {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-  transform: scale(1.05);
+  background: rgba(128, 255, 181, 0.1);
+  border-color: rgba(128, 255, 181, 0.25);
+  color: #80FFB5;
 }
 
 /* ─── Card text ─────────────────────────────────────────── */
 .navpage-card__text {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   align-self: flex-end;
 }
 
 .navpage-card__title {
-  font-size: 17px;
-  font-weight: 500;
+  font-size: 20px;
+  font-weight: 600;
   color: #ffffff;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
 .navpage-card__subtitle {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.45);
-  letter-spacing: 0.02em;
+  font-size: 14px;
+  color: #A1A1AA;
+  font-weight: 400;
 }
 
 /* ─── Wide chat button ──────────────────────────────────── */
@@ -285,169 +252,59 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
-  padding: 16px 32px;
-  border-radius: 16px;
-  border: 1.5px solid #ffffff;
-  background: transparent;
-  color: #ffffff;
+  padding: 13px 24px;
+  border-radius: 10px;
+  background: rgba(128, 255, 181, 0.10);
+  color: #80FFB5;
   text-decoration: none;
-  font-size: 14px;
-  font-family: 'Shantell Sans', 'Segoe UI', sans-serif;
+  font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  transition: all 0.3s ease;
+  letter-spacing: -0.01em;
+  transition: all 0.15s ease;
   flex-shrink: 0;
   margin-bottom: 16px;
 }
 
 .navpage__chat-wide:hover {
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 25px rgba(255, 255, 255, 0.4);
-  transform: translateY(-2px);
+  background: rgba(128, 255, 181, 0.13);
+  border-color: rgba(128, 255, 181, 0.5);
 }
 
 .navpage__chat-wide-icon {
-  width: 18px;
-  height: 18px;
+  width: 15px;
+  height: 15px;
   flex-shrink: 0;
 }
 
 /* ─── Responsive ────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .navpage__inner {
-    padding: 0 18px;
-  }
-
-  .navpage__header {
-    padding: 14px 0 10px;
-  }
-
-  .navpage__logo {
-    font-size: 18px;
-  }
-
-  .navpage-banner {
-    max-height: 120px;
-    margin-bottom: 12px;
-  }
-
-  .navpage-banner__left {
-    padding: 14px 16px;
-  }
-
-  .navpage-banner__title {
-    font-size: 14px;
-  }
-
-  .navpage-banner__penguin {
-    width: 100px;
-  }
-
-  .navpage-banner__penguin-img {
-    height: 120px;
-  }
-
-  .navpage__grid {
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-
-  .navpage-card {
-    min-height: 95px;
-    padding: 14px 16px 12px;
-  }
-
-  .navpage-card__icon-wrap {
-    width: 46px;
-    height: 46px;
-  }
-
-  .navpage-card__icon-wrap svg {
-    width: 22px;
-    height: 22px;
-  }
-
-  .navpage-card__title {
-    font-size: 14px;
-  }
-
-  .navpage__chat-wide {
-    padding: 13px 20px;
-    font-size: 13px;
-  }
+  .navpage__inner { padding: 0 18px; }
+  .navpage__header { padding: 16px 0 12px; margin-bottom: 12px; }
+  .navpage-banner { max-height: 110px; margin-bottom: 10px; }
+  .navpage-banner__left { padding: 13px 16px; }
+  .navpage-banner__title { font-size: 13px; }
+  .navpage__grid { gap: 7px; margin-bottom: 7px; }
+  .navpage-card { padding: 13px 13px 11px; }
+  .navpage-card__icon-wrap { width: 32px; height: 32px; }
+  .navpage-card__icon-wrap svg { width: 14px; height: 14px; }
+  .navpage-card__title { font-size: 13px; }
+  .navpage__chat-wide { padding: 12px 20px; font-size: 12px; }
 }
 
 @media (max-width: 480px) {
-  .navpage__inner {
-    padding: 0 12px;
-  }
-
-  .navpage-banner {
-    max-height: 105px;
-    border-radius: 14px;
-  }
-
-  .navpage-banner__left {
-    padding: 12px 14px;
-    gap: 3px;
-  }
-
-  .navpage-banner__title {
-    font-size: 12px;
-  }
-
-  .navpage-banner__sub {
-    font-size: 10px;
-  }
-
-  .navpage-banner__btn {
-    font-size: 10px;
-    padding: 5px 14px;
-  }
-
-  .navpage-banner__penguin {
-    width: 80px;
-  }
-
-  .navpage-banner__penguin-img {
-    height: 105px;
-  }
-
-  .navpage__grid {
-    gap: 7px;
-    margin-bottom: 7px;
-  }
-
-  .navpage-card {
-    min-height: 85px;
-    padding: 12px 14px 10px;
-    border-radius: 14px;
-  }
-
-  .navpage-card__icon-wrap {
-    width: 40px;
-    height: 40px;
-  }
-
-  .navpage-card__icon-wrap svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  .navpage-card__title {
-    font-size: 12px;
-  }
-
-  .navpage-card__subtitle {
-    font-size: 10px;
-  }
-
-  .navpage__chat-wide {
-    padding: 12px 16px;
-    font-size: 12px;
-    border-radius: 14px;
-  }
+  .navpage__inner { padding: 0 12px; }
+  .navpage-banner { max-height: 100px; border-radius: 9px; }
+  .navpage-banner__left { padding: 11px 13px; gap: 2px; }
+  .navpage-banner__title { font-size: 12px; }
+  .navpage-banner__sub { font-size: 10px; }
+  .navpage-banner__btn { font-size: 10px; padding: 4px 11px; }
+  .navpage__grid { gap: 6px; margin-bottom: 6px; }
+  .navpage-card { min-height: 78px; padding: 11px 11px 9px; border-radius: 9px; }
+  .navpage-card__icon-wrap { width: 28px; height: 28px; border-radius: 6px; }
+  .navpage-card__icon-wrap svg { width: 12px; height: 12px; }
+  .navpage-card__title { font-size: 12px; }
+  .navpage-card__subtitle { font-size: 10px; }
+  .navpage__chat-wide { padding: 11px 14px; font-size: 12px; border-radius: 9px; }
 }

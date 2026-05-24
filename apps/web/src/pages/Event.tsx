@@ -50,31 +50,20 @@ interface AnalysisData {
   related_concepts?: { id: string; name: string; relevance?: number | null }[];
 }
 
-// Строим SVG path из точек интенсивности
 function buildIntensityPath(metrics: IntensityMetric[], width = 600, height = 200): string {
   if (!metrics.length) return `M 0,${height / 2} L ${width},${height / 2}`;
-
   const sorted = [...metrics].sort(
     (a, b) => new Date(a.metric_date).getTime() - new Date(b.metric_date).getTime()
   );
-
   const values = sorted.map(m => m.intensity_value);
   const minVal = Math.min(...values);
   const maxVal = Math.max(...values);
   const range = maxVal - minVal || 1;
-
-  const points = sorted.map((m, i) => {
-    const x = (i / Math.max(sorted.length - 1, 1)) * width;
-    // Инвертируем Y: большее значение = выше
-    const y = height - ((m.intensity_value - minVal) / range) * (height * 0.8) - height * 0.1;
-    return { x, y };
-  });
-
-  if (points.length === 1) {
-    return `M 0,${points[0].y} L ${width},${points[0].y}`;
-  }
-
-  // Smooth curve через cubic bezier
+  const points = sorted.map((m, i) => ({
+    x: (i / Math.max(sorted.length - 1, 1)) * width,
+    y: height - ((m.intensity_value - minVal) / range) * (height * 0.8) - height * 0.1,
+  }));
+  if (points.length === 1) return `M 0,${points[0].y} L ${width},${points[0].y}`;
   let d = `M ${points[0].x},${points[0].y}`;
   for (let i = 1; i < points.length; i++) {
     const prev = points[i - 1];
@@ -92,157 +81,166 @@ export default function Event() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!id) {
-      setLoading(false);
-      return;
-    }
-
+    if (!id) { setLoading(false); return; }
     entriesApi.getAnalysis(id)
-      .then((res: AnalysisData) => {
-        setData(res);
-      })
-      .catch((err: unknown) => {
-        console.error("Failed to load entry analysis", err);
-        setError("Не удалось загрузить данные события");
-      })
+      .then((res: AnalysisData) => setData(res))
+      .catch(() => setError("Не удалось загрузить данные"))
       .finally(() => setLoading(false));
   }, [id]);
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#000019]">
-        <RadialPulseLoader text="Загрузка..." size={120} color="#ffffff" />
+      <div className="flex h-screen w-full items-center justify-center" style={{ background: '#171717' }}>
+        <RadialPulseLoader text="Загрузка..." size={120} color="#80FFB5" />
       </div>
     );
   }
 
   if (!id || error || !data) {
     return (
-      <div className="flex h-screen w-full flex-col items-center justify-center gap-4 bg-[#000019] text-white">
-        <p className="text-gray-400">{error ?? "Событие не найдено"}</p>
-        <Link to="/chat" className="text-sm text-gray-500 hover:text-white flex items-center gap-1">
-          <ChevronLeft className="w-4 h-4" /> Обратно
+      <div className="flex h-screen w-full flex-col items-center justify-center gap-4" style={{ background: '#171717' }}>
+        <p style={{ color: '#A1A1AA' }}>{error ?? "Не найдено"}</p>
+        <Link to="/events" className="text-sm flex items-center gap-1" style={{ color: '#80FFB5' }}>
+          <ChevronLeft className="w-4 h-4" /> Назад
         </Link>
       </div>
     );
   }
 
   const { entry, intensity_metrics, related_situations, negative_impacts, transformations } = data;
-
-  const avgIntensity =
-    intensity_metrics.length
-      ? intensity_metrics.reduce((s, m) => s + m.intensity_value, 0) / intensity_metrics.length
-      : null;
-
+  const avgIntensity = intensity_metrics.length
+    ? intensity_metrics.reduce((s, m) => s + m.intensity_value, 0) / intensity_metrics.length
+    : null;
   const intensityPath = buildIntensityPath(intensity_metrics);
-
-  const getIntensityColor = (value: number) => {
-    if (value > 0) return "text-green-500";
-    if (value < 0) return "text-red-500";
-    return "text-white";
-  };
-
-  // Разделяем related_situations на "повлияло" и "связанные"
   const influenced = related_situations.filter(s => s.relation_type === "influenced");
   const related = related_situations.filter(s => s.relation_type !== "influenced");
 
   return (
-    <div className="min-h-screen bg-[#000019] text-white">
+    <div className="min-h-screen" style={{ background: '#171717', color: '#C1BEC6' }}>
       {/* Хедер */}
-      <div className="border-b border-gray-800 py-4 md:py-5 px-4 md:px-6">
+      <div
+        className="py-4 md:py-5 px-4 md:px-8"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+      >
         <Breadcrumbs crumbs={[
           { label: 'Главная', to: '/navigation' },
-          { label: 'События', to: '/events' },
+          { label: 'Опыт', to: '/events' },
           { label: entry.title ?? entry.description.slice(0, 40) },
         ]} />
-        <h1 className="text-xl md:text-3xl font-bold mt-2">
+        <h1 className="text-xl md:text-2xl font-bold mt-2 tracking-tight" style={{ color: '#ffffff' }}>
           {entry.title ?? entry.description.slice(0, 60)}
         </h1>
       </div>
 
       {/* Основной контент */}
-      <div className="container mx-auto px-4 md:px-6 py-4 md:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+      <div className="container mx-auto px-4 md:px-8 py-6 md:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-5">
+
           {/* Левая + центральная колонки */}
-          <div className="lg:col-span-2 space-y-4 md:space-y-6">
+          <div className="lg:col-span-2 space-y-4">
+
             {/* График интенсивности */}
-            <div className="border border-gray-700/50 rounded-lg p-4 md:p-6 bg-[#0a0a1a]/50">
-              <div className="relative h-48 md:h-64">
+            <div
+              className="rounded-xl p-4 md:p-5"
+              style={{ background: '#19161D', border: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              <p className="text-xs font-medium mb-3" style={{ color: '#A1A1AA' }}>
+                Динамика интенсивности
+              </p>
+              <div className="relative h-40 md:h-52">
                 <svg viewBox="0 0 600 200" className="w-full h-full" preserveAspectRatio="none">
                   <defs>
-                    <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
-                      <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(100,150,150,0.1)" strokeWidth="1" />
+                    <pattern id="grid" width="60" height="40" patternUnits="userSpaceOnUse">
+                      <path d="M 60 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
                     </pattern>
                   </defs>
                   <rect width="600" height="200" fill="url(#grid)" />
-                  <path d={intensityPath} fill="none" stroke="#ef4444" strokeWidth="3" />
+                  <path d={intensityPath} fill="none" stroke="#80FFB5" strokeWidth="2.5" strokeLinecap="round" />
                 </svg>
               </div>
               {avgIntensity !== null && (
-                <div className="text-sm md:text-base text-gray-400 text-right mt-4">
-                  Средняя интенсивность:{" "}
-                  <span className={getIntensityColor(avgIntensity)}>
-                    {avgIntensity.toFixed(1)}
-                  </span>
+                <div className="text-xs text-right mt-3" style={{ color: '#A1A1AA' }}>
+                  Средняя:{" "}
+                  <span style={{ color: '#80FFB5' }}>{avgIntensity.toFixed(1)}</span>
                 </div>
               )}
             </div>
 
-            {/* Описание + связанные ситуации */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            {/* Описание + связанные */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Описание */}
-              <div className="border border-white/20 rounded-2xl p-4 md:p-6 bg-[#0a0a1a]/50 flex flex-col h-full">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-base md:text-lg font-semibold text-white">Описание ситуации</h2>
-                  <Link to="/chat" className="text-gray-400 hover:text-white transition-colors text-xs md:text-sm flex items-center gap-1">
+              <div
+                className="rounded-xl p-4 md:p-5 flex flex-col"
+                style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-semibold" style={{ color: '#ffffff' }}>Описание</h2>
+                  <Link
+                    to="/chat"
+                    className="text-xs flex items-center gap-1 transition-colors"
+                    style={{ color: '#A1A1AA' }}
+                  >
                     <span className="hidden sm:inline">К чату</span>
-                    <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
+                    <ChevronRight className="w-3 h-3" />
                   </Link>
                 </div>
-                <div className="border-t border-white/20 mb-4 w-full" />
-                <p className="text-gray-300 leading-relaxed text-xs md:text-sm">{entry.description}</p>
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginBottom: '12px' }} />
+                <p className="leading-relaxed text-xs md:text-sm flex-1" style={{ color: '#C1BEC6' }}>
+                  {entry.description}
+                </p>
               </div>
 
-              {/* Правая колонка: повлияло + связанные */}
-              <div className="flex flex-col gap-4 md:gap-6">
-                <div className="border border-white/20 rounded-2xl p-4 md:p-6 bg-[#0a0a1a]/50 flex-1 flex flex-col">
-                  <h2 className="text-base md:text-lg font-semibold mb-4 text-white">На что это повлияло потом?</h2>
-                  <div className="border-t border-white/20 mb-4 w-full" />
-                  <div className="space-y-2 flex-grow">
+              {/* Связанные */}
+              <div className="flex flex-col gap-4">
+                <div
+                  className="rounded-xl p-4 md:p-5 flex-1 flex flex-col"
+                  style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.06)' }}
+                >
+                  <h2 className="text-sm font-semibold mb-3" style={{ color: '#ffffff' }}>
+                    Что повлияло потом
+                  </h2>
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginBottom: '10px' }} />
+                  <div className="space-y-1 grow">
                     {influenced.length ? influenced.map(s => (
                       <Link
                         key={s.id}
                         to={`/event/${s.target_id}`}
-                        className="flex items-center justify-between p-2 md:p-3 rounded-lg hover:bg-white/5 border border-transparent hover:border-white/10 transition-all group"
+                        className="flex items-center justify-between p-2 rounded-lg transition-all group"
+                        style={{ border: '1px solid transparent' }}
                       >
-                        <span className="text-gray-300 text-xs md:text-sm group-hover:text-white">
+                        <span className="text-xs" style={{ color: '#C1BEC6' }}>
                           {s.target_title ?? "Ситуация"}
                         </span>
-                        <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-gray-600 group-hover:text-white transition-colors" />
+                        <ChevronRight className="w-3 h-3" style={{ color: '#A1A1AA' }} />
                       </Link>
                     )) : (
-                      <p className="text-gray-600 text-xs">Нет данных</p>
+                      <p className="text-xs" style={{ color: 'rgba(161,161,170,0.4)' }}>Нет данных</p>
                     )}
                   </div>
                 </div>
 
-                <div className="border border-white/20 rounded-2xl p-4 md:p-6 bg-[#0a0a1a]/50 flex-1 flex flex-col">
-                  <h2 className="text-base md:text-lg font-semibold mb-4 text-white">Связанные ситуации</h2>
-                  <div className="border-t border-white/20 mb-4 w-full" />
-                  <div className="space-y-2 flex-grow">
+                <div
+                  className="rounded-xl p-4 md:p-5 flex-1 flex flex-col"
+                  style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.06)' }}
+                >
+                  <h2 className="text-sm font-semibold mb-3" style={{ color: '#ffffff' }}>
+                    Связанные ситуации
+                  </h2>
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginBottom: '10px' }} />
+                  <div className="space-y-1 grow">
                     {related.length ? related.map(s => (
                       <Link
                         key={s.id}
                         to={`/event/${s.target_id}`}
-                        className="flex items-center justify-between p-2 md:p-3 rounded-lg hover:bg-white/5 border border-transparent hover:border-white/10 transition-all group"
+                        className="flex items-center justify-between p-2 rounded-lg transition-all"
                       >
-                        <span className="text-gray-300 text-xs md:text-sm group-hover:text-white">
+                        <span className="text-xs" style={{ color: '#C1BEC6' }}>
                           {s.target_title ?? "Ситуация"}
                         </span>
-                        <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-gray-600 group-hover:text-white transition-colors" />
+                        <ChevronRight className="w-3 h-3" style={{ color: '#A1A1AA' }} />
                       </Link>
                     )) : (
-                      <p className="text-gray-600 text-xs">Нет данных</p>
+                      <p className="text-xs" style={{ color: 'rgba(161,161,170,0.4)' }}>Нет данных</p>
                     )}
                   </div>
                 </div>
@@ -250,37 +248,63 @@ export default function Event() {
             </div>
           </div>
 
-          {/* Правая колонка: негативные последствия + трансформация */}
-          <div className="space-y-4 md:space-y-6">
-            <div className="border border-white/20 rounded-lg p-4 md:p-6 bg-[#0a0a1a]/50">
-              <div className="space-y-2 md:space-y-3">
-                {negative_impacts.length ? negative_impacts.map(impact => (
-                  <div
-                    key={impact.id}
-                    className="block w-full px-3 md:px-4 py-2 md:py-3 bg-red-900/40 border border-red-800/50 rounded-lg text-xs md:text-sm text-center text-gray-200"
-                  >
-                    {impact.title}
+          {/* Правая колонка: инсайты + действия */}
+          <div className="space-y-4">
+            <div
+              className="rounded-xl p-4 md:p-5"
+              style={{ background: '#19161D', border: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              {negative_impacts.length > 0 && (
+                <>
+                  <h2 className="text-sm font-semibold mb-3" style={{ color: '#ffffff' }}>
+                    Что это показало
+                  </h2>
+                  <div className="space-y-2">
+                    {negative_impacts.map(impact => (
+                      <div
+                        key={impact.id}
+                        className="px-3 py-2 rounded-lg text-xs"
+                        style={{
+                          background: 'rgba(255,255,255,0.04)',
+                          border: '1px solid rgba(255,255,255,0.07)',
+                          color: '#C1BEC6',
+                        }}
+                      >
+                        {impact.title}
+                      </div>
+                    ))}
                   </div>
-                )) : (
-                  <p className="text-gray-600 text-xs text-center">Нет негативных последствий</p>
-                )}
-              </div>
+                </>
+              )}
+
+              {negative_impacts.length === 0 && transformations.length === 0 && (
+                <p className="text-xs text-center py-6" style={{ color: 'rgba(161,161,170,0.4)' }}>
+                  Добавь инсайт из этого опыта в чате
+                </p>
+              )}
 
               {transformations.length > 0 && (
                 <>
-                  <div className="border-t border-gray-700/50 my-4 md:my-6" />
-                  <div>
-                    <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4 text-center text-white">Трансформация</h2>
-                    <div className="space-y-2 md:space-y-3">
-                      {transformations.map(t => (
-                        <div
-                          key={t.id}
-                          className="p-2 md:p-3 bg-green-800/40 border border-green-700/50 rounded-lg text-xs md:text-sm text-gray-200 leading-relaxed"
-                        >
-                          {t.title}
-                        </div>
-                      ))}
-                    </div>
+                  {negative_impacts.length > 0 && (
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', margin: '16px 0' }} />
+                  )}
+                  <h2 className="text-sm font-semibold mb-3" style={{ color: '#ffffff' }}>
+                    Что делаю дальше
+                  </h2>
+                  <div className="space-y-2">
+                    {transformations.map(t => (
+                      <div
+                        key={t.id}
+                        className="px-3 py-2 rounded-lg text-xs leading-relaxed"
+                        style={{
+                          background: 'rgba(128,255,181,0.06)',
+                          border: '1px solid rgba(128,255,181,0.18)',
+                          color: '#C1BEC6',
+                        }}
+                      >
+                        {t.title}
+                      </div>
+                    ))}
                   </div>
                 </>
               )}

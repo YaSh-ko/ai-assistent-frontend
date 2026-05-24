@@ -42,7 +42,7 @@ export const auth = betterAuth({
       logger.info('SMTP email sent successfully', info);
     }
   },
-  baseURL: process.env.BETTER_AUTH_URL || "https://api.delez-repo.ru",
+  baseURL: process.env.BETTER_AUTH_URL || "",
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 дней
   },

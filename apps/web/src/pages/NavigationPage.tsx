@@ -5,10 +5,9 @@ import {
   CalendarDays,
   Target,
   GitFork,
-  BookOpenText,
+  BarChart2,
   User,
 } from 'lucide-react';
-import ParticlesBackground from '@/components/ParticlesBackground';
 import '../styles/navigation.css';
 
 interface NavSection {
@@ -20,28 +19,28 @@ interface NavSection {
 
 const sections: NavSection[] = [
   {
-    title: 'Записи',
-    subtitle: 'События и мысли',
+    title: 'Опыт',
+    subtitle: 'События и инсайты',
     icon: <CalendarDays strokeWidth={1.5} />,
     to: '/records',
   },
   {
-    title: 'Развитие',
-    subtitle: 'Цели и рост',
+    title: 'Рост',
+    subtitle: 'Цели и эксперименты',
     icon: <Target strokeWidth={1.5} />,
     to: '/development',
   },
   {
-    title: 'Карта жизни',
-    subtitle: 'Граф связей',
+    title: 'Граф знаний',
+    subtitle: 'Карта связей',
     icon: <GitFork strokeWidth={1.5} />,
     to: '/graph',
   },
   {
-    title: 'Мемуары',
-    subtitle: 'Истории и воспоминания',
-    icon: <BookOpenText strokeWidth={1.5} />,
-    to: '/memoirs',
+    title: 'Аналитика',
+    subtitle: 'Паттерны и прогресс',
+    icon: <BarChart2 strokeWidth={1.5} />,
+    to: '/report',
   },
 ];
 
@@ -62,9 +61,6 @@ function NavCard({ section }: { readonly section: NavSection }) {
 export default function NavigationPage() {
   return (
     <div className="navpage">
-      {/* Фон с частицами и линиями — как на лендинге */}
-      <ParticlesBackground variant="default" />
-
       <div className="navpage__inner">
         {/* Хедер */}
         <header className="navpage__header">
@@ -78,14 +74,13 @@ export default function NavigationPage() {
         <div className="navpage-banner">
           <div className="navpage-banner__left">
             <span className="navpage-banner__label">Сегодня</span>
-            <h2 className="navpage-banner__title">Что происходит в твоей жизни?</h2>
-            <p className="navpage-banner__sub">Запиши событие — ИИ поможет увидеть главное</p>
-            <Link to="/chat" className="navpage-banner__btn">
-              Записать
-            </Link>
+            <h2 className="navpage-banner__title">Что важного происходит?</h2>
+            <p className="navpage-banner__sub">Расскажи ИИ — он поможет извлечь из этого максимум</p>
           </div>
-          <div className="navpage-banner__penguin">
-            <img src="/penguin3.png" alt="penguin" className="navpage-banner__penguin-img" />
+          <div className="navpage-banner__right">
+            <Link to="/chat" className="navpage-banner__btn">
+              Начать
+            </Link>
           </div>
         </div>
 

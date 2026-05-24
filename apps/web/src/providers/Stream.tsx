@@ -5,6 +5,7 @@ import React, {
   useState,
   useEffect,
   useMemo,
+  useCallback,
 } from "react";
 import { useStream } from "@langchain/langgraph-sdk/react";
 import { type Message } from "@langchain/langgraph-sdk";
@@ -24,8 +25,14 @@ import { getApiKey } from "@/lib/api-key";
 import { getAuthToken } from "@/lib/api-client";
 import { useThreads } from "./Thread";
 import { toast } from "sonner";
+import type { DetectorProposal } from "@/lib/detector-types";
 
 export type StateType = { messages: Message[]; ui?: UIMessage[] };
+
+export type DetectorCustomEvent = {
+  type: "detector_proposal";
+  proposal: DetectorProposal;
+};
 
 const useTypedStream = useStream<
   StateType,
@@ -34,12 +41,40 @@ const useTypedStream = useStream<
       messages?: Message[] | Message | string;
       ui?: (UIMessage | RemoveUIMessage)[] | UIMessage | RemoveUIMessage;
     };
-    CustomEventType: UIMessage | RemoveUIMessage;
+    CustomEventType: UIMessage | RemoveUIMessage | DetectorCustomEvent;
   }
 >;
 
 type StreamContextType = ReturnType<typeof useTypedStream>;
 const StreamContext = createContext<StreamContextType | undefined>(undefined);
+
+type DetectorProposalStreamContextValue = {
+  streamProposal: DetectorProposal | null;
+  clearStreamProposal: () => void;
+};
+
+const DetectorProposalStreamContext =
+  createContext<DetectorProposalStreamContextValue | null>(null);
+
+export function useDetectorProposalStream(): DetectorProposalStreamContextValue {
+  const ctx = useContext(DetectorProposalStreamContext);
+  if (!ctx) {
+    return { streamProposal: null, clearStreamProposal: () => {} };
+  }
+  return ctx;
+}
+
+function isDetectorCustomEvent(
+  event: UIMessage | RemoveUIMessage | DetectorCustomEvent,
+): event is DetectorCustomEvent {
+  return (
+    typeof event === "object" &&
+    event !== null &&
+    "type" in event &&
+    (event as DetectorCustomEvent).type === "detector_proposal" &&
+    "proposal" in event
+  );
+}
 
 async function sleep(ms = 4000) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -67,12 +102,6 @@ async function checkGraphStatus(
 
 // Default values for the form
 const getDefaultApiUrl = () => {
-  if (import.meta.env.PROD) {
-    return "https://api.delez-repo.ru/ai/api/v1";
-  }
-  if (globalThis.window !== undefined) {
-    return globalThis.location.origin + "/ai/api/v1";
-  }
   return "/ai/api/v1";
 };
 
@@ -92,6 +121,8 @@ const StreamSession = ({
 }) => {
   const [threadId, setThreadId] = useQueryState("threadId");
   const { getThreads, setThreads } = useThreads();
+  const [streamProposal, setStreamProposal] = useState<DetectorProposal | null>(null);
+  const clearStreamProposal = useCallback(() => setStreamProposal(null), []);
 
   // Extract user_id from JWT token to pass as X-User-Id header
   const authHeaders = useMemo(() => {
@@ -118,15 +149,18 @@ const StreamSession = ({
     threadId: threadId ?? null,
     defaultHeaders: authHeaders,
     onCustomEvent: (event, options) => {
+      if (isDetectorCustomEvent(event) && event.proposal?.show_chip) {
+        setStreamProposal(event.proposal);
+        return;
+      }
       options.mutate((prev) => {
-        const ui = uiMessageReducer(prev.ui ?? [], event);
+        const ui = uiMessageReducer(prev.ui ?? [], event as UIMessage | RemoveUIMessage);
         return { ...prev, ui };
       });
     },
     onThreadId: (id) => {
       setThreadId(id);
-      // Refetch threads list when thread ID changes.
-      // Wait for some seconds before fetching so we're able to get the new thread that was created.
+      setStreamProposal(null);
       sleep().then(() => getThreads().then(setThreads).catch(console.error));
     },
   });
@@ -147,7 +181,11 @@ const StreamSession = ({
 
   return (
     <StreamContext.Provider value={streamValue}>
-      {children}
+      <DetectorProposalStreamContext.Provider
+        value={{ streamProposal, clearStreamProposal }}
+      >
+        {children}
+      </DetectorProposalStreamContext.Provider>
     </StreamContext.Provider>
   );
 };
@@ -252,7 +290,7 @@ export const StreamProvider: React.FC<{ readonly children: ReactNode }> = ({
   children,
 }) => {
   // Get environment variables
-  const envApiUrl: string | undefined = import.meta.env.VITE_API_URL;
+  const envApiUrl: string | undefined = `${import.meta.env.VITE_AI_URL}/ai/api/v1`;
   const envAssistantId: string | undefined = import.meta.env.VITE_ASSISTANT_ID;
   const envApiKey: string | undefined = import.meta.env.VITE_LANGSMITH_API_KEY;
 

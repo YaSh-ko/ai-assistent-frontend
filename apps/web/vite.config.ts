@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, frontendRoot, '')
   /** Локальный uvicorn: http://127.0.0.1:8000 — тогда /v1 идёт без префикса /api */
   const devApiTarget = env.VITE_DEV_API_PROXY_TARGET?.trim()
-  const defaultRemote = 'https://api.delez-repo.ru'
+  const defaultRemote = ''
   const v1Target = devApiTarget || defaultRemote
   const authTarget = devApiTarget || defaultRemote
   const v1Rewrite = (p: string) =>
@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
       },
       proxy: {
         '/ai': {
-          target: defaultRemote,
+          target: 'http://localhost:8000',
           changeOrigin: true,
           secure: false,
         },

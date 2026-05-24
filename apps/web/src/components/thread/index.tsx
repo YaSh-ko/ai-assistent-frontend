@@ -27,7 +27,9 @@ import ParticlesBackground from "@/components/ParticlesBackground";
 import { useHints } from "@/hooks/useHints";
 import { ChatHints } from "./chat-hints";
 import { type ThreadContext } from "./context-banner";
+import { DetectorProposalChip } from "./detector-proposal-chip";
 import { chatApi } from "@/lib/api-client";
+import { useDetectorProposal } from "@/hooks/useDetectorProposal";
 
 const AI_PERSONA_STORAGE_KEY = "delez_ai_persona_v1";
 
@@ -574,10 +576,19 @@ export function Thread() {
       .catch(() => setThreadContext(null));
   }, [threadId]);
 
+  const {
+    proposal: detectorProposal,
+    isSaving: detectorSaving,
+    confirm: confirmDetector,
+    decline: declineDetector,
+    dismissChip: dismissDetectorChip,
+  } = useDetectorProposal();
+
   const handleSubmit = useCallback((e?: FormEvent) => {
     e?.preventDefault();
     if (!input.trim() || isLoading) return;
 
+    dismissDetectorChip();
     setFirstTokenReceived(false);
 
     const newHumanMessage: Message = {
@@ -606,7 +617,7 @@ export function Thread() {
     );
 
     setInput("");
-  }, [input, isLoading, stream]);
+  }, [input, isLoading, stream, dismissDetectorChip]);
 
   const handleRegenerate = useCallback((
     parentCheckpoint: Checkpoint | null | undefined,
@@ -787,6 +798,14 @@ export function Thread() {
           {chatStarted && (
             <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center gap-2 sm:gap-4 bg-gradient-to-t from-[#000019] from-70% to-transparent pt-8 pb-0 w-full z-10">
               <div className="flex flex-col items-center gap-2 pb-6 sm:pb-0 sm:-mb-[40px] w-full sm:-translate-y-[60px]">
+                <div className="w-full max-w-3xl px-4 mb-1">
+                  <DetectorProposalChip
+                    proposal={detectorProposal}
+                    isSaving={detectorSaving}
+                    onConfirm={() => void confirmDetector()}
+                    onDecline={() => void declineDetector()}
+                  />
+                </div>
                 {!isLoading && (
                   <>
                     <div className="w-full max-w-3xl px-4 flex justify-end mb-1 sm:mb-2">

@@ -48,9 +48,9 @@ function loadHabits(): HabitItem[] {
     const raw = localStorage.getItem(HABITS_STORAGE_KEY);
     if (!raw) {
       return [
-        { id: "habit-1", title: "10 минут рефлексии", doneToday: false, streak: 0 },
-        { id: "habit-2", title: "Фокус-сессия 60 минут", doneToday: false, streak: 0 },
-        { id: "habit-3", title: "Физическая активность", doneToday: false, streak: 0 },
+        { id: "habit-1", title: "Фокус-сессия 60 минут", doneToday: false, streak: 0 },
+        { id: "habit-2", title: "Физическая активность", doneToday: false, streak: 0 },
+        { id: "habit-3", title: "Читать 20 минут", doneToday: false, streak: 0 },
       ];
     }
     const parsed = JSON.parse(raw) as HabitItem[];
@@ -222,24 +222,24 @@ export default function DevelopmentPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#000019]">
-        <RadialPulseLoader text="Загрузка раздела Развитие..." size={120} color="#ffffff" />
+      <div className="flex h-screen w-full items-center justify-center" style={{ background: '#171717' }}>
+        <RadialPulseLoader text="Загрузка..." size={120} color="#80FFB5" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#000019] text-white">
-      <div className="flex items-start justify-between px-8 pt-8 pb-6">
+    <div className="min-h-screen" style={{ background: '#171717', color: '#C1BEC6' }}>
+      <div className="flex items-start justify-between px-8 pt-8 pb-6" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <div>
-          <Breadcrumbs crumbs={[{ label: "Главная", to: "/navigation" }, { label: "Развитие" }]} />
-          <h1 className="mt-2 mb-1 text-4xl font-bold">Развитие</h1>
-          <p className="text-sm text-gray-500">Цели, привычки и годовые итоги</p>
+          <Breadcrumbs crumbs={[{ label: "Главная", to: "/navigation" }, { label: "Рост" }]} />
+          <h1 className="mt-2 mb-1 text-3xl font-bold tracking-tight" style={{ color: '#ffffff' }}>Рост</h1>
+          <p className="text-sm" style={{ color: '#A1A1AA' }}>Цели, привычки и прогресс</p>
         </div>
         <Link
           to="/goals"
-          className="rounded-xl px-5 py-2.5 text-sm font-medium transition-all hover:opacity-90"
-          style={{ background: "rgba(255,255,255,0.9)", color: "#000" }}
+          className="rounded-lg px-4 py-2 text-sm font-medium transition-all"
+          style={{ background: 'rgba(128,255,181,0.1)', border: '1px solid rgba(128,255,181,0.3)', color: '#80FFB5' }}
         >
           К целям
         </Link>
@@ -247,18 +247,18 @@ export default function DevelopmentPage() {
 
       <div className="px-8 pb-8">
         {error ? (
-          <div className="mb-4 rounded-2xl border border-rose-300/20 bg-rose-500/10 p-4 text-sm text-rose-200">
+          <div className="mb-4 rounded-xl p-4 text-sm" style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', color: '#fca5a5' }}>
             {error}
           </div>
         ) : null}
 
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-2">
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+        <div className="rounded-xl p-1.5" style={{ background: '#19161D', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="grid grid-cols-2 gap-1.5 md:grid-cols-4">
             {[
               { id: "smart", label: "SMART цели", icon: Flag },
               { id: "habits", label: "Привычки", icon: Workflow },
-              { id: "planner", label: "Календарь задач", icon: CalendarCheck2 },
-              { id: "year", label: "Итоги года", icon: Trophy },
+              { id: "planner", label: "Календарь", icon: CalendarCheck2 },
+              { id: "year", label: "Итоги", icon: Trophy },
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === (tab.id as DevelopmentTab);
@@ -267,14 +267,14 @@ export default function DevelopmentPage() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id as DevelopmentTab)}
-                  className="flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm transition-all"
+                  className="flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm transition-all"
                   style={{
-                    border: isActive ? "1px solid rgba(255,255,255,0.25)" : "1px solid transparent",
-                    background: isActive ? "rgba(255,255,255,0.10)" : "transparent",
-                    color: isActive ? "#fff" : "rgba(255,255,255,0.55)",
+                    border: isActive ? '1px solid rgba(128,255,181,0.25)' : '1px solid transparent',
+                    background: isActive ? 'rgba(128,255,181,0.08)' : 'transparent',
+                    color: isActive ? '#80FFB5' : '#A1A1AA',
                   }}
                 >
-                  <Icon size={16} />
+                  <Icon size={14} />
                   <span>{tab.label}</span>
                 </button>
               );
@@ -283,51 +283,51 @@ export default function DevelopmentPage() {
         </div>
       </div>
 
-      <div className="px-8 pb-16">
+      <div className="px-8 py-6 pb-16">
         {activeTab === "smart" ? (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
             {[
               { label: "Всего целей", value: String(smartProgress.total) },
               { label: "Выполнено", value: String(smartProgress.completed) },
               { label: "Активные", value: String(smartProgress.active) },
-              { label: "Прогресс SMART", value: `${smartProgress.percent}%` },
+              { label: "Прогресс", value: `${smartProgress.percent}%` },
             ].map((item) => (
               <div
                 key={item.label}
-                className="rounded-2xl border p-5"
-                style={{ borderColor: "rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)" }}
+                className="rounded-xl p-5"
+                style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.06)' }}
               >
-                <p className="text-xs text-gray-500">{item.label}</p>
-                <p className="mt-3 text-3xl font-bold">{item.value}</p>
+                <p className="text-xs" style={{ color: '#A1A1AA' }}>{item.label}</p>
+                <p className="mt-3 text-3xl font-bold tracking-tight" style={{ color: '#ffffff' }}>{item.value}</p>
               </div>
             ))}
             <div
-              className="rounded-2xl border p-5 lg:col-span-4"
-              style={{ borderColor: "rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)" }}
+              className="rounded-xl p-4 lg:col-span-4"
+              style={{ background: '#19161D', border: '1px solid rgba(128,255,181,0.12)' }}
             >
-              <p className="text-sm text-gray-300">
-                Мотивация дня: маленький стабильный шаг каждый день создаёт большую траекторию через год.
+              <p className="text-sm" style={{ color: '#C1BEC6' }}>
+                Маленький стабильный шаг каждый день создаёт большую траекторию через год.
               </p>
             </div>
           </div>
         ) : null}
 
         {activeTab === "habits" ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
               {[
                 { label: "Всего привычек", value: String(habitsStats.total) },
                 { label: "Отмечено сегодня", value: String(habitsStats.done) },
-                { label: "Выполнение сегодня", value: `${habitsStats.completion}%` },
+                { label: "Выполнение", value: `${habitsStats.completion}%` },
                 { label: "Лучшая серия", value: `${habitsStats.bestStreak} дн.` },
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-2xl border p-5"
-                  style={{ borderColor: "rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)" }}
+                  className="rounded-xl p-5"
+                  style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.06)' }}
                 >
-                  <p className="text-xs text-gray-500">{item.label}</p>
-                  <p className="mt-3 text-3xl font-bold">{item.value}</p>
+                  <p className="text-xs" style={{ color: '#A1A1AA' }}>{item.label}</p>
+                  <p className="mt-3 text-3xl font-bold tracking-tight" style={{ color: '#ffffff' }}>{item.value}</p>
                 </div>
               ))}
             </div>
@@ -337,88 +337,109 @@ export default function DevelopmentPage() {
                   key={habit.id}
                   type="button"
                   onClick={() => toggleHabit(habit.id)}
-                  className="rounded-2xl border p-4 text-left transition-all hover:scale-[1.01]"
+                  className="rounded-xl p-4 text-left transition-all"
                   style={{
-                    borderColor: "rgba(255,255,255,0.10)",
-                    background: habit.doneToday ? "rgba(52,211,153,0.15)" : "rgba(255,255,255,0.03)",
+                    background: habit.doneToday ? 'rgba(128,255,181,0.08)' : '#211D25',
+                    border: habit.doneToday ? '1px solid rgba(128,255,181,0.25)' : '1px solid rgba(255,255,255,0.06)',
                   }}
                 >
-                  <p className="text-base font-semibold">{habit.title}</p>
-                  <p className="mt-2 text-sm text-gray-400">Серия: {habit.streak} дн.</p>
-                  <p className="mt-1 text-xs" style={{ color: habit.doneToday ? "#34d399" : "rgba(255,255,255,0.5)" }}>
-                    {habit.doneToday ? "Отмечено на сегодня" : "Нажми, чтобы отметить"}
+                  <p className="text-sm font-semibold" style={{ color: '#ffffff' }}>{habit.title}</p>
+                  <p className="mt-1.5 text-xs" style={{ color: '#A1A1AA' }}>Серия: {habit.streak} дн.</p>
+                  <p className="mt-1 text-xs" style={{ color: habit.doneToday ? '#80FFB5' : 'rgba(161,161,170,0.5)' }}>
+                    {habit.doneToday ? '✓ Отмечено' : 'Нажми, чтобы отметить'}
                   </p>
                 </button>
               ))}
             </div>
-            <p className="text-sm text-gray-300">
-              Мотивация дня: повторяемое действие важнее разового идеального действия.
+            <p className="text-sm" style={{ color: '#A1A1AA' }}>
+              Повторяемое действие важнее разового идеального действия.
             </p>
           </div>
         ) : null}
 
         {activeTab === "planner" ? (
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-              <h2 className="text-xl font-semibold">Календарь задач</h2>
-              <p className="mt-2 text-sm text-gray-400">Добавляй задачи по датам и связывай их с целями SMART.</p>
-              <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-[1fr_180px_220px_auto]">
+          <div className="space-y-3">
+            <div
+              className="rounded-xl p-5"
+              style={{ background: '#19161D', border: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              <h2 className="text-base font-semibold mb-1" style={{ color: '#ffffff' }}>Календарь задач</h2>
+              <p className="text-sm mb-4" style={{ color: '#A1A1AA' }}>Добавляй задачи по датам и связывай с целями.</p>
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_160px_200px_auto]">
                 <input
                   value={taskTitle}
                   onChange={(event) => setTaskTitle(event.target.value)}
                   placeholder="Название задачи"
-                  className="h-10 rounded-xl border border-white/15 bg-[#070b22]/90 px-3 text-sm outline-none"
+                  className="h-9 rounded-lg px-3 text-sm outline-none"
+                  style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.08)', color: '#C1BEC6' }}
                 />
                 <input
                   type="date"
                   value={taskDate}
                   onChange={(event) => setTaskDate(event.target.value)}
-                  className="h-10 rounded-xl border border-white/15 bg-[#070b22]/90 px-3 text-sm outline-none"
+                  className="h-9 rounded-lg px-3 text-sm outline-none"
+                  style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.08)', color: '#C1BEC6' }}
                 />
                 <select
                   value={taskGoalId}
                   onChange={(event) => setTaskGoalId(event.target.value)}
-                  className="h-10 rounded-xl border border-white/15 bg-[#070b22]/90 px-3 text-sm outline-none"
+                  className="h-9 rounded-lg px-3 text-sm outline-none"
+                  style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.08)', color: '#C1BEC6' }}
                 >
-                  <option value="">Без связи с целью</option>
+                  <option value="">Без цели</option>
                   {goals.map((goal) => (
-                    <option key={goal.id} value={goal.id}>
-                      {goal.title}
-                    </option>
+                    <option key={goal.id} value={goal.id}>{goal.title}</option>
                   ))}
                 </select>
                 <button
                   type="button"
                   onClick={addTask}
-                  className="rounded-xl border border-white/20 bg-white/10 px-4 text-sm transition hover:bg-white/20"
+                  className="rounded-lg px-4 text-sm font-medium transition-all"
+                  style={{ background: 'rgba(128,255,181,0.1)', border: '1px solid rgba(128,255,181,0.3)', color: '#80FFB5' }}
                 >
                   Добавить
                 </button>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-              <div className="mb-3 grid grid-cols-7 gap-2 text-xs text-gray-500">
+            <div
+              className="rounded-xl p-5"
+              style={{ background: '#19161D', border: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              <div className="mb-3 grid grid-cols-7 gap-1.5 text-xs" style={{ color: '#A1A1AA' }}>
                 {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((day) => (
-                  <div key={day}>{day}</div>
+                  <div key={day} className="text-center">{day}</div>
                 ))}
               </div>
-              <div className="grid grid-cols-7 gap-2">
+              <div className="grid grid-cols-7 gap-1.5">
                 {plannerCells.map((cell) => {
                   if (cell.day == null) {
-                    return <div key={cell.dateKey} className="min-h-[96px] rounded-xl border border-transparent" />;
+                    return <div key={cell.dateKey} className="min-h-[80px] rounded-lg border border-transparent" />;
                   }
                   const dayTasks = tasksByDate.get(cell.dateKey) ?? [];
                   return (
-                    <div key={cell.dateKey} className="min-h-[96px] rounded-xl border border-white/10 bg-white/[0.02] p-2">
-                      <p className="text-xs text-gray-300">{cell.day}</p>
-                      <div className="mt-1 space-y-1">
+                    <div
+                      key={cell.dateKey}
+                      className="min-h-[80px] rounded-lg p-1.5"
+                      style={{
+                        background: dayTasks.length > 0 ? 'rgba(128,255,181,0.05)' : '#211D25',
+                        border: dayTasks.length > 0 ? '1px solid rgba(128,255,181,0.15)' : '1px solid rgba(255,255,255,0.05)',
+                      }}
+                    >
+                      <p className="text-xs mb-1" style={{ color: '#A1A1AA' }}>{cell.day}</p>
+                      <div className="space-y-0.5">
                         {dayTasks.slice(0, 2).map((task) => (
-                          <div key={task.id} className="rounded-md border border-white/10 bg-black/20 px-2 py-1 text-[10px] text-gray-200">
+                          <div
+                            key={task.id}
+                            className="rounded px-1.5 py-0.5 text-[10px] leading-snug"
+                            style={{ background: 'rgba(128,255,181,0.1)', color: '#80FFB5' }}
+                          >
                             {task.title}
                           </div>
                         ))}
-                        {dayTasks.length > 2 ? <p className="text-[10px] text-gray-500">+{dayTasks.length - 2} ещё</p> : null}
+                        {dayTasks.length > 2 && (
+                          <p className="text-[10px]" style={{ color: '#A1A1AA' }}>+{dayTasks.length - 2}</p>
+                        )}
                       </div>
                     </div>
                   );
@@ -426,36 +447,46 @@ export default function DevelopmentPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-              <p className="mb-3 text-sm font-semibold">Список задач</p>
+            <div
+              className="rounded-xl p-5"
+              style={{ background: '#19161D', border: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              <p className="mb-3 text-sm font-semibold" style={{ color: '#ffffff' }}>Список задач</p>
               <div className="space-y-2">
                 {tasks.map((task) => {
                   const goal = goals.find((item) => item.id === task.goalId);
                   return (
-                    <div key={task.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2">
+                    <div
+                      key={task.id}
+                      className="flex items-center justify-between gap-3 rounded-lg px-3 py-2"
+                      style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.06)' }}
+                    >
                       <div>
-                        <p className="text-sm">{task.title}</p>
-                        <p className="text-xs text-gray-400">
-                          {task.date} {goal ? `• цель: ${goal.title}` : "• без цели"}
+                        <p className="text-sm" style={{ color: '#C1BEC6' }}>{task.title}</p>
+                        <p className="text-xs" style={{ color: '#A1A1AA' }}>
+                          {task.date}{goal ? ` · ${goal.title}` : ''}
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={() => removeTask(task.id)}
-                        className="rounded-md border border-rose-300/20 bg-rose-500/10 px-2 py-1 text-xs text-rose-200 transition hover:bg-rose-500/20"
+                        className="rounded-md px-2 py-1 text-xs transition-all"
+                        style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', color: '#fca5a5' }}
                       >
                         Удалить
                       </button>
                     </div>
                   );
                 })}
-                {tasks.length === 0 ? <p className="text-sm text-gray-500">Задач пока нет.</p> : null}
+                {tasks.length === 0 && (
+                  <p className="text-sm" style={{ color: 'rgba(161,161,170,0.5)' }}>Задач пока нет.</p>
+                )}
               </div>
               <div className="mt-4">
                 <Link
                   to="/goals"
-                  className="inline-flex items-center rounded-xl px-5 py-2.5 text-sm font-medium transition-all hover:opacity-90"
-                  style={{ background: "rgba(255,255,255,0.9)", color: "#000" }}
+                  className="inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium transition-all"
+                  style={{ background: 'rgba(128,255,181,0.1)', border: '1px solid rgba(128,255,181,0.3)', color: '#80FFB5' }}
                 >
                   Перейти к целям
                 </Link>
@@ -465,7 +496,7 @@ export default function DevelopmentPage() {
         ) : null}
 
         {activeTab === "year" ? (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {[
               { label: "Достигнутые цели", value: String(yearlySummary.achievedGoals) },
               { label: "Активные цели", value: String(yearlySummary.activeGoals) },
@@ -474,11 +505,11 @@ export default function DevelopmentPage() {
             ].map((item) => (
               <div
                 key={item.label}
-                className="rounded-2xl border p-5"
-                style={{ borderColor: "rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)" }}
+                className="rounded-xl p-5"
+                style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.06)' }}
               >
-                <p className="text-xs text-gray-500">{item.label}</p>
-                <p className="mt-3 text-2xl font-semibold">{item.value}</p>
+                <p className="text-xs" style={{ color: '#A1A1AA' }}>{item.label}</p>
+                <p className="mt-3 text-2xl font-semibold tracking-tight" style={{ color: '#ffffff' }}>{item.value}</p>
               </div>
             ))}
           </div>

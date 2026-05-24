@@ -1,7 +1,8 @@
 // src/pages/GoalsPage.tsx
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Target, Plus, Clock, CheckCircle2, Circle } from 'lucide-react';import { goalsApi } from '@/lib/api-client';
+import { ArrowRight, Target, Plus, Clock, CheckCircle2, Circle, Network } from 'lucide-react';
+import { goalsApi } from '@/lib/api-client';
 import RadialPulseLoader from '@/components/ui/loading-animation';
 import Breadcrumbs from '@/components/Breadcrumbs';
 
@@ -25,7 +26,7 @@ const STATUS_LABELS: Record<string, string> = {
 const PRIORITY_COLORS: Record<string, string> = {
   high: '#f87171',
   medium: '#fbbf24',
-  low: '#34d399',
+  low: '#80FFB5',
 };
 
 function statusIcon(status: string) {
@@ -35,7 +36,7 @@ function statusIcon(status: string) {
 }
 
 function GoalCard({ goal }: { readonly goal: Goal }) {
-  const priorityColor = goal.priority ? (PRIORITY_COLORS[goal.priority] ?? '#a78bfa') : '#a78bfa';
+  const priorityColor = goal.priority ? (PRIORITY_COLORS[goal.priority] ?? '#A1A1AA') : '#A1A1AA';
   const statusLabel = STATUS_LABELS[goal.status] ?? goal.status;
   const targetDate = goal.target_date
     ? new Date(goal.target_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -44,44 +45,43 @@ function GoalCard({ goal }: { readonly goal: Goal }) {
   return (
     <Link
       to={`/goals/${goal.id}`}
-      className="flex flex-col rounded-2xl p-5 transition-all hover:scale-[1.01] cursor-pointer"
-      style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.08)',
-      }}
+      className="flex flex-col rounded-xl p-5 transition-all hover:translate-y-[-1px] cursor-pointer"
+      style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.06)' }}
     >
       {/* Тег приоритета */}
       <div className="mb-3">
         <span
-          className="text-xs font-medium px-2 py-1 rounded"
-          style={{ background: `${priorityColor}28`, color: priorityColor }}
+          className="text-xs font-medium px-2 py-1 rounded-md"
+          style={{ background: `${priorityColor}18`, color: priorityColor }}
         >
-          {goal.priority ? `Приоритет: ${goal.priority}` : 'Цель'}
+          {goal.priority === 'high' ? 'Высокий' : goal.priority === 'medium' ? 'Средний' : goal.priority === 'low' ? 'Низкий' : 'Цель'}
         </span>
       </div>
 
       {/* Заголовок */}
-      <h3 className="text-white font-semibold text-base mb-2 line-clamp-2">{goal.title}</h3>
+      <h3 className="font-semibold text-sm mb-2 line-clamp-2" style={{ color: '#ffffff' }}>
+        {goal.title}
+      </h3>
 
       {/* Описание */}
-      <p className="text-gray-400 text-sm leading-relaxed line-clamp-5 flex-1">
-        {goal.description ?? 'Описание отсутствует'}
+      <p className="text-sm leading-relaxed line-clamp-4 flex-1" style={{ color: '#A1A1AA' }}>
+        {goal.description ?? 'Описание не добавлено'}
       </p>
 
       {/* Футер */}
       <div
         className="mt-4 pt-3 flex items-center justify-between text-xs"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}
+        style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
       >
         <span
           className="flex items-center gap-1"
-          style={{ color: goal.status === 'completed' ? '#34d399' : 'rgba(255,255,255,0.35)' }}
+          style={{ color: goal.status === 'completed' ? '#80FFB5' : 'rgba(161,161,170,0.5)' }}
         >
           {statusIcon(goal.status)}
           {statusLabel}
         </span>
         {targetDate && (
-          <span style={{ color: 'rgba(255,255,255,0.25)' }}>{targetDate}</span>
+          <span style={{ color: 'rgba(161,161,170,0.4)' }}>{targetDate}</span>
         )}
       </div>
     </Link>
@@ -104,51 +104,61 @@ export default function GoalsPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#000019]">
-        <RadialPulseLoader text="Загрузка целей..." size={120} color="#ffffff" />
+      <div className="flex h-screen w-full items-center justify-center" style={{ background: '#171717' }}>
+        <RadialPulseLoader text="Загрузка..." size={120} color="#80FFB5" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#000019] text-white">
+    <div className="min-h-screen" style={{ background: '#171717', color: '#C1BEC6' }}>
       {/* Хедер */}
-      <div className="flex items-start justify-between px-8 pt-8 pb-6">
+      <div
+        className="flex items-start justify-between px-8 pt-8 pb-6"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+      >
         <div>
           <Breadcrumbs crumbs={[{ label: 'Главная', to: '/navigation' }, { label: 'Цели' }]} />
-          <h1 className="text-4xl font-bold mt-2 mb-1">Цели</h1>
-          <p className="text-gray-500 text-sm">Твои цели и желания</p>
+          <h1 className="text-3xl font-bold mt-2 mb-1 tracking-tight" style={{ color: '#ffffff' }}>
+            Цели
+          </h1>
+          <p className="text-sm" style={{ color: '#A1A1AA' }}>Куда ты движешься</p>
         </div>
         <div className="flex items-center gap-3">
           <Link
             to="/chat"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90"
-            style={{ background: 'rgba(255,255,255,0.9)', color: '#000' }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+            style={{
+              background: 'rgba(128,255,181,0.1)',
+              border: '1px solid rgba(128,255,181,0.3)',
+              color: '#80FFB5',
+            }}
           >
-            Создать цель
+            Новая цель
             <ArrowRight className="w-4 h-4" />
           </Link>
           <button
             onClick={() => navigate('/graph')}
-            className="p-2.5 rounded-xl transition-all hover:opacity-80"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-            title="Граф"
+            className="p-2 rounded-lg transition-all"
+            style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.07)', color: '#A1A1AA' }}
+            title="Граф знаний"
           >
-            <Target className="w-4 h-4 text-gray-400" />
+            <Network className="w-4 h-4" />
           </button>
         </div>
       </div>
 
       {/* Контент */}
-      <div className="px-8 pb-16">
+      <div className="px-8 py-6 pb-16">
         {(() => {
           if (error) {
             return (
               <div className="flex flex-col items-center justify-center py-32 gap-4">
-                <p className="text-gray-500">{error}</p>
+                <p style={{ color: '#A1A1AA' }}>{error}</p>
                 <button
                   onClick={() => globalThis.location.reload()}
-                  className="text-sm text-gray-400 hover:text-white transition-colors"
+                  className="text-sm"
+                  style={{ color: '#A1A1AA' }}
                 >
                   Повторить
                 </button>
@@ -158,16 +168,16 @@ export default function GoalsPage() {
           if (goals.length === 0) {
             return (
               <div className="flex flex-col items-center justify-center py-32 gap-3">
-                <Plus className="w-10 h-10 text-gray-700" />
-                <p className="text-gray-500 text-sm">Целей пока нет</p>
-                <Link to="/chat" className="text-sm text-gray-400 hover:text-white transition-colors">
-                  Создать первую цель →
+                <Target className="w-8 h-8" style={{ color: 'rgba(161,161,170,0.3)' }} />
+                <p className="text-sm" style={{ color: '#A1A1AA' }}>Целей пока нет</p>
+                <Link to="/chat" className="text-sm" style={{ color: '#80FFB5' }}>
+                  Поставить первую цель →
                 </Link>
               </div>
             );
           }
           return (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {goals.map((goal) => (
                 <GoalCard key={goal.id} goal={goal} />
               ))}

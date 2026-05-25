@@ -111,7 +111,7 @@ export default function BetaTest() {
             <div className="auth-container">
                 <div className="form-box">
                     <h2 className="auth-title">БЕТА-ТЕСТИРОВАНИЕ</h2>
-                    <p className="auth-subtitle">Станьте одним из первых пользователей Delёz</p>
+                    <p className="auth-subtitle">Станьте одним из первых — тема роста и граф знаний</p>
 
                     <form className="auth-form" onSubmit={handleSubmit}>
                         <p className="form-instruction">

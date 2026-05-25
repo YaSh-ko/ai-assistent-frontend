@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ChevronRight, ChevronLeft } from "lucide-react";
-import { entriesApi } from "@/lib/api-client";
+import { ChevronRight, ChevronLeft, MessageSquare } from "lucide-react";
+import { chatApi, entriesApi } from "@/lib/api-client";
 import RadialPulseLoader from "@/components/ui/loading-animation";
 import Breadcrumbs from "@/components/Breadcrumbs";
 
@@ -79,6 +79,7 @@ export default function Event() {
   const [data, setData] = useState<AnalysisData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [linkedThread, setLinkedThread] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) { setLoading(false); return; }
@@ -86,21 +87,24 @@ export default function Event() {
       .then((res: AnalysisData) => setData(res))
       .catch(() => setError("Не удалось загрузить данные"))
       .finally(() => setLoading(false));
+    chatApi.getEntityThreads("observation", id)
+      .then(ids => setLinkedThread(ids[0] ?? null))
+      .catch(() => undefined);
   }, [id]);
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center" style={{ background: '#171717' }}>
-        <RadialPulseLoader text="Загрузка..." size={120} color="#80FFB5" />
+      <div className="flex h-screen w-full items-center justify-center" style={{ background: '#09090b' }}>
+        <RadialPulseLoader text="Загрузка..." size={120} color="#34d399" />
       </div>
     );
   }
 
   if (!id || error || !data) {
     return (
-      <div className="flex h-screen w-full flex-col items-center justify-center gap-4" style={{ background: '#171717' }}>
+      <div className="flex h-screen w-full flex-col items-center justify-center gap-4" style={{ background: '#09090b' }}>
         <p style={{ color: '#A1A1AA' }}>{error ?? "Не найдено"}</p>
-        <Link to="/events" className="text-sm flex items-center gap-1" style={{ color: '#80FFB5' }}>
+        <Link to="/events" className="text-sm flex items-center gap-1" style={{ color: '#34d399' }}>
           <ChevronLeft className="w-4 h-4" /> Назад
         </Link>
       </div>
@@ -116,7 +120,7 @@ export default function Event() {
   const related = related_situations.filter(s => s.relation_type !== "influenced");
 
   return (
-    <div className="min-h-screen" style={{ background: '#171717', color: '#C1BEC6' }}>
+    <div className="min-h-screen" style={{ background: '#09090b', color: '#e4e4e7' }}>
       {/* Хедер */}
       <div
         className="py-4 md:py-5 px-4 md:px-8"
@@ -155,13 +159,13 @@ export default function Event() {
                     </pattern>
                   </defs>
                   <rect width="600" height="200" fill="url(#grid)" />
-                  <path d={intensityPath} fill="none" stroke="#80FFB5" strokeWidth="2.5" strokeLinecap="round" />
+                  <path d={intensityPath} fill="none" stroke="#34d399" strokeWidth="2.5" strokeLinecap="round" />
                 </svg>
               </div>
               {avgIntensity !== null && (
                 <div className="text-xs text-right mt-3" style={{ color: '#A1A1AA' }}>
                   Средняя:{" "}
-                  <span style={{ color: '#80FFB5' }}>{avgIntensity.toFixed(1)}</span>
+                  <span style={{ color: '#34d399' }}>{avgIntensity.toFixed(1)}</span>
                 </div>
               )}
             </div>
@@ -175,17 +179,20 @@ export default function Event() {
               >
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-sm font-semibold" style={{ color: '#ffffff' }}>Описание</h2>
-                  <Link
-                    to="/chat"
-                    className="text-xs flex items-center gap-1 transition-colors"
-                    style={{ color: '#A1A1AA' }}
-                  >
-                    <span className="hidden sm:inline">К чату</span>
-                    <ChevronRight className="w-3 h-3" />
-                  </Link>
+                  {linkedThread && (
+                    <Link
+                      to={`/?threadId=${linkedThread}`}
+                      className="text-xs flex items-center gap-1 transition-colors hover:text-white"
+                      style={{ color: '#A1A1AA' }}
+                    >
+                      <MessageSquare className="w-3 h-3" />
+                      <span className="hidden sm:inline">К чату</span>
+                      <ChevronRight className="w-3 h-3" />
+                    </Link>
+                  )}
                 </div>
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginBottom: '12px' }} />
-                <p className="leading-relaxed text-xs md:text-sm flex-1" style={{ color: '#C1BEC6' }}>
+                <p className="leading-relaxed text-xs md:text-sm flex-1" style={{ color: '#e4e4e7' }}>
                   {entry.description}
                 </p>
               </div>
@@ -208,7 +215,7 @@ export default function Event() {
                         className="flex items-center justify-between p-2 rounded-lg transition-all group"
                         style={{ border: '1px solid transparent' }}
                       >
-                        <span className="text-xs" style={{ color: '#C1BEC6' }}>
+                        <span className="text-xs" style={{ color: '#e4e4e7' }}>
                           {s.target_title ?? "Ситуация"}
                         </span>
                         <ChevronRight className="w-3 h-3" style={{ color: '#A1A1AA' }} />
@@ -234,7 +241,7 @@ export default function Event() {
                         to={`/event/${s.target_id}`}
                         className="flex items-center justify-between p-2 rounded-lg transition-all"
                       >
-                        <span className="text-xs" style={{ color: '#C1BEC6' }}>
+                        <span className="text-xs" style={{ color: '#e4e4e7' }}>
                           {s.target_title ?? "Ситуация"}
                         </span>
                         <ChevronRight className="w-3 h-3" style={{ color: '#A1A1AA' }} />
@@ -267,7 +274,7 @@ export default function Event() {
                         style={{
                           background: 'rgba(255,255,255,0.04)',
                           border: '1px solid rgba(255,255,255,0.07)',
-                          color: '#C1BEC6',
+                          color: '#e4e4e7',
                         }}
                       >
                         {impact.title}
@@ -297,9 +304,9 @@ export default function Event() {
                         key={t.id}
                         className="px-3 py-2 rounded-lg text-xs leading-relaxed"
                         style={{
-                          background: 'rgba(128,255,181,0.06)',
-                          border: '1px solid rgba(128,255,181,0.18)',
-                          color: '#C1BEC6',
+                          background: 'rgba(52,211,153,0.06)',
+                          border: '1px solid rgba(52,211,153,0.18)',
+                          color: '#e4e4e7',
                         }}
                       >
                         {t.title}

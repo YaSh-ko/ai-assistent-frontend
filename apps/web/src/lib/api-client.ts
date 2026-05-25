@@ -573,6 +573,18 @@ export const entriesApi = {
         return response.json();
     },
 
+    patch: async (id: string, body: { title?: string; description?: string }) => {
+        const response = await apiRequest(`/v1/entries/${id}`, {
+            method: "PATCH",
+            body: JSON.stringify(body),
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(parseFastApiDetail(err) || response.statusText);
+        }
+        return response.json();
+    },
+
     getAnalysis: async (id: string) => {
         const response = await apiRequest(`/v1/entries/${id}/analysis`);
         return response.json();
@@ -705,6 +717,24 @@ export const goalsApi = {
         const response = await apiRequest(`/v1/goals/${id}/concepts`);
         return response.json();
     },
+
+    update: async (id: string, body: {
+        title?: string;
+        description?: string;
+        status?: string;
+        priority?: string;
+        target_date?: string;
+    }) => {
+        const response = await apiRequest(`/v1/goals/${id}`, {
+            method: "PATCH",
+            body: JSON.stringify(body),
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(parseFastApiDetail(err) || response.statusText);
+        }
+        return response.json();
+    },
 };
 
 // Chat API
@@ -747,13 +777,50 @@ export const chatApi = {
         return response.json();
     },
 
-    deleteLangGraphThread: async (threadId: string): Promise<boolean> => {
+    linkThreadToEntity: async (
+        threadId: string,
+        entityType: "observation" | "goal" | "task",
+        entityId: string,
+    ): Promise<boolean> => {
         const response = await apiRequest(
-            `/ai/api/v1/threads/${encodeURIComponent(threadId)}`,
+            `/v1/conversations/thread/${encodeURIComponent(threadId)}/link`,
+            {
+                method: "POST",
+                body: JSON.stringify({ entity_type: entityType, entity_id: entityId }),
+            },
+        );
+        return response.ok || response.status === 201;
+    },
+
+    getEntityThreads: async (
+        entityType: "observation" | "goal" | "task",
+        entityId: string,
+    ): Promise<string[]> => {
+        const response = await apiRequest(
+            `/v1/conversations/entity/${entityType}/${encodeURIComponent(entityId)}/threads`,
+        );
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.thread_ids ?? [];
+    },
+
+    deleteConversation: async (threadId: string): Promise<boolean> => {
+        const response = await apiRequest(
+            `/v1/conversations/thread/${encodeURIComponent(threadId)}`,
             { method: "DELETE" },
         );
-        return response.ok;
+        if (response.ok || response.status === 204) {
+            void aiApiRequest(`/threads/${encodeURIComponent(threadId)}`, {
+                method: "DELETE",
+            }).catch(() => undefined);
+            return true;
+        }
+        return false;
     },
+
+    /** @deprecated use deleteConversation */
+    deleteLangGraphThread: async (threadId: string): Promise<boolean> =>
+        chatApi.deleteConversation(threadId),
 
     createCategoryChat: async (category: string): Promise<{ thread_id: string; conversation_id: string }> => {
         const response = await apiRequest('/v1/conversations/category', {

@@ -113,7 +113,7 @@ export default function SignUp() {
             <div className="auth-container">
                 <div className="form-box">
                     <h2 className="auth-title">СОЗДАТЬ АККАУНТ</h2>
-                    <p className="auth-subtitle">Создайте аккаунт и начните путь с Delёz</p>
+                    <p className="auth-subtitle">Создайте аккаунт и начните отслеживать рост с Delёz</p>
 
                     <form className="auth-form" onSubmit={handleSignUp}>
                         <div className="input-group">

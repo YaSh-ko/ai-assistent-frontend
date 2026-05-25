@@ -25,7 +25,6 @@ import ProfilePage from "./pages/ProfilePage.tsx";
 import RecordsPage from "./pages/RecordsPage.tsx";
 import NotebookEntriesPage from "./pages/NotebookEntriesPage.tsx";
 import DevelopmentPage from "./pages/DevelopmentPage.tsx";
-import VirtualFieldsPage from "./pages/VirtualFieldsPage.tsx";
 import { NotFoundPage } from "./pages/NotFound.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
 import NavigationPage from "./pages/NavigationPage.tsx";
@@ -70,7 +69,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/goals/:id" element={<ProtectedRoute><GoalPage /></ProtectedRoute>} />
           <Route path="/report" element={<ProtectedRoute><ReportPage /></ProtectedRoute>} />
           <Route path="/experiments" element={<ProtectedRoute><ExperimentsPage /></ProtectedRoute>} />
-          <Route path="/virtual-fields" element={<ProtectedRoute><VirtualFieldsPage /></ProtectedRoute>} />
+          <Route path="/virtual-fields" element={<Navigate to="/navigation" replace />} />
           <Route path="/experiment/:id" element={<ProtectedRoute><Experiment /></ProtectedRoute>} />
           <Route path="/experiment" element={<ProtectedRoute><Experiment /></ProtectedRoute>} />
           <Route path="/memoirs" element={<Navigate to="/report" replace />} />

@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom";
+﻿import { Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { apiRequest, clearAuthToken, getAuthToken } from "@/lib/api-client";
 
@@ -52,7 +52,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
                 justifyContent: 'center',
                 alignItems: 'center',
                 minHeight: '100vh',
-                background: 'linear-gradient(135deg, #000019, #000019, #000019)',
+                background: 'linear-gradient(135deg, #09090b, #09090b, #09090b)',
                 color: '#ffffff'
             }}>
                 <div>Загрузка...</div>

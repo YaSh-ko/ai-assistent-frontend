@@ -6,7 +6,6 @@ import Landing from './Landing';
 vi.mock('@/components/ParticlesBackground', () => ({ default: () => null }));
 vi.mock('@/components/LandingFooter', () => ({ default: () => <footer>Footer</footer> }));
 
-// Mock image assets
 vi.mock('@/assets/memory.png', () => ({ default: 'memory.png' }));
 vi.mock('@/assets/overtime.png', () => ({ default: 'overtime.png' }));
 vi.mock('@/assets/history.png', () => ({ default: 'history.png' }));
@@ -14,7 +13,6 @@ vi.mock('@/assets/padlock.png', () => ({ default: 'padlock.png' }));
 vi.mock('@/assets/shield.png', () => ({ default: 'shield.png' }));
 vi.mock('@/assets/configuration.png', () => ({ default: 'configuration.png' }));
 vi.mock('@/assets/Macbook Air M2 Silver Flatten.png', () => ({ default: 'macbook.png' }));
-vi.mock('@/assets/circle_of_sins.png', () => ({ default: 'circle.png' }));
 
 describe('Landing', () => {
   const renderLanding = () =>
@@ -27,8 +25,8 @@ describe('Landing', () => {
 
   it('renders hero section', () => {
     renderLanding();
-    expect(screen.getByText(/Трудно разобраться в себе/i)).toBeInTheDocument();
-    expect(screen.getByText(/Разберёмся вместе/i)).toBeInTheDocument();
+    expect(screen.getByText(/Личный рост/i)).toBeInTheDocument();
+    expect(screen.getByText(/с опорой на данные/i)).toBeInTheDocument();
   });
 
   it('renders navigation links', () => {
@@ -41,26 +39,26 @@ describe('Landing', () => {
 
   it('renders problem section', () => {
     renderLanding();
-    expect(screen.getByText('Одна мысль не даёт спать?')).toBeInTheDocument();
-    expect(screen.getByText('Выводы забываются')).toBeInTheDocument();
+    expect(screen.getByText('Планы есть, прогресс — нет?')).toBeInTheDocument();
+    expect(screen.getByText('Цели и гипотезы теряются')).toBeInTheDocument();
   });
 
   it('renders how it works section', () => {
     renderLanding();
-    expect(screen.getByText('Delёz запоминает, анализирует и связывает')).toBeInTheDocument();
-    expect(screen.getByText('Обсуждаешь событие с ИИ')).toBeInTheDocument();
+    expect(screen.getByText('Delёz собирает, связывает и показывает прогресс')).toBeInTheDocument();
+    expect(screen.getByText('Фиксируешь шаг в чате')).toBeInTheDocument();
   });
 
   it('renders security section', () => {
     renderLanding();
-    expect(screen.getByText('Твои данные принадлежат только тебе')).toBeInTheDocument();
-    expect(screen.getByText('End-to-end шифрование')).toBeInTheDocument();
+    expect(screen.getByText('Данные под вашим контролем')).toBeInTheDocument();
+    expect(screen.getByText('HTTPS между клиентом и API')).toBeInTheDocument();
   });
 
-  it('renders philosophy section', () => {
+  it('renders tech stack section', () => {
     renderLanding();
-    expect(screen.getByText('Основано на концепциях Жиля Делёза')).toBeInTheDocument();
-    expect(screen.getByText('Ризома (сеть без центра)')).toBeInTheDocument();
+    expect(screen.getByText('Технологии под капотом')).toBeInTheDocument();
+    expect(screen.getByText('Граф знаний Neo4j')).toBeInTheDocument();
   });
 
   it('renders CTA section with beta-test links', () => {
@@ -75,8 +73,8 @@ describe('Landing', () => {
   it('renders target audience section', () => {
     renderLanding();
     expect(screen.getByText('Для кого это?')).toBeInTheDocument();
-    expect(screen.getByText('13–18 лет')).toBeInTheDocument();
-    expect(screen.getByText('55+ лет')).toBeInTheDocument();
+    expect(screen.getByText('Студенты и стажёры')).toBeInTheDocument();
+    expect(screen.getByText('Саморазвитие')).toBeInTheDocument();
   });
 
   it('renders footer', () => {

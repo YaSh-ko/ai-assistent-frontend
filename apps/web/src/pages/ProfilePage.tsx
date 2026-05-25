@@ -1,21 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { authApi, importApi, type ProfileData } from "../lib/api-client";
-import { MBTI_DATA } from "../lib/mbti-data";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { toast } from "sonner";
 
 type GenderValue = "male" | "female" | "other" | "";
-const MBTI_RESULT_STORAGE_KEY = "mbti_last_result";
 const AI_PERSONA_STORAGE_KEY = "delez_ai_persona_v1";
-
-type MbtiStoredResult = {
-  type: string;
-  scores?: { EI: number; SN: number; TF: number; JP: number };
-  completedAt?: string;
-};
-
 
 const emptyProfile: ProfileData = {
   id: "",
@@ -32,7 +23,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [securitySaving, setSecuritySaving] = useState(false);
-  const [section, setSection] = useState<"profile" | "security" | "test" | "support" | "memoirs" | "import" | "assistant">("profile");
+  const [section, setSection] = useState<"profile" | "security" | "support" | "import" | "assistant">("profile");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [securityError, setSecurityError] = useState<string | null>(null);
@@ -40,7 +31,6 @@ export default function ProfilePage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [mbtiResult, setMbtiResult] = useState<MbtiStoredResult | null>(null);
   const [importText, setImportText] = useState<string>("");
   const [assistantPersona, setAssistantPersona] = useState<string>("Баланс: эмпатия + структурность");
   const [assistantRole, setAssistantRole] = useState<string>("Навигатор изменений");
@@ -100,27 +90,6 @@ export default function ProfilePage() {
     }
   }, [isSpeechSupported, isBioListening, stopListening, startListening]);
 
-  const readMbtiResultFromStorage = useMemo(
-    () => () => {
-      try {
-        const raw = localStorage.getItem(MBTI_RESULT_STORAGE_KEY);
-        if (!raw) {
-          setMbtiResult(null);
-          return;
-        }
-        const parsed = JSON.parse(raw) as MbtiStoredResult;
-        if (!parsed?.type) {
-          setMbtiResult(null);
-          return;
-        }
-        setMbtiResult(parsed);
-      } catch {
-        setMbtiResult(null);
-      }
-    },
-    [],
-  );
-
   useEffect(() => {
     const load = async () => {
       try {
@@ -137,38 +106,6 @@ export default function ProfilePage() {
 
     void load();
   }, []);
-
-  useEffect(() => {
-    readMbtiResultFromStorage();
-  }, [readMbtiResultFromStorage]);
-
-  useEffect(() => {
-    if (section !== "test") return;
-    readMbtiResultFromStorage();
-  }, [readMbtiResultFromStorage, section]);
-
-  useEffect(() => {
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key && event.key !== MBTI_RESULT_STORAGE_KEY) return;
-      readMbtiResultFromStorage();
-    };
-    const handleFocus = () => readMbtiResultFromStorage();
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        readMbtiResultFromStorage();
-      }
-    };
-
-    globalThis.addEventListener("storage", handleStorage);
-    globalThis.addEventListener("focus", handleFocus);
-    document.addEventListener("visibilitychange", handleVisibility);
-
-    return () => {
-      globalThis.removeEventListener("storage", handleStorage);
-      globalThis.removeEventListener("focus", handleFocus);
-      document.removeEventListener("visibilitychange", handleVisibility);
-    };
-  }, [readMbtiResultFromStorage]);
 
   useEffect(() => {
     if (!success) return;
@@ -323,16 +260,17 @@ export default function ProfilePage() {
         </>
       );
     }
-    if (section === "support") {
-      return <img src="/penguin3.png" alt="Пингвин" className="pointer-events-none h-32 w-auto" />;
+    if (section === "support" || section === "import" || section === "assistant") {
+      return (
+        <div className="pointer-events-none flex h-32 items-center justify-center rounded-xl border border-zinc-800/80 bg-white/5 px-6 text-sm text-white/50">
+          Delёz · рост и развитие
+        </div>
+      );
     }
-    if (section === "import" || section === "assistant") {
-      return <img src="/penguin2.png" alt="Пингвин" className="pointer-events-none h-32 w-auto" />;
-    }
-    return <img src="/penguin2.png" alt="Пингвин" className="pointer-events-none h-32 w-auto" />;
+    return null;
   })();
   return (
-    <div className="h-screen overflow-hidden bg-[#000019] text-white">
+    <div className="growth-page h-screen overflow-hidden">
       <div className="relative mx-auto h-full max-w-6xl px-6 py-6">
         <div className="pointer-events-none absolute inset-0 opacity-35">
           <svg viewBox="0 0 1200 760" className="h-full w-full">
@@ -375,20 +313,20 @@ export default function ProfilePage() {
               <h1 className="mt-3 text-4xl font-semibold">Профиль</h1>
             </div>
             <Link
-              to="/mbti-test"
-              className="rounded-xl border border-white/20 bg-white/[0.03] px-4 py-2 text-sm text-slate-200 transition hover:bg-white/[0.06]"
+              to="/report"
+              className="growth-btn-secondary text-sm"
             >
-              MBTI тест
+              Аналитика
             </Link>
           </div>
 
           {loading ? (
-            <div className="flex h-full items-center justify-center rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur">
+            <div className="flex h-full items-center justify-center rounded-3xl border border-zinc-800/80 bg-white/[0.04] backdrop-blur">
               Загрузка профиля...
             </div>
           ) : (
             <div className="flex h-full min-h-0 gap-4">
-              <aside className="w-[210px] shrink-0 rounded-2xl border border-white/10 bg-[#070b22]/60 p-3">
+              <aside className="w-[210px] shrink-0 rounded-2xl border border-zinc-800/80 bg-[#070b22]/60 p-3">
                 <div className="mb-2 px-2 text-xs uppercase tracking-widest text-slate-500">Разделы</div>
                 <div className="flex flex-col gap-2">
                   <button
@@ -412,28 +350,6 @@ export default function ProfilePage() {
                     }`}
                   >
                     Безопасность
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSection("test")}
-                    className={`rounded-xl border px-3 py-2 text-left text-sm transition ${
-                      section === "test"
-                        ? "border-white/30 bg-white/[0.10] text-white"
-                        : "border-transparent bg-transparent text-slate-300 hover:bg-white/[0.06]"
-                    }`}
-                  >
-                    Тест
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSection("memoirs")}
-                    className={`rounded-xl border px-3 py-2 text-left text-sm transition ${
-                      section === "memoirs"
-                        ? "border-white/30 bg-white/[0.10] text-white"
-                        : "border-transparent bg-transparent text-slate-300 hover:bg-white/[0.06]"
-                    }`}
-                  >
-                    Мемуары
                   </button>
                   <button
                     type="button"
@@ -528,7 +444,7 @@ export default function ProfilePage() {
                           <button
                             type="button"
                             onClick={decreaseAge}
-                            className="h-full w-12 rounded-l-xl border-r border-white/10 text-xl text-slate-300 transition hover:bg-white/10"
+                            className="h-full w-12 rounded-l-xl border-r border-zinc-800/80 text-xl text-slate-300 transition hover:bg-zinc-800/60"
                             aria-label="Уменьшить возраст"
                           >
                             -
@@ -550,7 +466,7 @@ export default function ProfilePage() {
                           <button
                             type="button"
                             onClick={increaseAge}
-                            className="h-full w-12 rounded-r-xl border-l border-white/10 text-xl text-slate-300 transition hover:bg-white/10"
+                            className="h-full w-12 rounded-r-xl border-l border-zinc-800/80 text-xl text-slate-300 transition hover:bg-zinc-800/60"
                             aria-label="Увеличить возраст"
                           >
                             +
@@ -588,7 +504,7 @@ export default function ProfilePage() {
                             />
                           </motion.button>
                           {isBioListening && (
-                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 rounded-lg bg-white px-4 py-2 text-xs font-medium text-[#000019] shadow-lg pointer-events-none">
+                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 rounded-lg bg-white px-4 py-2 text-xs font-medium text-[#09090b] shadow-lg pointer-events-none">
                               Говорите...
                             </div>
                           )}
@@ -628,17 +544,6 @@ export default function ProfilePage() {
                         </label>
                       </div>
                     </div>
-                  ) : section === "memoirs" ? (
-                    <div className="delez-scrollbar h-full overflow-y-auto space-y-4 pr-1">
-                      <h2 className="text-xl font-semibold">Мемуары</h2>
-                      <p className="text-sm text-slate-400">Отчёт о себе — анализ твоей жизни на основе записей.</p>
-                      <Link
-                        to="/report"
-                        className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/[0.04] px-5 py-3 text-sm text-slate-200 transition hover:bg-white/[0.08] hover:border-white/30"
-                      >
-                        Открыть мемуары →
-                      </Link>
-                    </div>
                   ) : section === "support" ? (
                     <div className="space-y-4">
                       <h2 className="text-xl font-semibold">Поддержка</h2>
@@ -649,7 +554,7 @@ export default function ProfilePage() {
                           href="https://vk.com/delez_app"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="group flex items-center gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-5 py-4 transition hover:bg-white/[0.07] hover:border-white/20"
+                          className="group flex items-center gap-4 rounded-xl border border-zinc-800/80 bg-zinc-900/50 px-5 py-4 transition hover:bg-white/[0.07] hover:border-zinc-800"
                         >
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: "#0077FF" }}>
                             <svg viewBox="0 0 24 24" fill="white" className="h-5 w-5">
@@ -669,7 +574,7 @@ export default function ProfilePage() {
                           href="https://t.me/delez_support"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="group flex items-center gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-5 py-4 transition hover:bg-white/[0.07] hover:border-white/20"
+                          className="group flex items-center gap-4 rounded-xl border border-zinc-800/80 bg-zinc-900/50 px-5 py-4 transition hover:bg-white/[0.07] hover:border-zinc-800"
                         >
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: "#2AABEE" }}>
                             <svg viewBox="0 0 24 24" fill="white" className="h-5 w-5">
@@ -687,7 +592,7 @@ export default function ProfilePage() {
                         {/* Mail.ru */}
                         <a
                           href="mailto:support@delez.tech"
-                          className="group flex items-center gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-5 py-4 transition hover:bg-white/[0.07] hover:border-white/20"
+                          className="group flex items-center gap-4 rounded-xl border border-zinc-800/80 bg-zinc-900/50 px-5 py-4 transition hover:bg-white/[0.07] hover:border-zinc-800"
                         >
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: "#005FF9" }}>
                             <svg viewBox="0 0 24 24" fill="white" className="h-5 w-5">
@@ -741,7 +646,7 @@ export default function ProfilePage() {
                           </button>
                         ))}
                       </div>
-                      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                      <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-4">
                         <p className="text-xs text-slate-500">Предпросмотр</p>
                         <p className="mt-2 text-sm text-slate-300">
                           {importText.trim()
@@ -773,101 +678,13 @@ export default function ProfilePage() {
                           className="h-12 w-full rounded-xl border border-white/15 bg-[#070b22]/90 px-4 text-sm outline-none transition focus:border-white/35"
                         />
                       </label>
-                      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                      <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-4">
                         <p className="text-xs text-slate-500">Активная конфигурация</p>
                         <p className="mt-2 text-sm text-slate-200">{assistantPersona}</p>
                         <p className="mt-1 text-sm text-slate-400">{assistantRole}</p>
                       </div>
                     </div>
-                  ) : (() => {
-                    const mbti = mbtiResult ? MBTI_DATA[mbtiResult.type] : null;
-                    return (
-                      <div className="delez-scrollbar h-full overflow-y-auto space-y-4 pr-1">
-                        <h2 className="text-xl font-semibold">Тест личности</h2>
-
-                        {mbtiResult && mbti ? (
-                          <>
-                            {/* Type header */}
-                            <div className="rounded-2xl border border-white/10 bg-[#070b22]/85 p-5">
-                              <div className="flex items-start justify-between gap-3 flex-wrap">
-                                <div>
-                                  <div className="flex items-center gap-3 flex-wrap">
-                                    <span className="text-4xl font-bold">{mbtiResult.type}</span>
-                                    <span className={`rounded-full border border-white/10 bg-white/[0.05] px-3 py-0.5 text-xs font-medium ${mbti.groupColor}`}>
-                                      {mbti.group}
-                                    </span>
-                                  </div>
-                                  <div className="mt-1">
-                                    <span className="text-lg text-slate-200">{mbti.nameRu}</span>
-                                    <span className="ml-2 text-xs text-slate-500">{mbti.nameEn}</span>
-                                  </div>
-                                </div>
-                                {mbtiResult.completedAt ? (
-                                  <span className="text-xs text-slate-500">
-                                    {new Date(mbtiResult.completedAt).toLocaleDateString("ru-RU")}
-                                  </span>
-                                ) : null}
-                              </div>
-
-                              <p className="mt-3 text-sm leading-relaxed text-slate-300">{mbti.description}</p>
-
-                              <div className="mt-3 flex flex-wrap gap-2">
-                                {mbti.traits.map((t) => (
-                                  <span key={t} className={`rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs ${mbti.groupColor}`}>
-                                    {t}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Strengths / Weaknesses */}
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                              <div className="rounded-xl border border-emerald-300/20 bg-emerald-500/5 p-4">
-                                <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-emerald-300/80">Сильные стороны</h3>
-                                <ul className="space-y-1.5">
-                                  {mbti.strengths.map((s) => (
-                                    <li key={s} className="flex items-center gap-2 text-xs text-slate-300">
-                                      <span className="h-1 w-1 shrink-0 rounded-full bg-emerald-400/70" />
-                                      {s}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                              <div className="rounded-xl border border-rose-300/20 bg-rose-500/5 p-4">
-                                <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-rose-300/80">Зоны роста</h3>
-                                <ul className="space-y-1.5">
-                                  {mbti.weaknesses.map((w) => (
-                                    <li key={w} className="flex items-center gap-2 text-xs text-slate-300">
-                                      <span className="h-1 w-1 shrink-0 rounded-full bg-rose-400/70" />
-                                      {w}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            </div>
-
-                            {/* Careers */}
-                            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-400">Карьерные пути</h3>
-                              <div className="flex flex-wrap gap-2">
-                                {mbti.careers.map((c) => (
-                                  <span key={c} className="rounded-lg border border-white/10 bg-white/[0.06] px-2.5 py-1 text-xs text-slate-200">
-                                    {c}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="rounded-2xl border border-white/12 bg-[#070b22]/85 p-5">
-                            <p className="text-sm text-slate-300">
-                              После прохождения теста здесь появится ваш тип личности с подробным описанием.
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
+                  ) : null}
                 </div>
                 <div className="mt-4 flex items-center justify-between gap-3">
                   <div className="min-h-6 text-sm">
@@ -879,7 +696,7 @@ export default function ProfilePage() {
                         <button
                           type="button"
                           onClick={handleSignOut}
-                          className="rounded-xl border border-white/20 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/[0.08]"
+                          className="rounded-xl border border-zinc-800 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/[0.08]"
                         >
                           Выйти из профиля
                         </button>
@@ -918,14 +735,7 @@ export default function ProfilePage() {
                       >
                         Сохранить персону
                       </button>
-                    ) : (
-                      <Link
-                      to="/mbti-test"
-                      className="rounded-xl border border-white/25 bg-white/[0.06] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/[0.12]"
-                    >
-                      Перейти к тесту
-                    </Link>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </div>

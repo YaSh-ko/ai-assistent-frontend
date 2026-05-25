@@ -1,13 +1,12 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Info, Users, MonitorPlay, X } from "lucide-react";
+import { Eye, Target, ListChecks, Info, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Моковый контекст данных
-// В реальном приложении он придет из `conversations.entry_threads`
 export interface ThreadContext {
   id?: string;
-  type: "hackathon" | "event" | "meeting" | "general";
+  entity_id?: string;
+  type: "observation" | "goal" | "task" | "general" | "event" | "hackathon" | "meeting";
   title: string;
   description?: string;
 }
@@ -43,11 +42,10 @@ export const ContextBanner: React.FC<ContextBannerProps> = ({
 
           {/* Иконка */}
           <div className="flex-shrink-0 flex items-center justify-center size-10 rounded-full bg-white/10 border border-white/10 shadow-inner group-hover:scale-110 transition-transform duration-300">
-            {context.type === "hackathon" && <MonitorPlay className="size-5 text-blue-300" />}
-            {context.type === "meeting" && <Users className="size-5 text-purple-300" />}
-            {(context.type === "event" || context.type === "general") && (
-              <Info className="size-5 text-indigo-300" />
-            )}
+            {(context.type === "observation" || context.type === "event") && <Eye className="size-5 text-emerald-300" />}
+            {context.type === "goal" && <Target className="size-5 text-blue-300" />}
+            {context.type === "task" && <ListChecks className="size-5 text-amber-300" />}
+            {context.type === "general" && <Info className="size-5 text-indigo-300" />}
           </div>
 
           {/* Текст */}

@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+﻿import { motion } from "framer-motion";
 import { Compass, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ export function NotFoundPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="w-full relative flex min-h-screen items-center justify-center overflow-hidden bg-[#000019] text-foreground">
+    <div className="w-full relative flex min-h-screen items-center justify-center overflow-hidden bg-[#09090b] text-foreground">
       <ParticlesBackground/>
       <div aria-hidden={true} className="-z-10 absolute inset-0 overflow-hidden">
         <motion.div

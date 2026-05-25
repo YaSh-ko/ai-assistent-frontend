@@ -1,14 +1,14 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Target, FlaskConical, BookOpen, X } from "lucide-react";
+import { Target, ListChecks, Eye, RefreshCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { DetectorProposal } from "@/lib/detector-types";
 import { DETECTOR_ENTITY_LABELS } from "@/lib/detector-types";
 
 const TYPE_ICONS = {
-  event: BookOpen,
+  observation: Eye,
   goal: Target,
-  experiment: FlaskConical,
+  task: ListChecks,
 } as const;
 
 type Props = {
@@ -26,13 +26,32 @@ export function DetectorProposalChip({
   onDecline,
   className,
 }: Props) {
-  const entityType = proposal?.entity_type ?? "event";
-  const Icon = TYPE_ICONS[entityType as keyof typeof TYPE_ICONS] ?? BookOpen;
+  const entityType = proposal?.entity_type ?? "observation";
+  const Icon = TYPE_ICONS[entityType as keyof typeof TYPE_ICONS] ?? Eye;
   const label = DETECTOR_ENTITY_LABELS[entityType] ?? entityType;
   const title = proposal?.preview?.title ?? "Без названия";
   const description =
     (proposal?.preview?.description as string | undefined) ||
     (proposal?.preview?.hypothesis as string | undefined);
+
+  const isUpdate = proposal?.action === "confirm_update";
+  const existingTitle = proposal?.existing_title;
+
+  const chipMessage = isUpdate
+    ? `Обновить ${label} «${existingTitle ?? title}»?`
+    : proposal?.revived
+      ? `Вернулись к теме — сохранить ${label}?`
+      : `Похоже, можно сохранить ${label}`;
+
+  const confirmLabel = isUpdate ? "Обновить" : "Сохранить";
+  const savingLabel = isUpdate ? "Обновляем…" : "Сохраняем…";
+
+  const borderColor = isUpdate ? "border-amber-500/25" : "border-emerald-500/25";
+  const iconBg = isUpdate ? "bg-amber-500/15 border-amber-500/25" : "bg-emerald-500/15 border-emerald-500/25";
+  const iconColor = isUpdate ? "text-amber-400" : "text-emerald-400";
+  const btnBg = isUpdate ? "bg-amber-500 hover:bg-amber-400" : "bg-emerald-500 hover:bg-emerald-400";
+
+  const ChipIcon = isUpdate ? RefreshCw : Icon;
 
   return (
     <AnimatePresence>
@@ -43,22 +62,21 @@ export function DetectorProposalChip({
           exit={{ opacity: 0, y: 8, scale: 0.98 }}
           transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
           className={cn(
-            "mx-auto w-full max-w-3xl rounded-2xl border border-indigo-400/30",
-            "bg-[#0a0a2e]/90 backdrop-blur-md shadow-xl px-4 py-3 sm:px-5 sm:py-4",
+            "mx-auto w-full max-w-3xl rounded-2xl border",
+            borderColor,
+            "bg-zinc-900/95 backdrop-blur-md shadow-xl px-4 py-3 sm:px-5 sm:py-4",
             className,
           )}
           role="region"
-          aria-label="Предложение сохранить данные"
+          aria-label={isUpdate ? "Предложение обновить данные" : "Предложение сохранить данные"}
         >
           <div className="flex gap-3">
-            <div className="flex-shrink-0 flex items-center justify-center size-10 rounded-xl bg-indigo-500/20 border border-indigo-400/20">
-              <Icon className="size-5 text-indigo-300" />
+            <div className={cn("flex-shrink-0 flex items-center justify-center size-10 rounded-xl border", iconBg)}>
+              <ChipIcon className={cn("size-5", iconColor)} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm text-white/70">
-                {proposal.revived
-                  ? `Вернулись к теме — сохранить ${label}?`
-                  : `Похоже, можно сохранить ${label}`}
+                {chipMessage}
                 {proposal.confidence > 0 && (
                   <span className="text-white/40 ml-1">
                     ({Math.round(proposal.confidence * 100)}%)
@@ -74,10 +92,10 @@ export function DetectorProposalChip({
                   type="button"
                   size="sm"
                   disabled={isSaving}
-                  className="bg-indigo-500 hover:bg-indigo-400 text-white rounded-xl"
+                  className={cn(btnBg, "text-zinc-950 rounded-xl")}
                   onClick={onConfirm}
                 >
-                  {isSaving ? "Сохраняем…" : "Сохранить"}
+                  {isSaving ? savingLabel : confirmLabel}
                 </Button>
                 <Button
                   type="button"

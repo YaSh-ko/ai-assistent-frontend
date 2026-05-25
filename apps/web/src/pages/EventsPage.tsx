@@ -1,4 +1,4 @@
-// src/pages/EventsPage.tsx
+﻿// src/pages/EventsPage.tsx
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Link2, Plus, Network } from 'lucide-react';
@@ -35,7 +35,7 @@ function EventCard({ entry }: { readonly entry: Entry }) {
       <div className="mb-3">
         <span
           className="text-xs font-medium px-2 py-1 rounded-md"
-          style={{ background: 'rgba(128,255,181,0.1)', color: '#80FFB5' }}
+          style={{ background: 'rgba(52,211,153,0.1)', color: '#34d399' }}
         >
           Опыт
         </span>
@@ -79,14 +79,14 @@ export default function EventsPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center" style={{ background: '#171717' }}>
-        <RadialPulseLoader text="Загрузка..." size={120} color="#80FFB5" />
+      <div className="flex h-screen w-full items-center justify-center" style={{ background: '#09090b' }}>
+        <RadialPulseLoader text="Загрузка..." size={120} color="#34d399" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#171717', color: '#C1BEC6' }}>
+    <div className="min-h-screen" style={{ background: '#09090b', color: '#e4e4e7' }}>
       {/* Хедер */}
       <div
         className="flex items-start justify-between px-8 pt-8 pb-6"
@@ -104,9 +104,9 @@ export default function EventsPage() {
             to="/chat"
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all"
             style={{
-              background: 'rgba(128,255,181,0.1)',
-              border: '1px solid rgba(128,255,181,0.3)',
-              color: '#80FFB5',
+              background: 'rgba(52,211,153,0.1)',
+              border: '1px solid rgba(52,211,153,0.3)',
+              color: '#34d399',
             }}
           >
             Добавить
@@ -152,7 +152,7 @@ export default function EventsPage() {
                 <Link
                   to="/chat"
                   className="text-sm transition-colors"
-                  style={{ color: '#80FFB5' }}
+                  style={{ color: '#34d399' }}
                 >
                   Добавить первый опыт →
                 </Link>

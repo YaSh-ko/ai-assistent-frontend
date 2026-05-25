@@ -207,7 +207,7 @@ const ConfigurationForm = ({
         <div className="flex items-start flex-col gap-2">
           <LangGraphLogoSVG className="h-7" />
           <h1 className="text-xl font-semibold tracking-tight">
-            Delёz Chat
+            Ассистент
           </h1>
         </div>
         <p className="text-muted-foreground">

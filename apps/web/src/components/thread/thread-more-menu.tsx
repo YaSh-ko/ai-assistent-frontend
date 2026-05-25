@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+﻿import { useCallback, useMemo, useState } from "react";
 import type { Message } from "@langchain/langgraph-sdk";
 import {
-  AlertTriangle,
   Bookmark,
   BookmarkCheck,
   Check,
@@ -34,93 +33,15 @@ import { chatApi } from "@/lib/api-client";
 import { useThreads } from "@/providers/Thread";
 import { getContentString } from "./utils";
 import type { ThreadContext } from "./context-banner";
+import { ThreadDeleteDialog } from "./thread-delete-dialog";
 
 const SPACES = [
   { key: "entry",      label: "События" },
   { key: "goal",       label: "Цели/Желания" },
   { key: "experiment", label: "Эксперименты" },
   { key: "analysis",   label: "Анализ" },
-  { key: "general",    label: "Чатики" },
+  { key: "general",    label: "Чаты" },
 ] as const;
-
-// ─── Delete Confirm Dialog ────────────────────────────────────────────────────
-
-function DeleteConfirmDialog({
-  open,
-  isDeleting,
-  onConfirm,
-  onClose,
-}: Readonly<{
-  open: boolean;
-  isDeleting: boolean;
-  onConfirm: () => void;
-  onClose: () => void;
-}>) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    const el = dialogRef.current;
-    if (!el) return;
-    if (open && !el.open) {
-      el.showModal();
-    } else if (!open && el.open) {
-      el.close();
-    }
-  }, [open]);
-
-  useEffect(() => {
-    const el = dialogRef.current;
-    if (!el) return;
-    const handler = () => onClose();
-    el.addEventListener("cancel", handler);
-    return () => el.removeEventListener("cancel", handler);
-  }, [onClose]);
-
-  useEffect(() => {
-    const el = dialogRef.current;
-    if (!el) return;
-    const handleClick = (e: MouseEvent) => { if (e.target === el) onClose(); };
-    el.addEventListener("click", handleClick);
-    return () => el.removeEventListener("click", handleClick);
-  }, [onClose]);
-
-  return (
-    <dialog
-      ref={dialogRef}
-      tabIndex={-1}
-      className="fixed m-auto bg-transparent p-0 backdrop:bg-black/60 backdrop:backdrop-blur-sm"
-    >
-      <div className="bg-[#0a0a1a] border border-white/15 rounded-2xl p-6 w-[320px] shadow-2xl flex flex-col gap-4">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="flex items-center justify-center size-12 rounded-full bg-red-500/15 border border-red-500/30">
-            <AlertTriangle className="size-6 text-red-400" />
-          </div>
-          <div>
-            <p className="text-white font-medium text-base">Удалить чат?</p>
-            <p className="text-white/50 text-sm mt-1">Это действие необратимо.</p>
-          </div>
-        </div>
-        <div className="flex gap-2 mt-1">
-          <Button
-            variant="ghost"
-            className="flex-1 text-white/70 hover:text-white hover:bg-white/10 border border-white/15"
-            onClick={onClose}
-            disabled={isDeleting}
-          >
-            Отмена
-          </Button>
-          <Button
-            className="flex-1 bg-red-600 hover:bg-red-700 text-white border-none"
-            onClick={onConfirm}
-            disabled={isDeleting}
-          >
-            {isDeleting ? "Удаление…" : "Удалить"}
-          </Button>
-        </div>
-      </div>
-    </dialog>
-  );
-}
 
 // ─── Markdown export helper ───────────────────────────────────────────────────
 
@@ -128,7 +49,7 @@ function buildMarkdownExport(messages: Message[]): string {
   const lines: string[] = [];
   for (const m of messages) {
     if (m.type !== "human" && m.type !== "ai") continue;
-    const role = m.type === "human" ? "Вы" : "Delёz";
+    const role = m.type === "human" ? "Вы" : "Ассистент";
     const body = getContentString(m.content).trim();
     lines.push(`## ${role}`, "", body || "_(пусто)_", "", "---", "");
   }
@@ -219,7 +140,7 @@ async function exportToDocx(messages: Message[], title: string, threadId: string
 
   for (const m of messages) {
     if (m.type !== "human" && m.type !== "ai") continue;
-    const role = m.type === "human" ? "Вы" : "Delёz";
+    const role = m.type === "human" ? "Вы" : "Ассистент";
     const body = getContentString(m.content).trim() || "(пусто)";
     children.push(
       new Paragraph({ children: [new TextRun({ text: role, bold: true })] }),
@@ -272,7 +193,7 @@ export function ThreadMoreMenu({
       const t = getContentString(firstHuman.content).trim();
       if (t) return t.length > 80 ? `${t.slice(0, 80)}…` : t;
     }
-    return "Дорогой дневник...";
+    return "Диалог";
   }, [threadContext, messages]);
 
   const handleFavorite = useCallback(() => {
@@ -336,7 +257,7 @@ export function ThreadMoreMenu({
   const handleDeleteConfirm = useCallback(async () => {
     if (!threadId) return;
     setIsDeleting(true);
-    const ok = await chatApi.deleteLangGraphThread(threadId);
+    const ok = await chatApi.deleteConversation(threadId);
     setIsDeleting(false);
     if (ok) {
       toast.success("Чат удалён");
@@ -379,9 +300,9 @@ export function ThreadMoreMenu({
         </TooltipProvider>
         <DropdownMenuContent
           align="end"
-          className="min-w-[280px] p-0 py-1 border border-white/20 bg-[#000019]/95 text-white shadow-2xl backdrop-blur-md"
+          className="min-w-[260px] p-0 py-1 border border-zinc-800 bg-zinc-900/95 text-zinc-100 shadow-2xl backdrop-blur-md"
         >
-          <div className="px-3 pt-2 pb-2 border-b border-white/20">
+          <div className="px-3 pt-2 pb-2 border-b border-zinc-800">
             <p className="font-medium text-[15px] leading-snug text-white">{headerTitle}</p>
             <p className="text-xs text-white/45 font-light mt-1">
               {threadId ? `Чат · ${threadId.slice(0, 12)}…` : "Нет активного чата"}
@@ -466,7 +387,7 @@ export function ThreadMoreMenu({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <DeleteConfirmDialog
+      <ThreadDeleteDialog
         open={deleteDialogOpen}
         isDeleting={isDeleting}
         onConfirm={handleDeleteConfirm}

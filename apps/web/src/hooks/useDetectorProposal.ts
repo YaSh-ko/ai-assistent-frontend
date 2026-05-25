@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { entriesApi, experimentsApi, goalsApi } from "@/lib/api-client";
+import { chatApi, entriesApi, experimentsApi, goalsApi } from "@/lib/api-client";
 import type { DetectorProposal } from "@/lib/detector-types";
 import { useDetectorProposalStream } from "@/providers/Stream";
 import { toast } from "sonner";
@@ -10,43 +10,104 @@ function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+function ensureIsoDate(raw: unknown): string {
+  if (typeof raw === "string" && /^\d{4}-\d{2}-\d{2}/.test(raw)) {
+    return raw.slice(0, 10);
+  }
+  return todayIsoDate();
+}
+
 async function createEntityFromProposal(
   proposal: DetectorProposal,
+  threadId?: string | null,
 ): Promise<{ id: string; path: string }> {
   const preview = proposal.preview ?? {};
   const title = (preview.title as string) || "Без названия";
-  const description =
-    (preview.description as string) ||
-    (preview.hypothesis as string) ||
-    title;
-  const eventDate =
-    (preview.event_date as string) ||
-    (preview.eventdate as string) ||
-    todayIsoDate();
+  const description = (preview.description as string) || title;
 
-  if (proposal.entity_type === "event") {
+  let id: string;
+  let path: string;
+  const entityType = proposal.entity_type as "observation" | "goal" | "task";
+
+  if (entityType === "observation") {
     const entry = await entriesApi.create({
       title,
       description,
-      event_date: eventDate.slice(0, 10),
+      event_date: ensureIsoDate(preview.event_date),
     });
-    return { id: String(entry.id), path: `/event/${entry.id}` };
-  }
-
-  if (proposal.entity_type === "goal") {
+    id = String(entry.id);
+    path = `/event/${id}`;
+  } else if (entityType === "goal") {
     const created = await goalsApi.create({
       title,
       description,
+      priority: (preview.priority as string) || "medium",
+      ...(typeof preview.target_date === "string" && /^\d{4}-\d{2}-\d{2}/.test(preview.target_date)
+        ? { target_date: preview.target_date.slice(0, 10) }
+        : {}),
     });
-    return { id: String(created.id), path: `/goals/${created.id}` };
-  }
-
-  if (proposal.entity_type === "experiment") {
+    id = String(created.id);
+    path = `/goals/${id}`;
+  } else if (entityType === "task") {
     const created = await experimentsApi.create({
       title,
       description,
     });
-    return { id: String(created.id), path: `/experiment/${created.id}` };
+    id = String(created.id);
+    path = `/experiment/${id}`;
+  } else {
+    throw new Error(`Неизвестный тип: ${proposal.entity_type}`);
+  }
+
+  if (threadId) {
+    void chatApi.linkThreadToEntity(threadId, entityType, id).catch(() => undefined);
+  }
+
+  return { id, path };
+}
+
+async function updateEntityFromProposal(
+  proposal: DetectorProposal,
+  threadId?: string | null,
+): Promise<{ id: string; path: string }> {
+  const existingId = proposal.existing_entity_id;
+  if (!existingId) throw new Error("existing_entity_id is required for update");
+
+  const preview = proposal.preview ?? {};
+  const description = (preview.description as string) || undefined;
+  const entityType = proposal.entity_type as "observation" | "goal" | "task";
+
+  if (entityType === "observation") {
+    await entriesApi.patch(existingId, {
+      ...(description ? { description } : {}),
+      ...(preview.title ? { title: preview.title } : {}),
+    });
+    if (threadId) {
+      void chatApi.linkThreadToEntity(threadId, entityType, existingId).catch(() => undefined);
+    }
+    return { id: existingId, path: `/event/${existingId}` };
+  }
+
+  if (entityType === "goal") {
+    await goalsApi.update(existingId, {
+      ...(description ? { description } : {}),
+      ...(preview.title ? { title: preview.title } : {}),
+      ...(preview.priority ? { priority: preview.priority } : {}),
+    });
+    if (threadId) {
+      void chatApi.linkThreadToEntity(threadId, entityType, existingId).catch(() => undefined);
+    }
+    return { id: existingId, path: `/goals/${existingId}` };
+  }
+
+  if (entityType === "task") {
+    await experimentsApi.updateExperiment(existingId, {
+      ...(preview.description ? { outcome: preview.description } : {}),
+    });
+    if (threadId) {
+      void chatApi.linkThreadToEntity(threadId, entityType, existingId).catch(() => undefined);
+    }
+    return { id: existingId, path: `/experiment/${existingId}` };
   }
 
   throw new Error(`Неизвестный тип: ${proposal.entity_type}`);
@@ -55,7 +116,7 @@ async function createEntityFromProposal(
 /**
  * Shows detector chip from SSE custom event only (StreamProvider → streamProposal).
  */
-export function useDetectorProposal() {
+export function useDetectorProposal(threadId?: string | null) {
   const { streamProposal, clearStreamProposal } = useDetectorProposalStream();
   const [proposal, setProposal] = useState<DetectorProposal | null>(null);
   const [visible, setVisible] = useState(false);
@@ -101,8 +162,9 @@ export function useDetectorProposal() {
 
   useEffect(() => {
     if (!streamProposal?.show_chip) return;
-    if (streamProposal.pending_id === lastStreamProposalIdRef.current) return;
-    lastStreamProposalIdRef.current = streamProposal.pending_id;
+    const key = `${streamProposal.pending_id}:${streamProposal.action}`;
+    if (key === lastStreamProposalIdRef.current) return;
+    lastStreamProposalIdRef.current = key;
     showProposal(streamProposal);
   }, [streamProposal, showProposal]);
 
@@ -110,10 +172,16 @@ export function useDetectorProposal() {
     if (!proposal || isSaving) return;
     setIsSaving(true);
     clearHideTimer();
+
+    const isUpdate = proposal.action === "confirm_update" && proposal.existing_entity_id;
+
     try {
-      const { path } = await createEntityFromProposal(proposal);
+      const { path } = isUpdate
+        ? await updateEntityFromProposal(proposal, threadId)
+        : await createEntityFromProposal(proposal, threadId);
+
       dismissChip();
-      toast.success("Сохранено", {
+      toast.success(isUpdate ? "Обновлено" : "Сохранено", {
         description: "Открыть страницу?",
         action: {
           label: "Открыть",
@@ -130,7 +198,7 @@ export function useDetectorProposal() {
     } finally {
       setIsSaving(false);
     }
-  }, [proposal, isSaving, clearHideTimer, dismissChip, scheduleAutoHide]);
+  }, [proposal, isSaving, clearHideTimer, dismissChip, scheduleAutoHide, threadId]);
 
   const decline = useCallback(() => {
     dismissChip();

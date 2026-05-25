@@ -35,7 +35,7 @@ function ContentCopyable({
       variant="ghost"
       tooltip="Copy content"
       disabled={disabled}
-      className="text-white hover:bg-transparent hover:text-white"
+      className="text-zinc-400 hover:bg-transparent hover:text-zinc-200"
     >
       <AnimatePresence mode="wait" initial={false}>
         {copied ? (
@@ -168,7 +168,7 @@ export function CommandBar({
           disabled={isLoading}
           tooltip="Cancel edit"
           variant="ghost"
-          className="text-white hover:bg-transparent hover:text-white"
+          className="text-zinc-400 hover:bg-transparent hover:text-zinc-200"
           onClick={() => {
             setIsEditing(false);
           }}
@@ -179,7 +179,7 @@ export function CommandBar({
           disabled={isLoading}
           tooltip="Submit"
           variant="ghost"
-          className="text-white hover:bg-transparent hover:text-white"
+          className="text-zinc-400 hover:bg-transparent hover:text-zinc-200"
           onClick={handleSubmitEdit}
         >
           <SendHorizontal />
@@ -196,7 +196,7 @@ export function CommandBar({
           disabled={isLoading}
           tooltip="Refresh"
           variant="ghost"
-          className="text-white hover:bg-transparent hover:text-white"
+          className="text-zinc-400 hover:bg-transparent hover:text-zinc-200"
           onClick={handleRegenerate}
         >
           <RefreshCcw />
@@ -207,7 +207,7 @@ export function CommandBar({
           disabled={isLoading}
           tooltip="Edit"
           variant="ghost"
-          className="text-white hover:bg-transparent hover:text-white"
+          className="text-zinc-400 hover:bg-transparent hover:text-zinc-200"
           onClick={() => {
             setIsEditing?.(true);
           }}

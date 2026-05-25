@@ -1,4 +1,4 @@
-import { type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
+﻿import { type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bot, CalendarDays, ChartLine, NotebookTabs, Eraser, ImagePlus, Save, Type, Download } from "lucide-react";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -472,14 +472,14 @@ export default function RecordsPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#000019]">
+      <div className="flex h-screen w-full items-center justify-center growth-page">
         <RadialPulseLoader text="Загрузка раздела Записи..." size={120} color="#ffffff" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#000019] text-white">
+    <div className="growth-page min-h-screen">
       <div className="flex items-start justify-between px-8 pt-8 pb-6">
         <div>
           <Breadcrumbs crumbs={[{ label: "Главная", to: "/navigation" }, { label: "Записи" }]} />
@@ -494,7 +494,7 @@ export default function RecordsPage() {
         ) : null}
 
         {activeTab === "calendar" ? (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+          <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-5">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Месяц (по умолчанию)</h2>
               <p className="text-xs text-gray-400">Доступны режимы: день / неделя / месяц / год</p>
@@ -562,7 +562,7 @@ export default function RecordsPage() {
                         }}
                       >
                         <p className="mb-1 text-[10px] font-medium text-white/75">{sphere}</p>
-                        <div className={`mb-2 h-20 rounded-lg border border-white/20 ${notebook.coverClassName} relative overflow-hidden`}>
+                        <div className={`mb-2 h-20 rounded-lg border border-zinc-800 ${notebook.coverClassName} relative overflow-hidden`}>
                           <span className="absolute right-2 top-2 text-[11px] text-white/80">★</span>
                           <span className="absolute bottom-2 left-2 text-[10px] font-medium text-white/95">{notebook.title}</span>
                         </div>
@@ -582,14 +582,14 @@ export default function RecordsPage() {
                     <button
                       type="button"
                       onClick={stopNotebookEntryCreation}
-                      className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-3 py-2 text-xs text-white transition hover:bg-white/10"
+                      className="inline-flex items-center gap-2 rounded-xl border border-zinc-800 bg-white/5 px-3 py-2 text-xs text-white transition hover:bg-zinc-800/60"
                     >
                       Закрыть
                     </button>
                     <button
                       type="button"
                       onClick={persistSelectedNotebook}
-                      className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs text-white transition hover:bg-white/20"
+                      className="inline-flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-800/60 px-3 py-2 text-xs text-white transition hover:bg-white/20"
                     >
                       <Save size={14} />
                       Сохранить
@@ -597,7 +597,7 @@ export default function RecordsPage() {
                     <button
                       type="button"
                       onClick={exportSelectedNotebook}
-                      className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs text-white transition hover:bg-white/20"
+                      className="inline-flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-800/60 px-3 py-2 text-xs text-white transition hover:bg-white/20"
                     >
                       <Download size={14} />
                       Экспорт .md
@@ -624,7 +624,7 @@ export default function RecordsPage() {
                         key={tool.label}
                         type="button"
                         onClick={tool.onClick}
-                        className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 text-xs text-white transition hover:bg-white/10"
+                        className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 text-xs text-white transition hover:bg-zinc-800/60"
                       >
                         <Type size={12} />
                         {tool.label}
@@ -670,21 +670,21 @@ export default function RecordsPage() {
                   </div>
 
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                    <div className="rounded-xl border border-white/10 bg-black/20 p-2">
+                    <div className="rounded-xl border border-zinc-800/80 bg-black/20 p-2">
                       <div className="mb-2 flex items-center justify-between">
                         <p className="text-xs text-gray-400">Поле для рисования</p>
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() => setDrawMode((prev) => !prev)}
-                            className="rounded-md border border-white/15 bg-white/5 px-2 py-1 text-[10px] text-white transition hover:bg-white/10"
+                            className="rounded-md border border-white/15 bg-white/5 px-2 py-1 text-[10px] text-white transition hover:bg-zinc-800/60"
                           >
                             {drawMode ? "Рисование: вкл." : "Рисование: выкл."}
                           </button>
                           <button
                             type="button"
                             onClick={clearCanvas}
-                            className="inline-flex items-center gap-1 rounded-md border border-white/15 bg-white/5 px-2 py-1 text-[10px] text-white transition hover:bg-white/10"
+                            className="inline-flex items-center gap-1 rounded-md border border-white/15 bg-white/5 px-2 py-1 text-[10px] text-white transition hover:bg-zinc-800/60"
                           >
                             <Eraser size={10} />
                             Очистить
@@ -699,23 +699,23 @@ export default function RecordsPage() {
                         onPointerMove={draw}
                         onPointerUp={stopDrawing}
                         onPointerLeave={stopDrawing}
-                        className="h-[220px] w-full rounded-lg border border-white/10 bg-[#070b22]"
+                        className="h-[220px] w-full rounded-lg border border-zinc-800/80 bg-[#070b22]"
                       />
                     </div>
 
-                    <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                    <div className="rounded-xl border border-zinc-800/80 bg-black/20 p-3">
                       <p className="mb-2 text-xs text-gray-400">Предпросмотр медиа</p>
                       {selectedDraft.imageUrl ? (
                         <img src={selectedDraft.imageUrl} alt="notebook media" className="mb-2 h-28 w-full rounded-lg object-cover" />
                       ) : (
-                        <div className="mb-2 flex h-28 items-center justify-center rounded-lg border border-dashed border-white/10 text-xs text-gray-500">
+                        <div className="mb-2 flex h-28 items-center justify-center rounded-lg border border-dashed border-zinc-800/80 text-xs text-gray-500">
                           Изображение не выбрано
                         </div>
                       )}
                       {selectedDraft.gifUrl ? (
                         <img src={selectedDraft.gifUrl} alt="notebook gif" className="h-28 w-full rounded-lg object-cover" />
                       ) : (
-                        <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-white/10 text-xs text-gray-500">
+                        <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-zinc-800/80 text-xs text-gray-500">
                           GIF не выбран
                         </div>
                       )}
@@ -729,7 +729,7 @@ export default function RecordsPage() {
 
         {activeTab === "analytics" ? (
           <div className="space-y-4">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-4">
               <p className="mb-2 text-xs text-gray-500">Период аналитики</p>
               <div className="flex flex-wrap gap-2">
                 {[
@@ -763,7 +763,7 @@ export default function RecordsPage() {
             ) : null}
 
             {insightsLoading ? (
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm text-gray-400">Собираем глубокую аналитику записей...</div>
+              <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-5 text-sm text-gray-400">Собираем глубокую аналитику записей...</div>
             ) : null}
 
             {!insightsLoading && entryInsights ? (
@@ -792,13 +792,13 @@ export default function RecordsPage() {
                     { title: "Риски выгорания", items: entryInsights.burnout_triggers },
                     { title: "Повторяющиеся паттерны", items: entryInsights.repeating_patterns },
                   ].map((card) => (
-                    <div key={card.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <div key={card.title} className="rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-4">
                       <p className="text-sm font-semibold">{card.title}</p>
                       <ul className="mt-3 space-y-2 text-xs text-gray-300">
                         {card.items.map((item) => (
                           <li key={`${card.title}-${item.label}`} className="flex items-center justify-between gap-3">
                             <span>{item.label}</span>
-                            <span className="rounded-md border border-white/10 bg-black/20 px-2 py-0.5">{item.count}</span>
+                            <span className="rounded-md border border-zinc-800/80 bg-black/20 px-2 py-0.5">{item.count}</span>
                           </li>
                         ))}
                         {card.items.length === 0 ? <li className="text-gray-500">Недостаточно данных</li> : null}
@@ -807,7 +807,7 @@ export default function RecordsPage() {
                   ))}
                 </div>
 
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-5">
                   <p className="text-xs text-gray-500">Самая сильная запись</p>
                   <p className="mt-2 text-base font-semibold">{entryInsights.strongest_entry_title || "Нет данных"}</p>
                   <p className="mt-1 text-xs text-gray-400">Интенсивность: {entryInsights.strongest_entry_length} символов</p>

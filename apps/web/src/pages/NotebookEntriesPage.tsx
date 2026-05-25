@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react";
+﻿import { useMemo, useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowUp, ChevronLeft, Eraser, Image, Mic, PenLine, Sticker, X } from "lucide-react";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -225,7 +225,7 @@ export default function NotebookEntriesPage() {
 
   if (!notebook) {
     return (
-      <div className="min-h-screen bg-[#000019] px-8 pt-8 text-white">
+      <div className="growth-page min-h-screen px-8 pt-8 text-white">
         <Breadcrumbs crumbs={[{ label: "Главная", to: "/navigation" }, { label: "Записи", to: "/records" }, { label: "Блокнот" }]} />
         <p className="mt-6 text-sm text-white/70">Блокнот не найден.</p>
       </div>
@@ -733,7 +733,7 @@ export default function NotebookEntriesPage() {
     return (
       <div className="h-screen overflow-hidden bg-[#0a0d21] text-white">
         <div className="flex h-full flex-col">
-          <header className="flex items-center justify-between border-b border-white/10 bg-black/25 px-4 py-3 backdrop-blur-md">
+          <header className="flex items-center justify-between border-b border-zinc-800/80 bg-black/25 px-4 py-3 backdrop-blur-md">
             <button
               type="button"
               onClick={closeCreate}
@@ -845,7 +845,7 @@ export default function NotebookEntriesPage() {
 
           </div>
 
-          <div className="relative border-t border-white/10 bg-[rgba(9,14,36,0.96)] px-4 pt-3 pb-4 backdrop-blur-md transition-all duration-300 ease-out">
+          <div className="relative border-t border-zinc-800/80 bg-[rgba(9,14,36,0.96)] px-4 pt-3 pb-4 backdrop-blur-md transition-all duration-300 ease-out">
             <input
               ref={fileInputRef}
               type="file"
@@ -902,14 +902,14 @@ export default function NotebookEntriesPage() {
                       <button
                         type="button"
                         onClick={() => setDrawMode((prev) => !prev)}
-                        className={`rounded-xl px-3 py-2 text-xs font-medium ${drawMode ? "bg-emerald-500/25 text-emerald-200" : "bg-white/10 text-white/80"}`}
+                        className={`rounded-xl px-3 py-2 text-xs font-medium ${drawMode ? "bg-emerald-500/25 text-emerald-200" : "bg-zinc-800/60 text-white/80"}`}
                       >
                         {drawMode ? "Кисть включена" : "Включить кисть"}
                       </button>
                       <button
                         type="button"
                         onClick={clearDrawing}
-                        className="inline-flex items-center gap-1 rounded-xl bg-white/10 px-3 py-2 text-xs text-white/80"
+                        className="inline-flex items-center gap-1 rounded-xl bg-zinc-800/60 px-3 py-2 text-xs text-white/80"
                       >
                         <Eraser size={12} />
                         Ластик
@@ -943,7 +943,7 @@ export default function NotebookEntriesPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTool("text")}
-                  className="rounded-full p-1 text-white/75 transition hover:bg-white/10"
+                  className="rounded-full p-1 text-white/75 transition hover:bg-zinc-800/60"
                   title="Голос"
                   aria-label="Голос"
                 >
@@ -957,7 +957,7 @@ export default function NotebookEntriesPage() {
                   setActiveTool("media");
                   fileInputRef.current?.click();
                 }}
-                className="rounded-full p-2 text-white/85 transition hover:bg-white/10"
+                className="rounded-full p-2 text-white/85 transition hover:bg-zinc-800/60"
                 title="Изображения"
                 aria-label="Изображения"
               >
@@ -969,7 +969,7 @@ export default function NotebookEntriesPage() {
                   setActiveTool("draw");
                   setDrawMode(true);
                 }}
-                className="rounded-full p-2 text-white/85 transition hover:bg-white/10"
+                className="rounded-full p-2 text-white/85 transition hover:bg-zinc-800/60"
                 title="Рисование"
                 aria-label="Рисование"
               >
@@ -982,7 +982,7 @@ export default function NotebookEntriesPage() {
                   setIsGifPickerOpen(true);
                   void loadTrendingGifs();
                 }}
-                className="rounded-full p-2 text-white/85 transition hover:bg-white/10"
+                className="rounded-full p-2 text-white/85 transition hover:bg-zinc-800/60"
                 title="GIF/стикеры"
                 aria-label="GIF/стикеры"
               >
@@ -995,7 +995,7 @@ export default function NotebookEntriesPage() {
                 className={`rounded-full p-2 transition ${
                   draft.content.trim()
                     ? "bg-[#3b82f6] text-white hover:bg-[#2563eb]"
-                    : "bg-white/10 text-white/35"
+                    : "bg-zinc-800/60 text-white/35"
                 }`}
                 title="Отправить"
                 aria-label="Отправить"
@@ -1039,7 +1039,7 @@ export default function NotebookEntriesPage() {
                       void searchGifs();
                     }}
                     disabled={giphyLoading}
-                    className="rounded-xl border border-white/20 bg-white/10 px-4 text-xs text-white transition hover:bg-white/20 disabled:opacity-50"
+                    className="rounded-xl border border-zinc-800 bg-zinc-800/60 px-4 text-xs text-white transition hover:bg-white/20 disabled:opacity-50"
                   >
                     {giphyLoading ? "..." : "Найти"}
                   </button>
@@ -1079,7 +1079,7 @@ export default function NotebookEntriesPage() {
                           gifUrl: prev.gifUrl || gif.originalUrl,
                         }));
                       }}
-                      className="overflow-hidden rounded-md border border-white/10 transition hover:border-white/35"
+                      className="overflow-hidden rounded-md border border-zinc-800/80 transition hover:border-white/35"
                       title={gif.title}
                     >
                       <img src={gif.previewUrl} alt={gif.title} className="h-20 w-full object-cover" />
@@ -1098,7 +1098,7 @@ export default function NotebookEntriesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#000019] px-8 pt-8 pb-24 text-white">
+    <div className="growth-page min-h-screen px-8 pt-8 pb-24 text-white">
       <div className="flex items-start justify-between gap-4">
         <div>
           <Breadcrumbs crumbs={[{ label: "Главная", to: "/navigation" }, { label: "Записи", to: "/records" }, { label: notebook.title }]} />
@@ -1106,7 +1106,7 @@ export default function NotebookEntriesPage() {
         <button
           type="button"
           onClick={openCreate}
-          className="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium transition hover:bg-white/20"
+          className="rounded-xl border border-zinc-800 bg-zinc-800/60 px-4 py-2 text-sm font-medium transition hover:bg-white/20"
         >
           Создать запись
         </button>
@@ -1124,7 +1124,7 @@ export default function NotebookEntriesPage() {
                 key={entry.id}
                 type="button"
                 onClick={() => navigate(`/chat?source=notebook&notebook=${notebook.id}&entry=${entry.id}`)}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-left transition hover:bg-white/[0.06]"
+                className="rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-4 text-left transition hover:bg-white/[0.06]"
               >
                 <p className="text-sm font-semibold text-white">{entry.title}</p>
                 <p className="mt-2 line-clamp-4 text-sm text-white/75">{entry.content}</p>

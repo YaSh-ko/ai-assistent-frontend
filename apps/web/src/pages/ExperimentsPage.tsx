@@ -1,4 +1,4 @@
-// src/pages/ExperimentsPage.tsx
+﻿// src/pages/ExperimentsPage.tsx
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, FlaskConical, Plus, CheckCircle2, Circle, PauseCircle } from 'lucide-react';
@@ -124,7 +124,7 @@ export default function ExperimentsPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#000019]">
+      <div className="flex h-screen w-full items-center justify-center growth-page">
         <RadialPulseLoader text="Загрузка экспериментов..." size={120} color="#ffffff" />
       </div>
     );
@@ -139,7 +139,7 @@ export default function ExperimentsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#000019] text-white">
+    <div className="growth-page min-h-screen">
       {/* Хедер */}
       <div className="flex items-start justify-between px-8 pt-8 pb-6">
         <div>

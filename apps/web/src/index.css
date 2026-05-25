@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+﻿@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap');
 
 @font-face {
   font-family: 'DM Mono';
@@ -12,9 +12,21 @@ html {
   scroll-behavior: smooth;
 }
 
-/* ─── Design tokens ─────────────────────────────────────── */
+/* ─── Growth design tokens (dark + green accent) ───────── */
 :root {
-  --background: #000019;
+  --growth-bg: #0f0f10;
+  --growth-surface: #111113;
+  --growth-card: #18181b;
+  --growth-elevated: #1f1f23;
+  --growth-border: rgba(255, 255, 255, 0.08);
+  --growth-text: #e4e4e7;
+  --growth-muted: #a1a1aa;
+  --growth-accent: #34d399;
+  --growth-accent-hover: #4ade80;
+  --growth-accent-muted: rgba(52, 211, 153, 0.14);
+  --growth-accent-border: rgba(52, 211, 153, 0.35);
+
+  --background: var(--growth-bg);
   --foreground: oklch(0.985 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -137,23 +149,23 @@ html {
 
 @layer base {
   html {
-    background-color: #000019;
+    background-color: var(--growth-bg);
     overscroll-behavior: none;
     -webkit-text-size-adjust: 100%;
-    font-family: "Shantell Sans", "Segoe UI", sans-serif;
+    font-family: "Inter", "Montserrat", system-ui, sans-serif;
   }
 
   body {
     margin: 0;
-    background-color: #000019;
+    background-color: var(--growth-bg);
+    color: var(--growth-text);
     overscroll-behavior: none;
-    font-family: "Shantell Sans", "Segoe UI", sans-serif;
-    /* Убираем отступы браузера, чтобы не было скроллбаров по краям */
+    font-family: "Inter", "Montserrat", system-ui, sans-serif;
   }
 
   #root,
   #root * {
-    font-family: "Shantell Sans", "Segoe UI", sans-serif;
+    font-family: "Inter", "Montserrat", system-ui, sans-serif;
   }
 
   button,
@@ -232,7 +244,7 @@ html {
   }
 
   /**
-   * Узкий скроллбар в холодно-сером тоне под #000019 / border-white/20.
+   * Узкий скроллбар в холодно-сером тоне под #09090b / border-white/20.
    * WebKit: без стрелок; Firefox: thin + цвет ползунка.
    */
   .delez-scrollbar {
@@ -269,5 +281,76 @@ html {
 
   .delez-scrollbar::-webkit-scrollbar-corner {
     background: transparent;
+  }
+
+  .growth-page {
+    min-height: 100vh;
+    background-color: var(--growth-bg);
+    color: var(--growth-text);
+  }
+
+  .growth-card {
+    border-radius: 1rem;
+    border: 1px solid rgb(39 39 42);
+    background-color: rgb(24 24 27 / 0.85);
+  }
+
+  .growth-input {
+    height: 3rem;
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(63 63 70);
+    background-color: rgb(24 24 27 / 0.9);
+    padding-left: 1rem;
+    padding-right: 1rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  .growth-input:focus {
+    border-color: var(--growth-accent-border);
+  }
+
+  .growth-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    border: 1px solid var(--growth-accent);
+    background-color: var(--growth-accent);
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #0a0a0b;
+    transition: background-color 0.15s ease;
+  }
+
+  .growth-btn-primary:hover {
+    background-color: var(--growth-accent-hover);
+  }
+
+  .growth-btn-primary:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .growth-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(63 63 70);
+    background-color: rgb(39 39 42 / 0.5);
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    color: var(--growth-text);
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .growth-btn-secondary:hover {
+    border-color: var(--growth-accent-border);
+    background-color: var(--growth-accent-muted);
+    color: var(--growth-accent);
   }
 }

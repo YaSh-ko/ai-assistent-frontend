@@ -1,4 +1,4 @@
-// src/pages/GoalsPage.tsx
+﻿// src/pages/GoalsPage.tsx
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Target, Plus, Clock, CheckCircle2, Circle, Network } from 'lucide-react';
@@ -26,7 +26,7 @@ const STATUS_LABELS: Record<string, string> = {
 const PRIORITY_COLORS: Record<string, string> = {
   high: '#f87171',
   medium: '#fbbf24',
-  low: '#80FFB5',
+  low: '#34d399',
 };
 
 function statusIcon(status: string) {
@@ -75,7 +75,7 @@ function GoalCard({ goal }: { readonly goal: Goal }) {
       >
         <span
           className="flex items-center gap-1"
-          style={{ color: goal.status === 'completed' ? '#80FFB5' : 'rgba(161,161,170,0.5)' }}
+          style={{ color: goal.status === 'completed' ? '#34d399' : 'rgba(161,161,170,0.5)' }}
         >
           {statusIcon(goal.status)}
           {statusLabel}
@@ -104,14 +104,14 @@ export default function GoalsPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center" style={{ background: '#171717' }}>
-        <RadialPulseLoader text="Загрузка..." size={120} color="#80FFB5" />
+      <div className="flex h-screen w-full items-center justify-center" style={{ background: '#09090b' }}>
+        <RadialPulseLoader text="Загрузка..." size={120} color="#34d399" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#171717', color: '#C1BEC6' }}>
+    <div className="min-h-screen" style={{ background: '#09090b', color: '#e4e4e7' }}>
       {/* Хедер */}
       <div
         className="flex items-start justify-between px-8 pt-8 pb-6"
@@ -129,9 +129,9 @@ export default function GoalsPage() {
             to="/chat"
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all"
             style={{
-              background: 'rgba(128,255,181,0.1)',
-              border: '1px solid rgba(128,255,181,0.3)',
-              color: '#80FFB5',
+              background: 'rgba(52,211,153,0.1)',
+              border: '1px solid rgba(52,211,153,0.3)',
+              color: '#34d399',
             }}
           >
             Новая цель
@@ -170,7 +170,7 @@ export default function GoalsPage() {
               <div className="flex flex-col items-center justify-center py-32 gap-3">
                 <Target className="w-8 h-8" style={{ color: 'rgba(161,161,170,0.3)' }} />
                 <p className="text-sm" style={{ color: '#A1A1AA' }}>Целей пока нет</p>
-                <Link to="/chat" className="text-sm" style={{ color: '#80FFB5' }}>
+                <Link to="/chat" className="text-sm" style={{ color: '#34d399' }}>
                   Поставить первую цель →
                 </Link>
               </div>

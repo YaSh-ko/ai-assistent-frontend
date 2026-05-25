@@ -175,8 +175,9 @@ describe('AssistantMessage', () => {
 });
 
 describe('AssistantMessageLoading', () => {
-  it('renders animated loading dot', () => {
-    const { container } = render(<AssistantMessageLoading />);
-    expect(container.querySelector('.animate-\\[pulse_1\\.5s_ease-in-out_infinite\\]')).toBeTruthy();
+  it('renders loading spinner', () => {
+    render(<AssistantMessageLoading />);
+    expect(screen.getByTestId('assistant-loading-spinner')).toBeInTheDocument();
+    expect(screen.getByText('Думаю…')).toBeInTheDocument();
   });
 });

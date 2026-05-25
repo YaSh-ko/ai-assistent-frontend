@@ -1,4 +1,4 @@
-import { useStreamContext } from "@/providers/Stream";
+﻿import { useStreamContext } from "@/providers/Stream";
 import { Message } from "@langchain/langgraph-sdk";
 import { useState, useRef, useEffect } from "react";
 import { getContentString } from "../utils";
@@ -38,7 +38,7 @@ function EditableContent({
       onChange={(e) => setValue(e.target.value)}
       onKeyDown={handleKeyDown}
       className={cn(
-        "px-3 py-2 sm:px-4 sm:py-2 rounded-2xl bg-[#000019] border border-white/20 text-white/90 text-[15px] md:text-[15px] leading-relaxed w-fit min-w-[120px] ml-auto max-w-full sm:max-w-[600px] whitespace-pre-wrap break-words min-h-0 focus-visible:ring-1 focus-visible:ring-white/10",
+        "px-3 py-2 sm:px-4 sm:py-2 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-zinc-100 text-[15px] md:text-[15px] leading-relaxed w-fit min-w-[120px] ml-auto max-w-full sm:max-w-[600px] whitespace-pre-wrap break-words min-h-0 focus-visible:ring-1 focus-visible:ring-emerald-500/40",
         "resize-none outline-none shadow-none"
       )}
       autoFocus
@@ -98,7 +98,7 @@ export function HumanMessage({
             onSubmit={handleSubmitEdit}
           />
         ) : (
-          <p className="px-3 py-2 sm:px-4 sm:py-2 rounded-2xl bg-white/10 border border-white/30 text-white/90 text-[15px] leading-relaxed w-fit ml-auto max-w-full sm:max-w-[600px] whitespace-pre-wrap break-words">
+          <p className="px-3 py-2.5 sm:px-4 sm:py-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-zinc-100 text-[15px] leading-relaxed w-fit ml-auto max-w-full sm:max-w-[600px] whitespace-pre-wrap break-words shadow-sm">
             {contentString}
           </p>
         )}

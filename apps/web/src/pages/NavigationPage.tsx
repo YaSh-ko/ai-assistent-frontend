@@ -7,6 +7,7 @@ import {
   GitFork,
   BarChart2,
   User,
+  NotebookPen,
 } from 'lucide-react';
 import '../styles/navigation.css';
 
@@ -22,6 +23,12 @@ const sections: NavSection[] = [
     title: 'Опыт',
     subtitle: 'События и инсайты',
     icon: <CalendarDays strokeWidth={1.5} />,
+    to: '/events',
+  },
+  {
+    title: 'Заметки',
+    subtitle: 'Блокноты и записи',
+    icon: <NotebookPen strokeWidth={1.5} />,
     to: '/records',
   },
   {
@@ -73,9 +80,9 @@ export default function NavigationPage() {
         {/* Баннер — последнее событие / призыв к действию */}
         <div className="navpage-banner">
           <div className="navpage-banner__left">
-            <span className="navpage-banner__label">Сегодня</span>
-            <h2 className="navpage-banner__title">Что важного происходит?</h2>
-            <p className="navpage-banner__sub">Расскажи ИИ — он поможет извлечь из этого максимум</p>
+            <span className="navpage-banner__label">Фокус дня</span>
+            <h2 className="navpage-banner__title">Куда движешься сейчас?</h2>
+            <p className="navpage-banner__sub">Зафиксируй шаг, цель или инсайт — ассистент свяжет это с твоим графом</p>
           </div>
           <div className="navpage-banner__right">
             <Link to="/chat" className="navpage-banner__btn">
@@ -92,10 +99,9 @@ export default function NavigationPage() {
           ))}
         </div>
 
-        {/* Широкая кнопка чата — как у Мэтч */}
         <Link to="/chat" className="navpage__chat-wide">
           <MessageCircle strokeWidth={1.5} className="navpage__chat-wide-icon" />
-          <span>ИИ-чат</span>
+          <span>Открыть ассистента</span>
         </Link>
       </div>
     </div>

@@ -1,8 +1,8 @@
-// src/pages/GoalPage.tsx
+﻿// src/pages/GoalPage.tsx
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ChevronLeft, CheckCircle2, Circle, Clock, Target, Calendar, Flag } from 'lucide-react';
-import { goalsApi } from '@/lib/api-client';
+import { ChevronLeft, CheckCircle2, Circle, Clock, Target, Calendar, Flag, MessageSquare } from 'lucide-react';
+import { chatApi, goalsApi } from '@/lib/api-client';
 import RadialPulseLoader from '@/components/ui/loading-animation';
 import Breadcrumbs from '@/components/Breadcrumbs';
 
@@ -47,6 +47,7 @@ export default function GoalPage() {
   const [concepts, setConcepts] = useState<Concept[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [linkedThread, setLinkedThread] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -62,11 +63,14 @@ export default function GoalPage() {
       })
       .catch(() => setError('Не удалось загрузить цель'))
       .finally(() => setLoading(false));
+    chatApi.getEntityThreads("goal", id)
+      .then(ids => setLinkedThread(ids[0] ?? null))
+      .catch(() => undefined);
   }, [id]);
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#000019]">
+      <div className="flex h-screen w-full items-center justify-center growth-page">
         <RadialPulseLoader text="Загрузка..." size={120} color="#ffffff" />
       </div>
     );
@@ -74,7 +78,7 @@ export default function GoalPage() {
 
   if (error || !goal) {
     return (
-      <div className="flex h-screen w-full flex-col items-center justify-center gap-4 bg-[#000019] text-white">
+      <div className="flex h-screen w-full flex-col items-center justify-center gap-4 growth-page">
         <p className="text-gray-400">{error ?? 'Цель не найдена'}</p>
         <Link to="/goals" className="text-sm text-gray-500 hover:text-white flex items-center gap-1">
           <ChevronLeft className="w-4 h-4" /> К целям
@@ -102,7 +106,7 @@ export default function GoalPage() {
   const hasSmart = Object.keys(smartData).length > 0;
 
   return (
-    <div className="min-h-screen bg-[#000019] text-white">
+    <div className="growth-page min-h-screen">
       {/* Хедер */}
       <div className="border-b px-6 py-4" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
         <Breadcrumbs crumbs={[
@@ -241,11 +245,14 @@ export default function GoalPage() {
             )}
 
             {/* Кнопка в чат */}
-            <Link to="/chat"
-              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-medium transition-all hover:opacity-90"
-              style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)' }}>
-              Обсудить в чате →
-            </Link>
+            {linkedThread && (
+              <Link to={`/?threadId=${linkedThread}`}
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-medium transition-all hover:opacity-90"
+                style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)' }}>
+                <MessageSquare className="w-4 h-4" />
+                Перейти к чату
+              </Link>
+            )}
           </div>
         </div>
       </div>

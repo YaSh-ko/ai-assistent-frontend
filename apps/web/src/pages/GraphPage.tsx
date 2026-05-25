@@ -1,9 +1,9 @@
-// src/pages/GraphPage.tsx
+﻿// src/pages/GraphPage.tsx
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import ForceGraph3D from 'react-force-graph-3d';
 import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
-import { ChevronDown, GitFork, FlaskConical, X } from 'lucide-react';
+import { ChevronDown, GitFork, Target, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -121,7 +121,7 @@ function GraphSelect({ id, value, options, onChange, placeholder }: GraphSelectP
             <DropdownMenuRadioItem
               key={option.value || '__empty-option__'}
               value={option.value}
-              className="text-xs text-white/90 focus:bg-white/10 data-[state=checked]:bg-[#2563eb]/75 data-[state=checked]:text-white"
+              className="text-xs text-white/90 focus:bg-zinc-800/60 data-[state=checked]:bg-[#2563eb]/75 data-[state=checked]:text-white"
             >
               {option.label}
             </DropdownMenuRadioItem>
@@ -626,21 +626,21 @@ const GraphPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsRelationsPanelVisible((prev) => !prev)}
-            className="flex w-full items-center justify-end rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-left text-xs text-white transition hover:bg-white/10"
+            className="flex w-full items-center justify-end rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-left text-xs text-white transition hover:bg-zinc-800/60"
           >
             <span>{isRelationsPanelVisible ? 'Скрыть редактор' : 'Показать редактор'}</span>
           </button>
 
           {isRelationsPanelVisible && (
             <div className="mt-2 space-y-3">
-              <div className="rounded-lg border border-white/10 bg-black/20 p-2">
+              <div className="rounded-lg border border-zinc-800/80 bg-black/20 p-2">
                 <p className="text-[11px] font-medium text-white/80">Как добавить связь</p>
                 <p className="mt-1 text-[10px] text-white/55">
                   1) Источник {'->'} 2) Тип связи {'->'} 3) Цель {'->'} 4) Сохранить
                 </p>
               </div>
 
-              <div className="rounded-lg border border-white/10 bg-black/20 p-2 space-y-2">
+              <div className="rounded-lg border border-zinc-800/80 bg-black/20 p-2 space-y-2">
                 <div>
                   <label htmlFor="relation-from" className="mb-1 block text-[11px] text-white/70">Шаг 1. Узел источник</label>
                   <GraphSelect
@@ -693,7 +693,7 @@ const GraphPage: React.FC = () => {
                     type="button"
                     onClick={createOrUpdateRelationship}
                     disabled={relationSaving || !canCreateRelation}
-                    className="flex-1 rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs text-white transition hover:bg-white/20 disabled:opacity-50"
+                    className="flex-1 rounded-lg border border-zinc-800 bg-zinc-800/60 px-3 py-1.5 text-xs text-white transition hover:bg-white/20 disabled:opacity-50"
                   >
                     {relationSaving ? 'Сохраняем...' : 'Создать связь'}
                   </button>
@@ -707,18 +707,18 @@ const GraphPage: React.FC = () => {
                       setRelationError(null);
                       setRelationSuccess(null);
                     }}
-                    className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white transition hover:bg-white/10"
+                    className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white transition hover:bg-zinc-800/60"
                   >
                     Очистить
                   </button>
                 </div>
               </div>
 
-              <div className="rounded-lg border border-white/10 bg-black/20 p-2">
+              <div className="rounded-lg border border-zinc-800/80 bg-black/20 p-2">
                 <button
                   type="button"
                   onClick={() => setIsRelationsListVisible((prev) => !prev)}
-                  className="flex w-full items-center justify-between rounded-md border border-white/10 bg-white/5 px-2 py-1.5 text-left text-[11px] text-white/80 transition hover:bg-white/10"
+                  className="flex w-full items-center justify-between rounded-md border border-zinc-800/80 bg-white/5 px-2 py-1.5 text-left text-[11px] text-white/80 transition hover:bg-zinc-800/60"
                 >
                   <span>Текущие связи ({relationshipsList.length})</span>
                   <span>{isRelationsListVisible ? 'Скрыть' : 'Показать'}</span>
@@ -740,7 +740,7 @@ const GraphPage: React.FC = () => {
                               setRelationError(null);
                               setRelationSuccess(null);
                             }}
-                            className="flex-1 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-left text-[10px] text-white/75 transition hover:bg-white/10"
+                            className="flex-1 rounded-md border border-zinc-800/80 bg-white/5 px-2 py-1 text-left text-[10px] text-white/75 transition hover:bg-zinc-800/60"
                           >
                             {rel.sourceLabel} {'->'} {rel.targetLabel}
                           </button>
@@ -760,11 +760,11 @@ const GraphPage: React.FC = () => {
                 )}
               </div>
 
-              <div className="rounded-lg border border-white/10 bg-black/20 p-2">
+              <div className="rounded-lg border border-zinc-800/80 bg-black/20 p-2">
                 <button
                   type="button"
                   onClick={() => setIsRelationHistoryVisible((prev) => !prev)}
-                  className="flex w-full items-center justify-between rounded-md border border-white/10 bg-white/5 px-2 py-1.5 text-left text-[11px] text-white/80 transition hover:bg-white/10"
+                  className="flex w-full items-center justify-between rounded-md border border-zinc-800/80 bg-white/5 px-2 py-1.5 text-left text-[11px] text-white/80 transition hover:bg-zinc-800/60"
                 >
                   <span>История изменений</span>
                   <span>{isRelationHistoryVisible ? 'Скрыть' : 'Показать'}</span>
@@ -776,14 +776,14 @@ const GraphPage: React.FC = () => {
                     ) : (
                       relationHistory.slice(0, 8).map((item) => (
                         <div key={item.audit_id} className="flex items-center gap-1">
-                          <div className="flex-1 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] text-white/75">
+                          <div className="flex-1 rounded-md border border-zinc-800/80 bg-white/5 px-2 py-1 text-[10px] text-white/75">
                             {RELATION_AUDIT_ACTION_LABELS[item.action] ?? item.action}: {item.from_id.slice(0, 6)} {'->'} {item.to_id.slice(0, 6)} ({RELATIONSHIP_TYPE_LABELS[item.relationship] ?? item.relationship})
                           </div>
                           <button
                             type="button"
                             onClick={() => rollbackRelationshipChange(item.audit_id)}
                             disabled={rollbackAuditId === item.audit_id}
-                            className="rounded-md border border-white/15 bg-white/5 px-1.5 py-1 text-[10px] text-white transition hover:bg-white/10 disabled:opacity-50"
+                            className="rounded-md border border-white/15 bg-white/5 px-1.5 py-1 text-[10px] text-white transition hover:bg-zinc-800/60 disabled:opacity-50"
                           >
                             {rollbackAuditId === item.audit_id ? '...' : 'Откатить'}
                           </button>
@@ -794,11 +794,11 @@ const GraphPage: React.FC = () => {
                 )}
               </div>
 
-              <div className="rounded-lg border border-white/10 bg-black/20 p-2">
+              <div className="rounded-lg border border-zinc-800/80 bg-black/20 p-2">
                 <button
                   type="button"
                   onClick={() => setIsNodeEditorVisible((prev) => !prev)}
-                  className="flex w-full items-center justify-between rounded-md border border-white/10 bg-white/5 px-2 py-1.5 text-left text-[11px] text-white/80 transition hover:bg-white/10"
+                  className="flex w-full items-center justify-between rounded-md border border-zinc-800/80 bg-white/5 px-2 py-1.5 text-left text-[11px] text-white/80 transition hover:bg-zinc-800/60"
                 >
                   <span>Редактор узла</span>
                   <span>{isNodeEditorVisible ? 'Скрыть' : 'Показать'}</span>
@@ -834,7 +834,7 @@ const GraphPage: React.FC = () => {
                         type="button"
                         onClick={saveNodeChanges}
                         disabled={nodeSaving}
-                        className="flex-1 rounded-md border border-white/20 bg-white/10 px-2 py-1 text-[11px] text-white transition hover:bg-white/20 disabled:opacity-50"
+                        className="flex-1 rounded-md border border-zinc-800 bg-zinc-800/60 px-2 py-1 text-[11px] text-white transition hover:bg-white/20 disabled:opacity-50"
                       >
                         {nodeSaving ? 'Сохраняем...' : 'Сохранить узел'}
                       </button>
@@ -842,7 +842,7 @@ const GraphPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => navigate(`/event/${selectedNode.id}`)}
-                          className="rounded-md border border-white/15 bg-white/5 px-2 py-1 text-[11px] text-white transition hover:bg-white/10"
+                          className="rounded-md border border-white/15 bg-white/5 px-2 py-1 text-[11px] text-white transition hover:bg-zinc-800/60"
                         >
                           Открыть
                         </button>
@@ -861,15 +861,15 @@ const GraphPage: React.FC = () => {
         <div
           className="flex items-center gap-1 px-3 py-2 rounded-2xl"
           style={{
-            background: 'rgba(15, 15, 30, 0.85)',
+            background: 'rgba(24, 24, 27, 0.92)',
             backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255,255,255,0.1)',
+            border: '1px solid rgba(63, 63, 70, 0.8)',
             boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
           }}
         >
           {[
-            { label: 'Карта жизни', icon: GitFork, path: '/graph', color: '#60a5fa' },
-            { label: 'Виртуальные поля', icon: FlaskConical, path: '/virtual-fields', color: '#fbbf24' },
+            { label: 'Граф', icon: GitFork, path: '/graph', color: '#34d399' },
+            { label: 'Рост', icon: Target, path: '/development', color: '#34d399' },
           ].map(({ label, icon: Icon, path, color }) => {
             const isActive = path === '/graph';
             return (
@@ -968,7 +968,7 @@ const GraphPage: React.FC = () => {
         />
       </div>
 
-      <div className="pointer-events-none absolute bottom-4 right-4 z-10 rounded-xl border border-white/10 bg-[rgba(15,15,30,0.82)] px-3 py-2 text-xs text-white opacity-70">
+      <div className="pointer-events-none absolute bottom-4 right-4 z-10 rounded-xl border border-zinc-800/80 bg-[rgba(15,15,30,0.82)] px-3 py-2 text-xs text-white opacity-70">
         <div className="flex flex-col gap-1 text-left leading-tight">
           <div>ЛКМ: вращение</div>
           <div>ПКМ: перемещение</div>

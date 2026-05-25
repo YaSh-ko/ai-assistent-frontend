@@ -31,6 +31,7 @@ vi.mock('@/providers/Thread', () => ({
 
 vi.mock('@/lib/api-client', () => ({
   chatApi: {
+    deleteConversation: (...args: unknown[]) => deleteThread(...args),
     deleteLangGraphThread: (...args: unknown[]) => deleteThread(...args),
   },
 }));

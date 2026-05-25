@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from "uuid";
+﻿import { v4 as uuidv4 } from "uuid";
 import { useEffect, useRef, useCallback, useState, FormEvent } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,9 @@ import {
 } from "@/lib/ensure-tool-responses";
 
 import {
+  ArrowUp,
   ChevronDown,
+  PanelLeft,
 } from "lucide-react";
 import { ThreadMoreMenu } from "./thread-more-menu";
 import { useThreads } from "@/providers/Thread";
@@ -23,7 +25,6 @@ import ThreadHistory from "./history";
 import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
-import ParticlesBackground from "@/components/ParticlesBackground";
 import { useHints } from "@/hooks/useHints";
 import { ChatHints } from "./chat-hints";
 import { type ThreadContext } from "./context-banner";
@@ -80,7 +81,7 @@ function ScrollToBottom({ scrollRef, className }: Readonly<{ scrollRef: React.Re
     <Button
       variant="outline"
       className={cn(
-        "h-11 w-11 rounded-[12px] border-white/20 bg-[#000019]/45 text-white/90 shadow-none backdrop-blur-sm hover:bg-white/10 hover:border-white/30",
+        "h-11 w-11 rounded-xl border-zinc-700 bg-zinc-900/90 text-zinc-200 shadow-none backdrop-blur-sm hover:bg-zinc-800 hover:border-zinc-600",
         className,
       )}
       onClick={() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" })}
@@ -103,7 +104,7 @@ function VoiceInputIndicator({ isListening }: Readonly<{ isListening: boolean }>
         duration: 0.4,
         ease: [0.4, 0, 0.2, 1]
       }}
-      className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white text-[#000019] px-6 py-3 rounded-lg text-sm font-medium z-20 shadow-lg pointer-events-none"
+      className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-emerald-500 text-zinc-950 px-6 py-3 rounded-lg text-sm font-medium z-20 shadow-lg pointer-events-none"
     >
       Говорите...
     </motion.div>
@@ -205,56 +206,56 @@ function ChatInput({
     if (chatStarted) {
       return "Поделитесь мыслями…";
     }
-    return isDesktop ? "Дорогой дневник..." : "Спросите Delёz";
+    return isDesktop ? "Опишите цель, шаг или наблюдение…" : "Напишите ассистенту";
   };
+
+  const canSend = input.trim().length > 0;
 
   return (
     <div className="flex justify-center w-full max-w-3xl mx-auto pb-2 px-4">
       <VoiceInputIndicator isListening={isListening} />
-      <div className="flex-1 bg-[#000019] rounded-[20px] border border-white/20 shadow-xs relative z-10 px-3 sm:px-4 py-2 flex flex-col gap-0">
-        <div className={`flex gap-2 ${input.length > 60 || input.includes('\n') ? 'flex-col' : 'flex-row items-center'}`}>
-          <form
-            onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
-            className="flex-1"
+      <form
+        onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
+        className="flex-1 relative z-10 rounded-2xl border border-zinc-800 bg-zinc-900/95 shadow-lg backdrop-blur-sm px-4 py-3 flex flex-col gap-2"
+      >
+        <textarea
+          ref={textareaRef}
+          value={input}
+          onChange={handleTextareaChange}
+          onKeyDown={handleKeyDown}
+          placeholder={getPlaceholder()}
+          className="w-full bg-transparent border-none outline-none resize-none text-[16px] leading-relaxed text-zinc-100 placeholder:text-zinc-500 overflow-y-auto max-h-[120px]"
+          rows={1}
+        />
+        <div className="flex items-center justify-between gap-2 pt-1 border-t border-zinc-800/80">
+          <VoiceInputButton isListening={isListening} onVoiceInput={onVoiceInput} />
+          <button
+            type="submit"
+            disabled={!canSend}
+            aria-label="Отправить"
+            className={cn(
+              "flex h-9 w-9 items-center justify-center rounded-full transition-all flex-shrink-0",
+              canSend
+                ? "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 active:scale-95"
+                : "bg-zinc-800 text-zinc-600 cursor-not-allowed",
+            )}
           >
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={handleTextareaChange}
-              onKeyDown={handleKeyDown}
-              placeholder={getPlaceholder()}
-              className="w-full bg-transparent border-none outline-none resize-none text-[16px] leading-normal text-white placeholder:text-white/50 overflow-y-auto max-h-[120px] pr-1 pt-1"
-              rows={1}
-            />
-          </form>
-          <div className={`flex items-center gap-2 flex-shrink-0  ${input.length > 60 || input.includes('\n') ? 'justify-end' : ''}`}>
-            <VoiceInputButton isListening={isListening} onVoiceInput={onVoiceInput} />
-            <button
-              type="button"
-              onClick={onSubmit}
-              className="flex items-center justify-center flex-shrink-0 cursor-pointer bg-transparent border-none p-0"
-            >
-              <img src="/arrow_right.png" alt="Send" className="h-8 w-8 object-contain brightness-200 -translate-x-0.5" />
-            </button>
-          </div>
+            <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
+          </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }
 
 function SidebarButton({
-  chatHistoryOpen,
   setChatHistoryOpen,
-  isLargeScreen
+  isLargeScreen,
 }: Readonly<{
-  chatHistoryOpen: boolean;
   setChatHistoryOpen: (value: boolean | ((prev: boolean) => boolean)) => void;
   isLargeScreen: boolean;
 }>) {
-  const shouldHide = chatHistoryOpen && isLargeScreen;
-
-  if (shouldHide) return null;
+  if (isLargeScreen) return null;
 
   return (
     <Button
@@ -262,8 +263,9 @@ function SidebarButton({
       variant="ghost"
       size="icon"
       onClick={() => setChatHistoryOpen((p) => !p)}
+      aria-label="Открыть список чатов"
     >
-      <img src="/Vector.png" alt="Sidebar" className="w-5 h-5" />
+      <PanelLeft className="w-5 h-5 text-zinc-400" strokeWidth={1.75} />
     </Button>
   );
 }
@@ -272,8 +274,8 @@ const CATEGORY_LABELS: Record<string, string> = {
   entry: "События",
   goal: "Цели/Желания",
   experiment: "Эксперименты",
-  analysis: "Анализ",
-  general: "Чатики",
+  analysis: "Разбор",
+  general: "Чаты",
 };
 
 function ChatHeader({
@@ -333,32 +335,17 @@ function ChatHeader({
       <div className="flex items-center justify-start gap-2 relative">
         <div className="absolute left-[10px] z-10">
           <SidebarButton
-            chatHistoryOpen={chatHistoryOpen}
             setChatHistoryOpen={setChatHistoryOpen}
             isLargeScreen={isLargeScreen}
           />
         </div>
-        <motion.button
-          className="flex gap-2 items-center cursor-pointer"
-          onClick={() => setThreadId(null)}
-          animate={{
-            marginLeft: chatHistoryOpen ? 0 : 48,
-          }}
-          transition={{
-            type: "spring",
-            stiffness: 300,
-            damping: 30,
-          }}
-        >
-
-        </motion.button>
       </div>
 
       {threadId && currentTitle && (
         <div className="flex-1 flex justify-center items-center min-w-0">
           <div className="flex items-center gap-1.5">
             {categoryLabel && (
-              <span className="text-white/70 text-sm border border-white/20 rounded-full px-3 py-1 flex-shrink-0">
+              <span className="text-emerald-400/90 text-xs font-medium border border-emerald-500/30 bg-emerald-500/10 rounded-full px-3 py-1 flex-shrink-0">
                 {categoryLabel}
               </span>
             )}
@@ -369,16 +356,16 @@ function ChatHeader({
                 onChange={(e) => setEditValue(e.target.value)}
                 onBlur={commitEdit}
                 onKeyDown={handleKeyDown}
-                className="bg-transparent border-b border-white/40 text-white/90 text-base font-medium outline-none text-center w-48 sm:w-64"
+                className="bg-transparent border-b border-emerald-500/50 text-zinc-100 text-base font-medium outline-none text-center w-48 sm:w-64"
               />
             ) : (
               <>
-                <span className="text-white/90 text-base font-medium truncate max-w-[180px] sm:max-w-xs">
+                <span className="text-zinc-100 text-base font-medium truncate max-w-[180px] sm:max-w-xs">
                   {currentTitle}
                 </span>
                 <button
                   onClick={startEdit}
-                  className="text-white/40 hover:text-white/80 transition-colors flex-shrink-0"
+                  className="text-zinc-500 hover:text-zinc-300 transition-colors flex-shrink-0"
                   title="Переименовать"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -463,7 +450,7 @@ export function Thread() {
   const [threadId, setThreadId] = useQueryState("threadId");
   const [chatHistoryOpen, setChatHistoryOpen] = useQueryState(
     "chatHistoryOpen",
-    parseAsBoolean.withDefault(false),
+    parseAsBoolean.withDefault(true),
   );
   const [input, setInput] = useState("");
   const [firstTokenReceived, setFirstTokenReceived] = useState(false);
@@ -567,7 +554,8 @@ export function Thread() {
           setThreadContext({
             type: data.type ?? "general",
             title: data.title,
-            description: data.description || undefined
+            description: data.description || undefined,
+            entity_id: data.entity_id || data.entry_id || undefined,
           });
         } else {
           setThreadContext(null);
@@ -582,7 +570,7 @@ export function Thread() {
     confirm: confirmDetector,
     decline: declineDetector,
     dismissChip: dismissDetectorChip,
-  } = useDetectorProposal();
+  } = useDetectorProposal(threadId);
 
   const handleSubmit = useCallback((e?: FormEvent) => {
     e?.preventDefault();
@@ -677,51 +665,20 @@ export function Thread() {
     }
   }, [messages.length]);
 
-  const sidebarWidth = 300;
-  const sidebarOffset = chatHistoryOpen && isLargeScreen ? sidebarWidth : 0;
-  const mainWidth = chatHistoryOpen && isLargeScreen ? `calc(100% - ${sidebarWidth}px)` : "100%";
-  const footerMarginLeft = chatHistoryOpen && isLargeScreen ? 150 : 0;
-
   return (
-    <div className="flex w-full h-full overflow-hidden">
-      <div className="relative lg:flex hidden bg-[#000019]">
-        <motion.div
-          className="absolute h-full overflow-hidden z-40 bg-[#000019]"
-          style={{ width: sidebarWidth }}
-          animate={{ x: chatHistoryOpen ? 0 : -sidebarWidth }}
-          initial={{ x: -sidebarWidth }}
-          transition={
-            isLargeScreen
-              ? { type: "spring", stiffness: 300, damping: 30 }
-              : { duration: 0 }
-          }
-        >
-          <div className="relative h-full bg-[#000019]" style={{ width: sidebarWidth }}>
-            <ThreadHistory />
-          </div>
-        </motion.div>
-      </div>
-      <motion.div
+    <div className="flex w-full h-full min-h-0 overflow-hidden">
+      <ThreadHistory
+        collapsed={!chatHistoryOpen}
+        onToggleCollapse={() => setChatHistoryOpen((p) => !p)}
+      />
+
+      <div
         className={cn(
-          "flex-1 flex flex-col min-w-0 overflow-hidden relative bg-[#000019]",
+          "flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden relative bg-[var(--growth-bg)]",
           !chatStarted && "grid-rows-[1fr]",
         )}
-        layout={isLargeScreen}
-        animate={{
-          marginLeft: sidebarOffset,
-          width: mainWidth,
-        }}
-        transition={
-          isLargeScreen
-            ? { type: "spring", stiffness: 300, damping: 30 }
-            : { duration: 0 }
-        }
       >
-        <motion.div
-          className="fixed top-0 left-0 right-0 z-30 bg-[#000019]"
-          animate={{ marginLeft: sidebarOffset }}
-          transition={isLargeScreen ? { type: "spring", stiffness: 300, damping: 30 } : { duration: 0 }}
-        >
+        <div className="shrink-0 z-30 bg-[var(--growth-bg)] border-b border-zinc-800/60">
           <ChatHeader
             chatHistoryOpen={chatHistoryOpen}
             setChatHistoryOpen={setChatHistoryOpen}
@@ -739,11 +696,9 @@ export function Thread() {
               }
             }}
           />
-        </motion.div>
-        <div className="pt-[60px]" />
+        </div>
 
         <div className="relative flex-1 overflow-hidden">
-          <ParticlesBackground variant="chat" />
           <div
             ref={scrollRef}
             className={cn(
@@ -752,7 +707,7 @@ export function Thread() {
             )}
           >
             {chatStarted ? (
-              <div className="pt-8 pb-[180px] px-4 max-w-full sm:max-w-3xl mx-auto flex flex-col gap-4 w-full">
+              <div className="pt-8 pb-[200px] px-2 sm:px-4 max-w-full sm:max-w-3xl mx-auto flex flex-col gap-5 w-full">
                 <MessagesList
                   messages={messages}
                   isLoading={isLoading}
@@ -763,19 +718,17 @@ export function Thread() {
                 />
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-10 w-full px-4 -translate-y-[10vh]">
-                <div className="relative flex items-center justify-center">
-                  <h2 className="text-white/80 text-2xl sm:text-3xl font-medium text-center">
-                    Как ты себя чувствуешь?
+              <div className="flex flex-col items-center gap-8 w-full px-4 -translate-y-[8vh]">
+                <div className="flex flex-col items-center gap-3 w-full max-w-lg">
+                  <h2 className="text-zinc-100 text-2xl sm:text-3xl font-semibold text-center tracking-tight">
+                    Что развиваем сегодня?
                   </h2>
+                  <p className="text-zinc-500 text-sm sm:text-base text-center leading-relaxed">
+                    Цели, эксперименты и заметки — ассистент поможет связать их в графе знаний
+                  </p>
                 </div>
                 <div className="flex flex-col items-center gap-3 w-full">
                   <div className="relative w-full max-w-3xl mx-auto">
-                    <img
-                      src="/penguin.png"
-                      alt="Пингвин"
-                      className="absolute bottom-full right-12 w-24 sm:w-28 object-contain pointer-events-none select-none z-10"
-                    />
                   <ChatInput
                     input={input}
                     setInput={setInput}
@@ -796,7 +749,7 @@ export function Thread() {
           </div>
 
           {chatStarted && (
-            <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center gap-2 sm:gap-4 bg-gradient-to-t from-[#000019] from-70% to-transparent pt-8 pb-0 w-full z-10">
+            <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center gap-2 sm:gap-4 bg-gradient-to-t from-zinc-950 from-75% via-zinc-950/80 to-transparent pt-8 pb-0 w-full z-10">
               <div className="flex flex-col items-center gap-2 pb-6 sm:pb-0 sm:-mb-[40px] w-full sm:-translate-y-[60px]">
                 <div className="w-full max-w-3xl px-4 mb-1">
                   <DetectorProposalChip
@@ -833,21 +786,11 @@ export function Thread() {
             </div>
           )}
 
-          <motion.span
-            className="fixed bottom-1 sm:bottom-2 left-1/2 -translate-x-1/2 text-white text-[10px] sm:text-xs opacity-70 z-20 text-center w-full px-4 sm:w-auto sm:px-0"
-            animate={{
-              marginLeft: footerMarginLeft,
-            }}
-            transition={
-              isLargeScreen
-                ? { type: "spring", stiffness: 300, damping: 30 }
-                : { duration: 0 }
-            }
-          >
-            Delёz может допускать ошибки. Обращайтесь к уму-разуму!
-          </motion.span>
+          <span className="fixed bottom-1 sm:bottom-2 left-1/2 -translate-x-1/2 text-zinc-500 text-[10px] sm:text-xs z-20 text-center w-full px-4 sm:w-auto sm:px-0 pointer-events-none">
+            Ассистент может ошибаться — проверяйте важные решения сами.
+          </span>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

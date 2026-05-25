@@ -95,7 +95,7 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
               className={cn(
                 "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[13px] font-medium border transition-colors cursor-pointer",
                 reaction.highlighted
-                  ? "bg-white/10 border-white/20 text-white"
+                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-300"
                   : "bg-transparent border-white/10 text-white/70 hover:bg-white/5 hover:text-white"
               )}
             >

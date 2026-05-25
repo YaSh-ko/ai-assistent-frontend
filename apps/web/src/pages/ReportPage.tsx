@@ -1,4 +1,4 @@
-// src/pages/ReportPage.tsx
+﻿// src/pages/ReportPage.tsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { entriesApi, goalsApi, graphApi } from '@/lib/api-client';
@@ -153,7 +153,7 @@ export default function ReportPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#000019]">
+      <div className="flex h-screen w-full items-center justify-center growth-page">
         <RadialPulseLoader text="Загрузка отчёта..." size={120} color="#ffffff" />
       </div>
     );
@@ -175,7 +175,7 @@ export default function ReportPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-[#000019] text-white">
+    <div className="growth-page min-h-screen">
       {/* Хедер */}
       <div className="flex items-start justify-between px-8 pt-8 pb-6">
         <div>

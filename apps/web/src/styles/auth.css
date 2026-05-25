@@ -1,4 +1,4 @@
-/* Backup of current auth.css styles */
+﻿/* Backup of current auth.css styles */
 /* Auth Pages Styles */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&display=swap');
@@ -9,7 +9,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Shantell Sans', 'Poppins', sans-serif;
+  font-family: 'Inter', 'Montserrat', system-ui, sans-serif;
 }
 
 .auth-body {
@@ -18,7 +18,7 @@
   align-items: flex-start;
   padding-top: 80px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #000019, #000019, #000019);
+  background: linear-gradient(135deg, #09090b, #09090b, #09090b);
   overflow: hidden;
   perspective: 1000px;
   position: relative;
@@ -67,7 +67,7 @@
   color: #ffffff;
   text-align: center;
   margin-bottom: 10px;
-  font-family: 'Shantell Sans', 'Cinzel', serif;
+  font-family: 'Inter', system-ui, sans-serif;
   font-weight: 700;
   letter-spacing: 2px;
   text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
@@ -121,7 +121,7 @@
   transition: 0.3s;
   z-index: 1;
   position: relative;
-  font-family: 'Shantell Sans', 'Rajdhani', sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   /* Ограничиваем текст внутри поля */
   overflow: hidden;
   text-overflow: ellipsis;
@@ -138,7 +138,7 @@
 .input-field:-moz-autofill:focus {
   color: #ffffff !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.4) !important;
-  font-family: 'Shantell Sans', 'Rajdhani', sans-serif !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
   font-size: 15px !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
@@ -150,7 +150,7 @@
 .input-field:-webkit-autofill:hover,
 .input-field:-webkit-autofill:focus,
 .input-field:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 30px #000019 inset !important;
+  -webkit-box-shadow: 0 0 0 30px #09090b inset !important;
   -webkit-text-fill-color: #ffffff !important;
   caret-color: #ffffff !important;
   transition: background-color 5000s ease-in-out 0s;
@@ -285,7 +285,7 @@
   position: relative;
   overflow: hidden;
   transform: translateZ(20px);
-  font-family: 'Shantell Sans', 'Cinzel', serif;
+  font-family: 'Inter', system-ui, sans-serif;
   margin-bottom: 10px;
   display: flex;
   align-items: center;

@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+﻿import { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Quote } from 'lucide-react';
-import { experimentsApi } from '@/lib/api-client';
+import { ChevronLeft, ChevronRight, MessageSquare, Quote } from 'lucide-react';
+import { chatApi, experimentsApi } from '@/lib/api-client';
 import RadialPulseLoader from '@/components/ui/loading-animation';
 import Breadcrumbs from '@/components/Breadcrumbs';
 
@@ -161,6 +161,7 @@ const Experiment = () => {
     const [selectedPeriod, setSelectedPeriod] = useState<Period>('week');
     const [closeExperiment, setCloseExperiment] = useState<'yes' | 'no' | null>(null);
     const [closing, setClosing] = useState(false);
+    const [linkedThread, setLinkedThread] = useState<string | null>(null);
 
     const loadDetail = useCallback(() => {
         if (!id) return;
@@ -206,7 +207,12 @@ const Experiment = () => {
 
     useEffect(() => {
         loadDetail();
-    }, [loadDetail]);
+        if (id) {
+            chatApi.getEntityThreads("task", id)
+                .then(ids => setLinkedThread(ids[0] ?? null))
+                .catch(() => undefined);
+        }
+    }, [loadDetail, id]);
 
     useEffect(() => {
         if (!id || !detail?.experiment) return;
@@ -246,7 +252,7 @@ const Experiment = () => {
 
     if (loading) {
         return (
-            <div className="flex h-screen w-full items-center justify-center bg-[#000019]">
+            <div className="flex h-screen w-full items-center justify-center growth-page">
                 <RadialPulseLoader text="Загрузка..." size={120} color="#ffffff" />
             </div>
         );
@@ -254,7 +260,7 @@ const Experiment = () => {
 
     if (error || !detail?.experiment) {
         return (
-            <div className="flex h-screen w-full flex-col items-center justify-center gap-4 bg-[#000019] text-white">
+            <div className="flex h-screen w-full flex-col items-center justify-center gap-4 growth-page">
                 <p className="text-gray-400">{error ?? 'Эксперимент не найден'}</p>
                 <Link to="/experiments" className="text-sm text-gray-500 hover:text-white flex items-center gap-1">
                     <ChevronLeft className="w-4 h-4" /> К экспериментам
@@ -266,7 +272,7 @@ const Experiment = () => {
     const { experiment, related_entries, tested_concepts } = detail;
     const badge = STATUS_BADGE[experiment.status] ?? {
         label: experiment.status,
-        className: 'bg-white/10 text-gray-300 border-white/20',
+        className: 'bg-zinc-800/60 text-gray-300 border-zinc-800',
     };
 
     const avgIntensity =
@@ -280,7 +286,7 @@ const Experiment = () => {
     const intensityDisplay = avgIntensity === null ? '—' : avgIntensity.toFixed(1);
 
     return (
-        <div className="min-h-screen bg-[#000019] text-white p-2 md:p-4 lg:p-8 font-sans">
+        <div className="growth-page min-h-screen p-2 md:p-4 lg:p-8 font-sans">
             <div className="max-w-7xl mx-auto px-2 md:px-0">
                 <header className="flex flex-col gap-2 mb-6 md:mb-8">
                     <Breadcrumbs crumbs={[
@@ -300,7 +306,7 @@ const Experiment = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
                     <div className="lg:col-span-2 space-y-4 md:space-y-6">
-                        <div className="relative h-[280px] md:h-[300px] w-full bg-[#0a0a1a]/50 rounded-2xl border border-white/10 overflow-hidden">
+                        <div className="relative h-[280px] md:h-[300px] w-full bg-zinc-900/50 rounded-2xl border border-zinc-800/80 overflow-hidden">
                             <div className="absolute right-2 top-2 bottom-8 flex flex-col justify-between text-[10px] text-gray-500 z-10 pointer-events-none">
                                 <span>80</span>
                                 <span>60</span>
@@ -343,7 +349,7 @@ const Experiment = () => {
                             </svg>
                         </div>
 
-                        <div className="border border-white/20 rounded-2xl p-4 md:p-6 bg-[#0a0a1a]/50">
+                        <div className="border border-zinc-800 rounded-2xl p-4 md:p-6 bg-zinc-900/50">
                             <div className="flex flex-col gap-4 mb-6">
                                 <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                                     <h2 className="text-xl md:text-2xl font-medium text-gray-200">Резюме</h2>
@@ -359,7 +365,7 @@ const Experiment = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex bg-[#0a0a1a] rounded-full p-1 border border-gray-800 mx-auto w-fit">
+                                <div className="flex bg-zinc-900 rounded-full p-1 border border-gray-800 mx-auto w-fit">
                                     {(['week', 'month', 'year'] as const).map(p => (
                                         <button
                                             key={p}
@@ -381,12 +387,15 @@ const Experiment = () => {
                                 <p className="text-gray-300 text-sm leading-relaxed mb-3 whitespace-pre-wrap">
                                     {experiment.outcome?.trim() || 'Резюме пока не заполнено.'}
                                 </p>
-                                <Link
-                                    to="/chat"
-                                    className="text-gray-400 hover:text-white transition-colors text-xs flex items-center justify-end gap-1"
-                                >
-                                    К чату <ChevronRight className="w-3 h-3" />
-                                </Link>
+                                {linkedThread && (
+                                    <Link
+                                        to={`/?threadId=${linkedThread}`}
+                                        className="text-gray-400 hover:text-white transition-colors text-xs flex items-center justify-end gap-1"
+                                    >
+                                        <MessageSquare className="w-3 h-3" />
+                                        К чату <ChevronRight className="w-3 h-3" />
+                                    </Link>
+                                )}
                             </div>
 
                             <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
@@ -426,7 +435,7 @@ const Experiment = () => {
                                                 className={`px-3 py-1 rounded-lg text-xs transition-colors uppercase ${
                                                     closeExperiment === 'yes'
                                                         ? 'bg-white/20 border border-white text-white'
-                                                        : 'border border-white/50 hover:bg-white/10'
+                                                        : 'border border-white/50 hover:bg-zinc-800/60'
                                                 } disabled:opacity-40`}
                                             >
                                                 Да
@@ -450,25 +459,28 @@ const Experiment = () => {
                     </div>
 
                     <div className="space-y-6">
-                        <div className="border border-white/20 rounded-2xl p-6 bg-[#0a0a1a]/50 min-h-[300px] flex flex-col">
+                        <div className="border border-zinc-800 rounded-2xl p-6 bg-zinc-900/50 min-h-[300px] flex flex-col">
                             <h2 className="text-lg font-semibold mb-4 text-white">Суть эксперимента</h2>
-                            <div className="border-t border-white/20 mb-4 w-full" />
+                            <div className="border-t border-zinc-800 mb-4 w-full" />
                             <p className="text-gray-300 text-sm leading-relaxed flex-grow overflow-y-auto experiment-scrollbar pr-2 whitespace-pre-wrap">
                                 {experiment.description?.trim() || 'Описание не указано.'}
                             </p>
-                            <div className="mt-4 pt-4">
-                                <Link
-                                    to="/chat"
-                                    className="text-gray-400 hover:text-white transition-colors text-sm flex items-center justify-end gap-1"
-                                >
-                                    К чату <ChevronRight className="w-4 h-4" />
-                                </Link>
-                            </div>
+                            {linkedThread && (
+                                <div className="mt-4 pt-4">
+                                    <Link
+                                        to={`/?threadId=${linkedThread}`}
+                                        className="text-gray-400 hover:text-white transition-colors text-sm flex items-center justify-end gap-1"
+                                    >
+                                        <MessageSquare className="w-4 h-4" />
+                                        К чату <ChevronRight className="w-4 h-4" />
+                                    </Link>
+                                </div>
+                            )}
                         </div>
 
-                        <div className="border border-white/20 rounded-2xl p-6 bg-[#0a0a1a]/50">
+                        <div className="border border-zinc-800 rounded-2xl p-6 bg-zinc-900/50">
                             <h2 className="text-lg font-semibold mb-4 text-white">Что случилось за это время?</h2>
-                            <div className="border-t border-white/20 mb-4 w-full" />
+                            <div className="border-t border-zinc-800 mb-4 w-full" />
                             <div className="space-y-4">
                                 {related_entries.length === 0 ? (
                                     <p className="text-gray-500 text-sm">Связанных записей пока нет.</p>

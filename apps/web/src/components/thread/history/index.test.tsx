@@ -1,8 +1,11 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ThreadHistory from './index';
+
+const renderHistory = () => render(<MemoryRouter><ThreadHistory /></MemoryRouter>);
 
 const navigateMock = vi.fn();
 const setThreadIdMock = vi.fn();
@@ -27,7 +30,7 @@ vi.mock('react-router-dom', async () => {
 vi.mock('nuqs', () => ({
   useQueryState: vi.fn((key: string, options?: { defaultValue?: unknown }) => {
     if (key === 'threadId') return [null, setThreadIdMock];
-    if (key === 'chatHistoryOpen') return [false, setChatHistoryOpenMock];
+    if (key === 'chatHistoryOpen') return [true, setChatHistoryOpenMock];
     return [options?.defaultValue ?? null, vi.fn()];
   }),
   parseAsBoolean: { withDefault: (v: boolean) => ({ defaultValue: v }) },
@@ -49,6 +52,7 @@ vi.mock('@/lib/api-client', () => ({
 
 vi.mock('../utils', () => ({
   getContentString: (content: unknown) => String(content),
+  formatSidebarThreadTitle: (text: string) => String(text),
 }));
 
 vi.mock('@/components/ui/dropdown-menu', () => {
@@ -132,22 +136,22 @@ describe('ThreadHistory', () => {
   });
 
   it('загружает треды при монтировании и рендерит секции', async () => {
-    render(<ThreadHistory />);
+    renderHistory();
 
     await waitFor(() => expect(getThreadsMock).toHaveBeenCalled());
-    expect(screen.getAllByText('Чатики').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Недавнее').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Избранное').length).toBeGreaterThan(0);
   });
 
-  it('вызывает navigate при клике назад', () => {
-    render(<ThreadHistory />);
-    fireEvent.click(screen.getAllByText('На главную')[0].closest('button')!);
-    expect(navigateMock).toHaveBeenCalledWith('/navigation');
+  it('ссылка «На главную» ведёт в навигацию', () => {
+    renderHistory();
+    const link = screen.getAllByText('На главную')[0].closest('a');
+    expect(link).toHaveAttribute('href', '/navigation');
   });
 
   it('создает чат категории и обновляет список', async () => {
     getThreadsMock.mockResolvedValueOnce([makeThread('t-3', 'Новый', 'entry')]);
-    render(<ThreadHistory />);
+    renderHistory();
 
     fireEvent.click(screen.getAllByLabelText('Новый чат в разделе События')[0]);
 
@@ -161,24 +165,25 @@ describe('ThreadHistory', () => {
   it('обрабатывает ошибку создания категорийного чата', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     createCategoryChatMock.mockRejectedValueOnce(new Error('fail'));
-    render(<ThreadHistory />);
+    renderHistory();
 
-    fireEvent.click(screen.getAllByLabelText('Новый чат в разделе Эксперименты')[0]);
+    fireEvent.click(screen.getAllByLabelText('Новый чат в разделе События')[0]);
 
     await waitFor(() => {
       expect(errorSpy).toHaveBeenCalledWith('Не удалось создать чат в категории', expect.any(Error));
     });
+    expect(createCategoryChatMock).toHaveBeenCalledWith('entry');
     errorSpy.mockRestore();
   });
 
   it('открывает меню треда, переключает избранное и категорию', async () => {
     updateThreadCategoryMock.mockResolvedValueOnce(undefined);
     getThreadsMock.mockResolvedValueOnce([makeThread('t-1', 'Первый тред', 'goal')]);
-    render(<ThreadHistory />);
+    renderHistory();
 
     fireEvent.mouseDown(screen.getAllByLabelText('Меню чата')[0]);
     const menu = document.querySelector('[data-slot="dropdown-menu-content"]') as HTMLElement;
-    fireEvent.click(within(menu).getByText('Цели/Желания'));
+    fireEvent.click(within(menu).getByText('Цели'));
     fireEvent.mouseDown(screen.getAllByLabelText('Меню чата')[0]);
     fireEvent.click(within(document.querySelector('[data-slot="dropdown-menu-content"]') as HTMLElement).getByText('Убрать из избранного'));
 
@@ -191,7 +196,7 @@ describe('ThreadHistory', () => {
 
   it('переименовывает тред по Enter', async () => {
     updateThreadTitleMock.mockResolvedValueOnce(undefined);
-    render(<ThreadHistory />);
+    renderHistory();
 
     fireEvent.mouseDown(screen.getAllByLabelText('Меню чата')[0]);
     fireEvent.click(screen.getByText('Переименовать'));
@@ -211,7 +216,7 @@ describe('ThreadHistory', () => {
       if (typeof cb === 'function') scheduled.push(cb as () => void);
       return 1 as unknown as ReturnType<typeof setTimeout>;
     }) as typeof setTimeout);
-    render(<ThreadHistory />);
+    renderHistory();
 
     fireEvent.mouseDown(screen.getAllByLabelText('Меню чата')[0]);
     expect(screen.getByText('Удалить')).toBeInTheDocument();
@@ -248,7 +253,7 @@ describe('ThreadHistory loading state', () => {
   });
 
   it('shows skeletons when threadsLoading is true', () => {
-    render(<ThreadHistory />);
+    renderHistory();
     expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0);
   });
 });

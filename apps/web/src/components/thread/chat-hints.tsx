@@ -12,7 +12,7 @@ function HintSkeleton() {
       {[1, 2, 3].map((i) => (
         <div
           key={i}
-          className="flex-1 h-9 rounded-xl bg-white/10 animate-pulse"
+          className="flex-1 h-9 rounded-xl bg-zinc-800/80 animate-pulse"
         />
       ))}
     </div>
@@ -43,9 +43,9 @@ export function ChatHints({ hints, isLoading, onSelect }: Readonly<ChatHintsProp
             type="button"
             onClick={() => onSelect(hint)}
             className="
-              flex-1 text-sm text-white/75 border border-white/20 rounded-xl
-              px-3 py-2 bg-transparent text-center
-              hover:border-white/50 hover:text-white
+              flex-1 text-sm text-zinc-400 border border-zinc-800 rounded-xl
+              px-3 py-2 bg-zinc-900/60 text-center
+              hover:border-emerald-500/40 hover:text-zinc-200 hover:bg-zinc-900
               active:scale-95
               transition-all duration-200 ease-out
               cursor-pointer outline-none break-words

@@ -1,13 +1,12 @@
-/* Landing Page Styles */
-@import url('https://fonts.googleapis.com/css2?family=Shantell+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+﻿/* Landing Page Styles — growth theme */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* Ограничиваем reset только для лендинга */
 .landing-body,
 .landing-body * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Shantell Sans', 'Segoe UI', sans-serif;
+  font-family: 'Inter', 'Montserrat', system-ui, sans-serif;
 }
 
 /* Particles Background */
@@ -19,8 +18,8 @@
 }
 
 .landing-body {
-  background: #000019;
-  color: #ffffff;
+  background: #09090b;
+  color: #e4e4e7;
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
@@ -44,7 +43,7 @@
   left: 0;
   right: 0;
   z-index: 1000;
-  background: rgba(0, 0, 25, 0.9);
+  background: rgba(9, 9, 11, 0.92);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -123,7 +122,7 @@
   text-decoration: none;
   font-size: 13px;
   font-weight: 500;
-  font-family: 'Shantell Sans', 'Segoe UI', sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   transition: all 0.3s ease;
   display: inline-block;
   white-space: nowrap;
@@ -157,7 +156,7 @@
 }
 
 .highlight {
-  color: #ffffff;
+  color: #34d399;
   text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
 }
 
@@ -189,14 +188,16 @@
 }
 
 .btn-primary {
-  background: transparent;
-  border: 2px solid #ffffff;
-  color: #ffffff;
+  background: #34d399;
+  border: 2px solid #34d399;
+  color: #0a0a0b;
+  font-weight: 600;
 }
 
 .btn-primary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 25px rgba(255, 255, 255, 0.4);
+  background: #4ade80;
+  border-color: #4ade80;
+  box-shadow: 0 0 24px rgba(52, 211, 153, 0.35);
   transform: translateY(-2px);
 }
 
@@ -324,6 +325,42 @@ section {
   max-width: 80%;
   height: auto;
   display: block;
+}
+
+.cycle-visual {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  margin: 0 auto;
+}
+
+.cycle-visual__node {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 20px rgba(52, 211, 153, 0.45);
+}
+
+.cycle-visual__node:nth-child(1) { top: 10%; left: 50%; transform: translateX(-50%); }
+.cycle-visual__node:nth-child(2) { bottom: 15%; left: 12%; }
+.cycle-visual__node:nth-child(3) { bottom: 15%; right: 12%; }
+
+.cycle-visual__line {
+  position: absolute;
+  inset: 22%;
+  border: 1px dashed rgba(52, 211, 153, 0.35);
+  border-radius: 50%;
+  animation: pulse 3s ease-in-out infinite;
+}
+
+.security-honest {
+  max-width: 640px;
+  margin: 0 auto 2rem;
+  text-align: center;
+  line-height: 1.6;
+  color: rgba(228, 228, 231, 0.75);
 }
 
 @keyframes pulse {
@@ -903,7 +940,7 @@ section {
     justify-content: center;
     row-gap: 13px;
 
-    background: rgba(0, 0, 25, 0.9);
+    background: rgba(9, 9, 11, 0.92);
     backdrop-filter: blur(10px);
 
     padding-bottom: 30px;

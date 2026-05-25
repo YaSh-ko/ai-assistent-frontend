@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { CalendarCheck2, Flag, Trophy, Workflow } from "lucide-react";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -222,14 +222,14 @@ export default function DevelopmentPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center" style={{ background: '#171717' }}>
-        <RadialPulseLoader text="Загрузка..." size={120} color="#80FFB5" />
+      <div className="flex h-screen w-full items-center justify-center" style={{ background: '#09090b' }}>
+        <RadialPulseLoader text="Загрузка..." size={120} color="#34d399" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#171717', color: '#C1BEC6' }}>
+    <div className="min-h-screen" style={{ background: '#09090b', color: '#e4e4e7' }}>
       <div className="flex items-start justify-between px-8 pt-8 pb-6" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <div>
           <Breadcrumbs crumbs={[{ label: "Главная", to: "/navigation" }, { label: "Рост" }]} />
@@ -239,7 +239,7 @@ export default function DevelopmentPage() {
         <Link
           to="/goals"
           className="rounded-lg px-4 py-2 text-sm font-medium transition-all"
-          style={{ background: 'rgba(128,255,181,0.1)', border: '1px solid rgba(128,255,181,0.3)', color: '#80FFB5' }}
+          style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)', color: '#34d399' }}
         >
           К целям
         </Link>
@@ -269,9 +269,9 @@ export default function DevelopmentPage() {
                   onClick={() => setActiveTab(tab.id as DevelopmentTab)}
                   className="flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm transition-all"
                   style={{
-                    border: isActive ? '1px solid rgba(128,255,181,0.25)' : '1px solid transparent',
-                    background: isActive ? 'rgba(128,255,181,0.08)' : 'transparent',
-                    color: isActive ? '#80FFB5' : '#A1A1AA',
+                    border: isActive ? '1px solid rgba(52,211,153,0.25)' : '1px solid transparent',
+                    background: isActive ? 'rgba(52,211,153,0.08)' : 'transparent',
+                    color: isActive ? '#34d399' : '#A1A1AA',
                   }}
                 >
                   <Icon size={14} />
@@ -303,9 +303,9 @@ export default function DevelopmentPage() {
             ))}
             <div
               className="rounded-xl p-4 lg:col-span-4"
-              style={{ background: '#19161D', border: '1px solid rgba(128,255,181,0.12)' }}
+              style={{ background: '#19161D', border: '1px solid rgba(52,211,153,0.12)' }}
             >
-              <p className="text-sm" style={{ color: '#C1BEC6' }}>
+              <p className="text-sm" style={{ color: '#e4e4e7' }}>
                 Маленький стабильный шаг каждый день создаёт большую траекторию через год.
               </p>
             </div>
@@ -339,13 +339,13 @@ export default function DevelopmentPage() {
                   onClick={() => toggleHabit(habit.id)}
                   className="rounded-xl p-4 text-left transition-all"
                   style={{
-                    background: habit.doneToday ? 'rgba(128,255,181,0.08)' : '#211D25',
-                    border: habit.doneToday ? '1px solid rgba(128,255,181,0.25)' : '1px solid rgba(255,255,255,0.06)',
+                    background: habit.doneToday ? 'rgba(52,211,153,0.08)' : '#211D25',
+                    border: habit.doneToday ? '1px solid rgba(52,211,153,0.25)' : '1px solid rgba(255,255,255,0.06)',
                   }}
                 >
                   <p className="text-sm font-semibold" style={{ color: '#ffffff' }}>{habit.title}</p>
                   <p className="mt-1.5 text-xs" style={{ color: '#A1A1AA' }}>Серия: {habit.streak} дн.</p>
-                  <p className="mt-1 text-xs" style={{ color: habit.doneToday ? '#80FFB5' : 'rgba(161,161,170,0.5)' }}>
+                  <p className="mt-1 text-xs" style={{ color: habit.doneToday ? '#34d399' : 'rgba(161,161,170,0.5)' }}>
                     {habit.doneToday ? '✓ Отмечено' : 'Нажми, чтобы отметить'}
                   </p>
                 </button>
@@ -371,20 +371,20 @@ export default function DevelopmentPage() {
                   onChange={(event) => setTaskTitle(event.target.value)}
                   placeholder="Название задачи"
                   className="h-9 rounded-lg px-3 text-sm outline-none"
-                  style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.08)', color: '#C1BEC6' }}
+                  style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.08)', color: '#e4e4e7' }}
                 />
                 <input
                   type="date"
                   value={taskDate}
                   onChange={(event) => setTaskDate(event.target.value)}
                   className="h-9 rounded-lg px-3 text-sm outline-none"
-                  style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.08)', color: '#C1BEC6' }}
+                  style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.08)', color: '#e4e4e7' }}
                 />
                 <select
                   value={taskGoalId}
                   onChange={(event) => setTaskGoalId(event.target.value)}
                   className="h-9 rounded-lg px-3 text-sm outline-none"
-                  style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.08)', color: '#C1BEC6' }}
+                  style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.08)', color: '#e4e4e7' }}
                 >
                   <option value="">Без цели</option>
                   {goals.map((goal) => (
@@ -395,7 +395,7 @@ export default function DevelopmentPage() {
                   type="button"
                   onClick={addTask}
                   className="rounded-lg px-4 text-sm font-medium transition-all"
-                  style={{ background: 'rgba(128,255,181,0.1)', border: '1px solid rgba(128,255,181,0.3)', color: '#80FFB5' }}
+                  style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)', color: '#34d399' }}
                 >
                   Добавить
                 </button>
@@ -422,8 +422,8 @@ export default function DevelopmentPage() {
                       key={cell.dateKey}
                       className="min-h-[80px] rounded-lg p-1.5"
                       style={{
-                        background: dayTasks.length > 0 ? 'rgba(128,255,181,0.05)' : '#211D25',
-                        border: dayTasks.length > 0 ? '1px solid rgba(128,255,181,0.15)' : '1px solid rgba(255,255,255,0.05)',
+                        background: dayTasks.length > 0 ? 'rgba(52,211,153,0.05)' : '#211D25',
+                        border: dayTasks.length > 0 ? '1px solid rgba(52,211,153,0.15)' : '1px solid rgba(255,255,255,0.05)',
                       }}
                     >
                       <p className="text-xs mb-1" style={{ color: '#A1A1AA' }}>{cell.day}</p>
@@ -432,7 +432,7 @@ export default function DevelopmentPage() {
                           <div
                             key={task.id}
                             className="rounded px-1.5 py-0.5 text-[10px] leading-snug"
-                            style={{ background: 'rgba(128,255,181,0.1)', color: '#80FFB5' }}
+                            style={{ background: 'rgba(52,211,153,0.1)', color: '#34d399' }}
                           >
                             {task.title}
                           </div>
@@ -462,7 +462,7 @@ export default function DevelopmentPage() {
                       style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.06)' }}
                     >
                       <div>
-                        <p className="text-sm" style={{ color: '#C1BEC6' }}>{task.title}</p>
+                        <p className="text-sm" style={{ color: '#e4e4e7' }}>{task.title}</p>
                         <p className="text-xs" style={{ color: '#A1A1AA' }}>
                           {task.date}{goal ? ` · ${goal.title}` : ''}
                         </p>
@@ -486,7 +486,7 @@ export default function DevelopmentPage() {
                 <Link
                   to="/goals"
                   className="inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium transition-all"
-                  style={{ background: 'rgba(128,255,181,0.1)', border: '1px solid rgba(128,255,181,0.3)', color: '#80FFB5' }}
+                  style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)', color: '#34d399' }}
                 >
                   Перейти к целям
                 </Link>

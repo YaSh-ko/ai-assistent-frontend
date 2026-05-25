@@ -119,7 +119,7 @@ export function AssistantMessage({
       ) : (
         <div className="flex flex-col gap-2">
           {contentString.length > 0 && (
-            <div className="bg-[#0d0d2b] border border-white/20 rounded-2xl px-3 py-2 sm:px-4 sm:py-2 text-white/90 text-[15px] leading-relaxed max-w-full sm:max-w-[600px] break-words">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl px-3 py-2.5 sm:px-4 sm:py-3 text-zinc-200 text-[15px] leading-relaxed max-w-full sm:max-w-[600px] break-words shadow-sm">
               <MarkdownText>{contentString}</MarkdownText>
             </div>
           )}
@@ -171,8 +171,12 @@ export function AssistantMessage({
 
 export function AssistantMessageLoading() {
   return (
-    <div className="flex items-start mr-auto gap-2">
-      <div className="w-4 h-4 rounded-full bg-[#0d0d2b] border border-white/20 animate-[pulse_1.5s_ease-in-out_infinite]"></div>
+    <div className="flex items-center mr-auto gap-3 py-1" aria-label="Ассистент печатает">
+      <div
+        className="h-8 w-8 rounded-full border-2 border-zinc-700 border-t-emerald-400 animate-spin"
+        data-testid="assistant-loading-spinner"
+      />
+      <span className="text-sm text-zinc-500">Думаю…</span>
     </div>
   );
 }

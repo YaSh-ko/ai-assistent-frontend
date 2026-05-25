@@ -1,12 +1,23 @@
-import { Button } from "@/components/ui/button";
-import { useThreads } from "@/providers/Thread";
+﻿import { useThreads } from "@/providers/Thread";
 import { Thread } from "@langchain/langgraph-sdk";
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import type { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
-  ChevronLeft, ChevronDown, ChevronUp, Plus, Star,
-  MoreHorizontal, Bookmark, BookmarkCheck, FolderInput, Trash2, Check, Pencil,
+  ChevronLeft,
+  Plus,
+  Star,
+  MoreHorizontal,
+  Bookmark,
+  BookmarkCheck,
+  FolderInput,
+  Trash2,
+  Check,
+  Pencil,
+  Search,
+  PanelLeftClose,
+  PanelLeft,
+  Home,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -20,41 +31,47 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { getContentString } from "../utils";
+import { formatSidebarThreadTitle, getContentString } from "../utils";
 import { useQueryState, parseAsBoolean } from "nuqs";
 import {
   Sheet,
   SheetContent,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { chatApi } from "@/lib/api-client";
+import { toast } from "sonner";
+import { ThreadDeleteDialog } from "../thread-delete-dialog";
+import "../../../styles/thread-sidebar.css";
+
+export const THREAD_SIDEBAR_WIDTH = 260;
+export const THREAD_SIDEBAR_COLLAPSED_WIDTH = 56;
+export const THREAD_SIDEBAR_TRANSITION_MS = 250;
 
 const CATEGORIES = [
-  { key: "entry",      label: "События" },
-  { key: "goal",       label: "Цели/Желания" },
-  { key: "experiment", label: "Эксперименты" },
-  { key: "analysis",   label: "Анализ настоящего/прошлого" },
-  { key: "general",    label: "Чатики" },
+  { key: "entry", label: "Наблюдения" },
+  { key: "goal", label: "Цели" },
+  { key: "experiment", label: "Задачи" },
+  { key: "analysis", label: "Разбор" },
+  { key: "general", label: "Недавнее" },
 ] as const;
 
-type CategoryKey = typeof CATEGORIES[number]["key"];
+type CategoryKey = (typeof CATEGORIES)[number]["key"];
 
 function getThreadTitle(t: Thread): string {
   const values = t.values as Record<string, unknown> | undefined;
-  if (values && typeof values.title === "string") return values.title;
-  if (values && Array.isArray(values.messages) && values.messages.length > 0) {
+  let raw = "";
+  if (values && typeof values.title === "string") {
+    raw = values.title;
+  } else if (values && Array.isArray(values.messages) && values.messages.length > 0) {
     const msgs = values.messages as Array<{ content: unknown }>;
-    return getContentString(msgs[0].content as string);
+    raw = getContentString(msgs[0].content as string);
+  } else {
+    raw = t.thread_id.slice(0, 8);
   }
-  return t.thread_id;
+  return formatSidebarThreadTitle(raw);
 }
 
-/**
- * Keep menu open only while the pointer is over this thread's row or the portaled menu / submenu
- * (same anchor id). Any other area → close (no need to "drag through" the menu).
- */
 function shouldKeepThreadContextMenuOpen(
   clientX: number,
   clientY: number,
@@ -83,6 +100,7 @@ function ThreadContextMenu({
   onOpenChange,
   onClose,
   onRename,
+  onDelete,
   children,
 }: {
   readonly t: Thread;
@@ -90,9 +108,11 @@ function ThreadContextMenu({
   readonly onOpenChange: (open: boolean) => void;
   readonly onClose: () => void;
   readonly onRename: () => void;
+  readonly onDelete: () => void;
   readonly children: ReactNode;
 }) {
-  const { toggleFavorite, favoriteIds, updateThreadCategory, getThreads, setThreads } = useThreads();
+  const { toggleFavorite, favoriteIds, updateThreadCategory, getThreads, setThreads } =
+    useThreads();
   const isFav = favoriteIds.includes(t.thread_id);
   const currentCat = (t.metadata as { category?: string })?.category ?? "general";
 
@@ -101,12 +121,15 @@ function ThreadContextMenu({
     onClose();
   }, [toggleFavorite, t.thread_id, onClose]);
 
-  const handleCategory = useCallback(async (key: string) => {
-    await updateThreadCategory(t.thread_id, key);
-    const updated = await getThreads();
-    setThreads(updated);
-    onClose();
-  }, [updateThreadCategory, t.thread_id, getThreads, setThreads, onClose]);
+  const handleCategory = useCallback(
+    async (key: string) => {
+      await updateThreadCategory(t.thread_id, key);
+      const updated = await getThreads();
+      setThreads(updated);
+      onClose();
+    },
+    [updateThreadCategory, t.thread_id, getThreads, setThreads, onClose],
+  );
 
   return (
     <DropdownMenu
@@ -117,36 +140,43 @@ function ThreadContextMenu({
         if (!nextOpen) onClose();
       }}
     >
-      <DropdownMenuTrigger asChild>
-        {children}
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
       <DropdownMenuContent
-        align="start"
+        align="end"
         side="right"
-        sideOffset={8}
-        className="min-w-[180px] p-1 border border-white/20 bg-[#000019]/95 text-white shadow-2xl backdrop-blur-md"
+        sideOffset={4}
+        className="min-w-[200px] p-1 border border-zinc-700 bg-zinc-900 text-zinc-100 shadow-xl"
       >
-        <DropdownMenuItem onClick={handleFavorite} className="gap-2.5 text-sm hover:bg-white/10 focus:bg-white/10">
-          {isFav
-            ? <BookmarkCheck className="size-3.5 shrink-0 text-yellow-400 fill-yellow-400" />
-            : <Bookmark className="size-3.5 shrink-0" />}
+        <DropdownMenuItem
+          onClick={handleFavorite}
+          className="gap-2.5 text-sm rounded-md"
+        >
+          {isFav ? (
+            <BookmarkCheck className="size-3.5 shrink-0 text-amber-400 fill-amber-400" />
+          ) : (
+            <Bookmark className="size-3.5 shrink-0" />
+          )}
           {isFav ? "Убрать из избранного" : "В избранное"}
         </DropdownMenuItem>
 
         <DropdownMenuSub>
-          <DropdownMenuSubTrigger className="gap-2.5 text-sm hover:bg-white/10 focus:bg-white/10">
+          <DropdownMenuSubTrigger className="gap-2.5 text-sm rounded-md">
             <FolderInput className="size-3.5 shrink-0" />
             Пространство
           </DropdownMenuSubTrigger>
           <DropdownMenuPortal>
-            <DropdownMenuSubContent
-              className="min-w-[180px] border border-white/20 bg-[#000019]/95 text-white shadow-2xl backdrop-blur-md"
-            >
+            <DropdownMenuSubContent className="min-w-[200px] border border-zinc-700 bg-zinc-900 text-zinc-100 shadow-xl">
               {CATEGORIES.map((s) => (
-                <DropdownMenuItem key={s.key} onClick={() => handleCategory(s.key)} className="gap-2.5 text-sm hover:bg-white/10 focus:bg-white/10">
-                  {currentCat === s.key
-                    ? <Check className="size-3.5 shrink-0" />
-                    : <span className="size-3.5 shrink-0" />}
+                <DropdownMenuItem
+                  key={s.key}
+                  onClick={() => handleCategory(s.key)}
+                  className="gap-2.5 text-sm rounded-md"
+                >
+                  {currentCat === s.key ? (
+                    <Check className="size-3.5 shrink-0 text-emerald-400" />
+                  ) : (
+                    <span className="size-3.5 shrink-0" />
+                  )}
                   {s.label}
                 </DropdownMenuItem>
               ))}
@@ -154,14 +184,27 @@ function ThreadContextMenu({
           </DropdownMenuPortal>
         </DropdownMenuSub>
 
-        <DropdownMenuItem onClick={() => { onClose(); onRename(); }} className="gap-2.5 text-sm hover:bg-white/10 focus:bg-white/10">
+        <DropdownMenuItem
+          onClick={() => {
+            onClose();
+            onRename();
+          }}
+          className="gap-2.5 text-sm rounded-md"
+        >
           <Pencil className="size-3.5 shrink-0" />
           Переименовать
         </DropdownMenuItem>
 
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="bg-zinc-700" />
 
-        <DropdownMenuItem variant="destructive" onClick={onClose} className="gap-2.5 text-sm hover:bg-red-500/20 focus:bg-red-500/20">
+        <DropdownMenuItem
+          variant="destructive"
+          onClick={() => {
+            onClose();
+            onDelete();
+          }}
+          className="gap-2.5 text-sm rounded-md"
+        >
           <Trash2 className="size-3.5 shrink-0" />
           Удалить
         </DropdownMenuItem>
@@ -178,10 +221,18 @@ function ThreadItem({
   readonly onThreadClick?: (threadId: string) => void;
 }) {
   const [threadId, setThreadId] = useQueryState("threadId");
-  const { updateThreadTitle } = useThreads();
+  const {
+    updateThreadTitle,
+    getThreads,
+    setThreads,
+    favoriteIds,
+    toggleFavorite,
+  } = useThreads();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const itemText = getThreadTitle(t);
   const isActive = t.thread_id === threadId;
@@ -200,10 +251,41 @@ function ThreadItem({
     setIsEditing(false);
   }, [editValue, itemText, t.thread_id, updateThreadTitle]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") commitEdit();
-    if (e.key === "Escape") setIsEditing(false);
-  }, [commitEdit]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") commitEdit();
+      if (e.key === "Escape") setIsEditing(false);
+    },
+    [commitEdit],
+  );
+
+  const handleDeleteConfirm = useCallback(async () => {
+    setIsDeleting(true);
+    const ok = await chatApi.deleteConversation(t.thread_id);
+    setIsDeleting(false);
+    if (!ok) {
+      toast.error("Не удалось удалить чат");
+      return;
+    }
+    toast.success("Чат удалён");
+    setDeleteOpen(false);
+    if (favoriteIds.includes(t.thread_id)) {
+      toggleFavorite(t.thread_id);
+    }
+    if (threadId === t.thread_id) {
+      setThreadId(null);
+    }
+    const updated = await getThreads();
+    setThreads(updated);
+  }, [
+    t.thread_id,
+    favoriteIds,
+    toggleFavorite,
+    threadId,
+    setThreadId,
+    getThreads,
+    setThreads,
+  ]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -234,56 +316,65 @@ function ThreadItem({
 
   return (
     <div
-      className="w-full px-1 group relative"
+      className={`thread-sidebar__item ${isActive ? "thread-sidebar__item--active" : ""} ${menuOpen ? "thread-sidebar__item--menu-open" : ""}`}
       data-thread-context-menu-anchor={t.thread_id}
     >
       {isEditing ? (
-        <div className="px-3 py-1.5 w-[280px]">
-          <input
-            ref={inputRef}
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onBlur={commitEdit}
-            onKeyDown={handleKeyDown}
-            className="w-full bg-white/10 rounded px-2 py-1 text-sm text-white outline-none border border-white/20"
-          />
-        </div>
+        <input
+          ref={inputRef}
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={commitEdit}
+          onKeyDown={handleKeyDown}
+          className="thread-sidebar__item-input"
+          aria-label="Название чата"
+        />
       ) : (
-        <div className={`w-[280px] rounded-md transition-colors ${isActive || menuOpen ? "bg-white/12" : "bg-transparent hover:bg-white/10"}`}>
-          <Button
-            variant="ghost"
-            className="text-left items-start justify-start font-normal w-[280px] text-white hover:text-white hover:bg-transparent pr-8"
-            onClick={(e) => {
-              e.preventDefault();
+        <>
+          <button
+            type="button"
+            className="thread-sidebar__item-btn"
+            onClick={() => {
               onThreadClick?.(t.thread_id);
               if (t.thread_id === threadId) return;
               setThreadId(t.thread_id);
             }}
           >
-            <p className="truncate text-ellipsis">{itemText}</p>
-          </Button>
-        </div>
-      )}
-      {!isEditing && (
-        <ThreadContextMenu
-          t={t}
-          open={menuOpen}
-          onOpenChange={setMenuOpen}
-          onClose={() => setMenuOpen(false)}
-          onRename={triggerEdit}
-        >
-          <button
-            type="button"
-            data-thread-context-menu-trigger
-            onClick={(e) => e.stopPropagation()}
-            className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-white/40 hover:text-white/80 p-1"
-            aria-label="Меню чата"
-            aria-haspopup="menu"
-          >
-            <MoreHorizontal size={14} />
+            <span className="thread-sidebar__item-title" title={itemText}>
+              {itemText}
+            </span>
           </button>
-        </ThreadContextMenu>
+          <ThreadContextMenu
+            t={t}
+            open={menuOpen}
+            onOpenChange={setMenuOpen}
+            onClose={() => setMenuOpen(false)}
+            onRename={triggerEdit}
+            onDelete={() => setDeleteOpen(true)}
+          >
+            <button
+              type="button"
+              data-thread-context-menu-trigger
+              onClick={(e) => e.stopPropagation()}
+              className="thread-sidebar__item-menu"
+              aria-label="Меню чата"
+              aria-haspopup="menu"
+            >
+              <MoreHorizontal size={16} />
+            </button>
+          </ThreadContextMenu>
+        </>
       )}
+      {deleteOpen ? (
+        <ThreadDeleteDialog
+          open
+          isDeleting={isDeleting}
+          onConfirm={handleDeleteConfirm}
+          onClose={() => {
+            if (!isDeleting) setDeleteOpen(false);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -301,58 +392,35 @@ function CategorySection({
   readonly onNewChat: (key: CategoryKey) => void;
   readonly onThreadClick?: (threadId: string) => void;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
-  const PREVIEW_COUNT = 3;
-  const visibleThreads = collapsed ? threads.slice(0, PREVIEW_COUNT) : threads;
-  const hasMore = threads.length > PREVIEW_COUNT;
+  if (threads.length === 0) return null;
 
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between px-3 py-1.5">
-        <div className="flex items-center gap-1">
-          <button
-            className="text-white/60 hover:text-white transition-colors bg-transparent border-none p-0 cursor-pointer"
-            onClick={() => setCollapsed((c) => !c)}
-            aria-label={collapsed ? "Развернуть" : "Свернуть"}
-          >
-            {collapsed ? <ChevronDown className="size-3.5" /> : <ChevronUp className="size-3.5" />}
-          </button>
-          <span className="text-white/70 text-sm font-light">{label}</span>
-          {collapsed && hasMore && (
-            <span className="text-white/30 text-xs ml-1">{threads.length}</span>
-          )}
-        </div>
+    <section className="thread-sidebar__section">
+      <div className="thread-sidebar__section-head">
+        <span className="thread-sidebar__section-label">{label}</span>
         <button
-          className="text-white/60 hover:text-white transition-colors bg-transparent border-none p-0 cursor-pointer"
+          type="button"
+          className="thread-sidebar__section-add"
           onClick={() => onNewChat(categoryKey)}
           aria-label={`Новый чат в разделе ${label}`}
         >
-          <Plus className="size-4" />
+          <Plus className="size-3.5" />
         </button>
       </div>
-      <div className="flex flex-col w-full gap-0.5 pb-1">
-        {visibleThreads.map((t) => (
+      <div className="thread-sidebar__list">
+        {threads.map((t) => (
           <ThreadItem key={t.thread_id} t={t} onThreadClick={onThreadClick} />
         ))}
-        {collapsed && hasMore && (
-          <button
-            className="text-white/30 hover:text-white/60 text-xs px-4 py-0.5 text-left transition-colors bg-transparent border-none cursor-pointer"
-            onClick={() => setCollapsed(false)}
-          >
-            ещё {threads.length - PREVIEW_COUNT}…
-          </button>
-        )}
       </div>
-    </div>
+    </section>
   );
 }
 
 function ThreadHistoryLoading() {
-  const skeletonKeys = Array.from({ length: 10 }, (_, i) => `skeleton-${i}`);
   return (
-    <div className="flex flex-col w-full gap-2 items-start justify-start py-1 px-2">
-      {skeletonKeys.map((key) => (
-        <Skeleton key={key} className="w-[280px] h-8" />
+    <div className="flex flex-col gap-2 px-1 py-2">
+      {Array.from({ length: 8 }, (_, i) => (
+        <div key={`sk-${i}`} className="thread-sidebar__skeleton" data-testid="skeleton" />
       ))}
     </div>
   );
@@ -365,92 +433,99 @@ function FavoritesSection({
   readonly threads: Thread[];
   readonly onThreadClick?: (threadId: string) => void;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
   if (threads.length === 0) return null;
 
-  const PREVIEW_COUNT = 3;
-  const visibleThreads = collapsed ? threads.slice(0, PREVIEW_COUNT) : threads;
-  const hasMore = threads.length > PREVIEW_COUNT;
-
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between px-3 py-1.5">
-        <div className="flex items-center gap-1">
-          <button
-            className="text-white/60 hover:text-white transition-colors bg-transparent border-none p-0 cursor-pointer"
-            onClick={() => setCollapsed((c) => !c)}
-            aria-label={collapsed ? "Развернуть" : "Свернуть"}
-          >
-            {collapsed ? <ChevronDown className="size-3.5" /> : <ChevronUp className="size-3.5" />}
-          </button>
-          <Star className="size-3.5 text-yellow-400 fill-yellow-400" />
-          <span className="text-white/70 text-sm font-light">Избранное</span>
-          {collapsed && hasMore && (
-            <span className="text-white/30 text-xs ml-1">{threads.length}</span>
-          )}
-        </div>
+    <section className="thread-sidebar__section">
+      <div className="thread-sidebar__section-head">
+        <span className="thread-sidebar__section-label flex items-center gap-1.5">
+          <Star className="size-3 text-amber-400 fill-amber-400" />
+          Избранное
+        </span>
       </div>
-      <div className="flex flex-col w-full gap-0.5 pb-1">
-        {visibleThreads.map((t) => (
+      <div className="thread-sidebar__list">
+        {threads.map((t) => (
           <ThreadItem key={t.thread_id} t={t} onThreadClick={onThreadClick} />
         ))}
-        {collapsed && hasMore && (
-          <button
-            className="text-white/30 hover:text-white/60 text-xs px-4 py-0.5 text-left transition-colors bg-transparent border-none cursor-pointer"
-            onClick={() => setCollapsed(false)}
-          >
-            ещё {threads.length - PREVIEW_COUNT}…
-          </button>
-        )}
       </div>
-    </div>
+    </section>
   );
 }
 
 function GroupedThreadList({
   threads,
+  searchQuery,
   onThreadClick,
 }: {
   readonly threads: Thread[];
+  readonly searchQuery: string;
   readonly onThreadClick?: (threadId: string) => void;
 }) {
   const [, setThreadId] = useQueryState("threadId");
   const { getThreads, setThreads, favoriteIds: rawFavoriteIds } = useThreads();
   const favoriteIds = useMemo(() => rawFavoriteIds ?? [], [rawFavoriteIds]);
 
-  const favoriteThreads = useMemo(() => {
-    return threads.filter((t) => favoriteIds.includes(t.thread_id));
-  }, [threads, favoriteIds]);
+  const filteredThreads = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return threads;
+    return threads.filter((t) => getThreadTitle(t).toLowerCase().includes(q));
+  }, [threads, searchQuery]);
+
+  const favoriteThreads = useMemo(
+    () => filteredThreads.filter((t) => favoriteIds.includes(t.thread_id)),
+    [filteredThreads, favoriteIds],
+  );
 
   const threadsByCategory = useMemo(() => {
     const map: Record<CategoryKey, Thread[]> = {
-      entry: [], goal: [], experiment: [], analysis: [], general: [],
+      entry: [],
+      goal: [],
+      experiment: [],
+      analysis: [],
+      general: [],
     };
-    for (const t of threads) {
+    for (const t of filteredThreads) {
       const cat = (t.metadata as { category?: string })?.category ?? "general";
       const key = (cat in map ? cat : "general") as CategoryKey;
       map[key].push(t);
     }
     return map;
-  }, [threads]);
+  }, [filteredThreads]);
 
-  const handleNewChat = useCallback(async (key: CategoryKey) => {
-    if (key === "general") {
-      setThreadId(null);
-      return;
-    }
-    try {
-      const { thread_id } = await chatApi.createCategoryChat(key);
-      const updated = await getThreads();
-      setThreads(updated);
-      setThreadId(thread_id);
-    } catch (err) {
-      console.error("Не удалось создать чат в категории", err);
-    }
-  }, [setThreadId, getThreads, setThreads]);
+  const handleNewChat = useCallback(
+    async (key: CategoryKey) => {
+      if (key === "general") {
+        setThreadId(null);
+        return;
+      }
+      try {
+        const { thread_id } = await chatApi.createCategoryChat(key);
+        const updated = await getThreads();
+        setThreads(updated);
+        setThreadId(thread_id);
+      } catch (err) {
+        console.error("Не удалось создать чат в категории", err);
+      }
+    },
+    [setThreadId, getThreads, setThreads],
+  );
+
+  const hasAny =
+    favoriteThreads.length > 0 ||
+    CATEGORIES.some((c) => threadsByCategory[c.key].length > 0);
+
+  if (!hasAny) {
+    return (
+      <p className="thread-sidebar__empty">
+        {searchQuery.trim()
+          ? "Ничего не найдено"
+          : "Нет чатов. Нажмите «Новый чат», чтобы начать."}
+      </p>
+    );
+  }
 
   return (
-    <div className="flex flex-col w-full gap-1 py-1">
+    <>
       <FavoritesSection threads={favoriteThreads} onThreadClick={onThreadClick} />
       {CATEGORIES.map((cat) => (
         <CategorySection
@@ -462,20 +537,139 @@ function GroupedThreadList({
           onThreadClick={onThreadClick}
         />
       ))}
+    </>
+  );
+}
+
+function SidebarChrome({
+  collapsed,
+  onToggleCollapse,
+  onThreadClick,
+}: {
+  readonly collapsed: boolean;
+  readonly onToggleCollapse: () => void;
+  readonly onThreadClick?: (threadId: string) => void;
+}) {
+  const [, setThreadId] = useQueryState("threadId");
+  const [searchQuery, setSearchQuery] = useState("");
+  const { threads, threadsLoading } = useThreads();
+
+  const handleNewChat = useCallback(() => {
+    setThreadId(null);
+  }, [setThreadId]);
+
+  return (
+    <div className={collapsed ? "thread-sidebar thread-sidebar--collapsed" : "thread-sidebar"}>
+      <div className="thread-sidebar__rail">
+        <button
+          type="button"
+          className="thread-sidebar__rail-btn"
+          onClick={onToggleCollapse}
+          aria-label="Развернуть панель"
+          title="Развернуть"
+        >
+          <PanelLeft className="size-5" strokeWidth={1.75} />
+        </button>
+        <button
+          type="button"
+          className="thread-sidebar__rail-btn thread-sidebar__rail-btn--accent"
+          onClick={handleNewChat}
+          aria-label="Новый чат"
+          title="Новый чат"
+        >
+          <Plus className="size-5" strokeWidth={2} />
+        </button>
+        <div className="thread-sidebar__rail-spacer" />
+        <Link
+          to="/navigation"
+          className="thread-sidebar__rail-btn"
+          aria-label="На главную"
+          title="На главную"
+        >
+          <Home className="size-5" strokeWidth={1.75} />
+        </Link>
+      </div>
+
+      <div className="thread-sidebar__panel">
+        <header className="thread-sidebar__header">
+          <Link to="/navigation" className="thread-sidebar__brand">
+            Delёz
+          </Link>
+          <button
+            type="button"
+            className="thread-sidebar__icon-btn"
+            onClick={onToggleCollapse}
+            aria-label="Свернуть панель"
+          >
+            <PanelLeftClose className="size-5" strokeWidth={1.75} />
+          </button>
+        </header>
+
+        <div className="thread-sidebar__toolbar">
+          <button type="button" className="thread-sidebar__new-chat" onClick={handleNewChat}>
+            <Plus className="thread-sidebar__new-chat-icon size-4" strokeWidth={2} />
+            <span className="thread-sidebar__new-chat-label">Новый чат</span>
+          </button>
+          <div className="thread-sidebar__search-wrap">
+            <Search className="thread-sidebar__search-icon size-4" strokeWidth={2} />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Поиск чатов…"
+              className="thread-sidebar__search"
+              aria-label="Поиск чатов"
+            />
+          </div>
+        </div>
+
+        <div className="thread-sidebar__scroll delez-scrollbar">
+          {threadsLoading ? (
+            <ThreadHistoryLoading />
+          ) : (
+            <GroupedThreadList
+              threads={threads}
+              searchQuery={searchQuery}
+              onThreadClick={onThreadClick}
+            />
+          )}
+        </div>
+
+        <footer className="thread-sidebar__footer">
+          <Link to="/navigation" className="thread-sidebar__footer-link">
+            <ChevronLeft className="size-4 shrink-0" />
+            На главную
+          </Link>
+        </footer>
+      </div>
     </div>
   );
 }
 
-export default function ThreadHistory() {
+export default function ThreadHistory({
+  collapsed = false,
+  onToggleCollapse,
+}: {
+  readonly collapsed?: boolean;
+  readonly onToggleCollapse?: () => void;
+}) {
   const isLargeScreen = useMediaQuery("(min-width: 1024px)");
-  const navigate = useNavigate();
   const [chatHistoryOpen, setChatHistoryOpen] = useQueryState(
     "chatHistoryOpen",
-    parseAsBoolean.withDefault(false),
+    parseAsBoolean.withDefault(true),
   );
-  const [,] = useQueryState("threadId");
 
-  const { getThreads, threads, setThreads, threadsLoading, setThreadsLoading } = useThreads();
+  const toggleCollapse = useCallback(() => {
+    if (onToggleCollapse) {
+      onToggleCollapse();
+      return;
+    }
+    setChatHistoryOpen((p) => !p);
+  }, [onToggleCollapse, setChatHistoryOpen]);
+
+  const isCollapsed = onToggleCollapse ? collapsed : !chatHistoryOpen;
+
+  const { getThreads, setThreads, setThreadsLoading } = useThreads();
 
   useEffect(() => {
     if (globalThis.window === undefined) return;
@@ -489,32 +683,19 @@ export default function ThreadHistory() {
 
   return (
     <>
-      {/* Desktop — статический блок в потоке документа */}
-      <div className="hidden lg:flex flex-col border-r border-white/20 items-start justify-start h-full w-[300px] shrink-0 shadow-inner-right bg-[#000019] overflow-hidden rounded-r-[20px]">
-        <div className="w-full border-b border-white/20 pb-3 pt-3 bg-[#000019] rounded-tr-[20px] shrink-0">
-          <div className="flex items-center justify-between w-full px-4">
-            <button
-              style={{ color: 'white' }}
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer bg-transparent border-none p-0 outline-none"
-              onClick={() => navigate('/navigation')}
-            >
-              <ChevronLeft className="size-5" style={{ color: 'white' }} />
-              <span className="text-base font-light tracking-tight" style={{ color: 'white' }}>На главную</span>
-            </button>
-            <button
-              className="hover:opacity-80 transition-opacity cursor-pointer bg-transparent border-none p-0 outline-none"
-              onClick={() => setChatHistoryOpen((p) => !p)}
-            >
-              <img src="/Vector.png" alt="Close Sidebar" className="size-5" />
-            </button>
-          </div>
-        </div>
-        <div className="w-full bg-[#000019] flex-1 overflow-y-auto overflow-x-hidden rounded-br-[20px] delez-scrollbar">
-          {threadsLoading ? <ThreadHistoryLoading /> : <GroupedThreadList threads={threads} />}
-        </div>
+      <div
+        className={
+          isCollapsed
+            ? "thread-sidebar-shell thread-sidebar-shell--collapsed hidden lg:block"
+            : "thread-sidebar-shell hidden lg:block"
+        }
+      >
+        <SidebarChrome
+          collapsed={isCollapsed}
+          onToggleCollapse={toggleCollapse}
+        />
       </div>
 
-      {/* Mobile — Sheet */}
       <div className="lg:hidden">
         <Sheet
           open={!!chatHistoryOpen && !isLargeScreen}
@@ -525,40 +706,14 @@ export default function ThreadHistory() {
         >
           <SheetContent
             side="left"
-            className="lg:hidden flex flex-col min-h-0 bg-[#000019] border-r border-white/20 p-0 w-[300px] max-h-[100dvh] rounded-r-[20px] overflow-hidden"
+            className="flex flex-col min-h-0 p-0 w-[min(100vw,260px)] max-h-[100dvh] border-r border-zinc-800 bg-[var(--growth-bg)] overflow-hidden"
           >
             <SheetTitle className="sr-only">История чатов</SheetTitle>
-            <div className="w-full border-b border-white/20 pb-2 shrink-0">
-              <div className="relative flex items-center justify-center w-full px-4">
-                <Button
-                  className="text-white absolute left-[1px] top-1/2 -translate-y-1/2 hover:bg-transparent focus:bg-transparent active:bg-transparent hover:text-white focus:text-white active:text-white"
-                  variant="ghost"
-                  onClick={() => navigate('/navigation')}
-                >
-                  <ChevronLeft className="size-6" />
-                </Button>
-                <h1 className="text-xl font-light tracking-tight text-white relative left-[-20px]">
-                  На главную
-                </h1>
-                <Button
-                  className="hover:bg-transparent text-white absolute right-1 top-1/2 -translate-y-1/2"
-                  variant="ghost"
-                  onClick={() => setChatHistoryOpen((p) => !p)}
-                >
-                  <img src="/Vector.png" alt="Sidebar" className="size-5" />
-                </Button>
-              </div>
-            </div>
-            <div className="flex-1 overflow-y-auto overflow-x-hidden delez-scrollbar">
-              {threadsLoading ? (
-                <ThreadHistoryLoading />
-              ) : (
-                <GroupedThreadList
-                  threads={threads}
-                  onThreadClick={() => setChatHistoryOpen((o) => !o)}
-                />
-              )}
-            </div>
+            <SidebarChrome
+              collapsed={false}
+              onToggleCollapse={() => setChatHistoryOpen(false)}
+              onThreadClick={() => setChatHistoryOpen(false)}
+            />
           </SheetContent>
         </Sheet>
       </div>

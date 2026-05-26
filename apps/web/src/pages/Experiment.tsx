@@ -389,7 +389,7 @@ const Experiment = () => {
                                 </p>
                                 {linkedThread && (
                                     <Link
-                                        to={`/?threadId=${linkedThread}`}
+                                        to={`/chat?threadId=${linkedThread}`}
                                         className="text-gray-400 hover:text-white transition-colors text-xs flex items-center justify-end gap-1"
                                     >
                                         <MessageSquare className="w-3 h-3" />
@@ -468,7 +468,7 @@ const Experiment = () => {
                             {linkedThread && (
                                 <div className="mt-4 pt-4">
                                     <Link
-                                        to={`/?threadId=${linkedThread}`}
+                                        to={`/chat?threadId=${linkedThread}`}
                                         className="text-gray-400 hover:text-white transition-colors text-sm flex items-center justify-end gap-1"
                                     >
                                         <MessageSquare className="w-4 h-4" />

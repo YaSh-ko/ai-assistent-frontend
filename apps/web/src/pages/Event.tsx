@@ -181,7 +181,7 @@ export default function Event() {
                   <h2 className="text-sm font-semibold" style={{ color: '#ffffff' }}>Описание</h2>
                   {linkedThread && (
                     <Link
-                      to={`/?threadId=${linkedThread}`}
+                      to={`/chat?threadId=${linkedThread}`}
                       className="text-xs flex items-center gap-1 transition-colors hover:text-white"
                       style={{ color: '#A1A1AA' }}
                     >

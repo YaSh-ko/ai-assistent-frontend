@@ -7,7 +7,6 @@ import {
   GitFork,
   BarChart2,
   User,
-  NotebookPen,
 } from 'lucide-react';
 import '../styles/navigation.css';
 
@@ -26,12 +25,6 @@ const sections: NavSection[] = [
     to: '/events',
   },
   {
-    title: 'Заметки',
-    subtitle: 'Блокноты и записи',
-    icon: <NotebookPen strokeWidth={1.5} />,
-    to: '/records',
-  },
-  {
     title: 'Рост',
     subtitle: 'Цели и эксперименты',
     icon: <Target strokeWidth={1.5} />,
@@ -45,7 +38,7 @@ const sections: NavSection[] = [
   },
   {
     title: 'Аналитика',
-    subtitle: 'Паттерны и прогресс',
+    subtitle: 'Календарь и сводки',
     icon: <BarChart2 strokeWidth={1.5} />,
     to: '/report',
   },

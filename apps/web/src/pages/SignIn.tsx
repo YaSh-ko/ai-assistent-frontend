@@ -1,217 +1,179 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowRight } from "lucide-react";
 import { validateEmail } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import authApi from "@/lib/api-client";
-import ParticlesBackground from "@/components/ParticlesBackground";
-import PasswordToggleButton from "@/components/PasswordToggleButton";
-import "../styles/auth.css";
-
-
-
-// CSS для screen reader only текста
-const srOnlyStyle = {
-    position: 'absolute' as const,
-    width: '1px',
-    height: '1px',
-    padding: '0',
-    margin: '-1px',
-    overflow: 'hidden',
-    clip: 'rect(0, 0, 0, 0)',
-    whiteSpace: 'nowrap' as const,
-    border: '0'
-};
 
 export default function SignIn() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
-    const [rememberMe, setRememberMe] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-    const handleSignIn = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError(null);
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
 
-        logger.debug('Attempting sign in', { email, emailLength: email.length });
+    if (!validateEmail(email)) {
+      setError("Некорректный email");
+      return;
+    }
+    if (!password) {
+      setError("Введите пароль");
+      return;
+    }
 
-        // Client-side validation
-        const isEmailValid = validateEmail(email);
-        logger.debug('Email validation result', { isValid: isEmailValid });
+    setIsLoading(true);
+    try {
+      const body = { email: email.trim().toLowerCase(), password };
+      const { response, data } = await authApi.signIn(body.email, body.password);
 
-        if (!isEmailValid) {
-            logger.warn('Email validation failed', { email });
-            setError("Некорректный формат email-адреса");
-            return;
-        }
-        if (!password) {
-            setError("Введите пароль");
-            return;
-        }
+      if (!response.ok) {
+        await handleError(response, data);
+        return;
+      }
 
-        setIsLoading(true);
+      if (data.session?.token) {
+        localStorage.setItem("auth_token", data.session.token);
+      }
 
-        try {
-            const requestBody = {
-                email: email.trim().toLowerCase(),
-                password
-            };
+      logger.authEvent("User signed in", { email: body.email });
+      navigate("/navigation");
+    } catch (err: any) {
+      logger.authError("Sign in failed", err);
+      setError(err?.message || "Не удалось войти");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-            const { response, data } = await authApi.signIn(requestBody.email, requestBody.password);
-            
-            logger.debug('Sign in response data', data);
+  const handleError = async (response: Response, data: any) => {
+    const msg = data.message || data.error || "";
 
-            if (!response.ok) {
-                await handleSignInError(response, data);
-                return;
-            }
+    if (response.status === 500)
+      throw new Error("Ошибка сервера, попробуйте позже");
 
-            // Store session token if provided
-            if (data.session?.token) {
-                localStorage.setItem("auth_token", data.session.token);
-            }
+    if (response.status === 401) {
+      if (msg.toLowerCase().includes("user not found"))
+        throw new Error("Пользователь не найден");
+      if (msg.toLowerCase().includes("not verified") || msg.toLowerCase().includes("не подтвержден")) {
+        navigate("/verify-email", { state: { email: email.trim().toLowerCase() } });
+        return;
+      }
+      throw new Error("Неверный email или пароль");
+    }
 
-            logger.authEvent('User signed in successfully', { email: requestBody.email });
-            navigate("/navigation");
-        } catch (err: any) {
-            logger.authError('Sign in failed', err);
-            setError(err?.message || "Не удалось выполнить вход. Попробуйте ещё раз.");
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    if (response.status === 400)
+      throw new Error(msg || "Неверный формат данных");
 
-    const handleSignInError = async (response: Response, data: any) => {
-        const message = data.message || data.error || '';
+    if (response.status === 403 && (msg.toLowerCase().includes("verify") || msg.toLowerCase().includes("подтвер"))) {
+      navigate("/verify-email", { state: { email: email.trim().toLowerCase() } });
+      return;
+    }
 
-        // Ошибка сервера (500) — проблема на стороне бэкенда
-        if (response.status === 500) {
-            logger.error('Server error during sign in', { status: 500, message });
-            throw new Error("Ошибка сервера. Пожалуйста, попробуйте позже или обратитесь в поддержку.");
-        }
+    throw new Error(msg || "Ошибка входа");
+  };
 
-        if (response.status === 401) {
-            if (message.toLowerCase().includes('user not found')) {
-                throw new Error("Пользователь с таким email-адресом не найден");
-            }
+  const inputCls =
+    "block w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/90 outline-none transition placeholder:text-white/30 focus:border-white/25 focus:bg-white/[0.06]";
 
-            if (message.toLowerCase().includes('email not verified') || message.toLowerCase().includes('не подтвержден')) {
-                navigate("/verify-email", {
-                    state: { email: email.trim().toLowerCase() }
-                });
-                return;
-            }
-
-            throw new Error("Неверный email-адрес или пароль");
-        }
-
-        // Handle unverified email error (status 400)
-        if (response.status === 400) {
-            if (message.toLowerCase().includes('не подтвержден') || message.toLowerCase().includes('email')) {
-                throw new Error(message);
-            }
-            throw new Error(message || "Неверный формат данных");
-        }
-
-        const hasVerifyMessage = message.toLowerCase().includes('verify') || message.toLowerCase().includes('подтвер');
-        if (response.status === 403 && hasVerifyMessage) {
-            navigate("/verify-email", {
-                state: { email: email.trim().toLowerCase() }
-            });
-            return;
-        }
-
-        throw new Error(message || "Ошибка входа");
-    };
-
-    return (
-        <div className="auth-body auth-page">
-            <ParticlesBackground />
-            <div className="auth-container">
-                <div className="form-box">
-                    <h2 className="auth-title">С ВОЗВРАЩЕНИЕМ</h2>
-                    <p className="auth-subtitle">Войдите в аккаунт, чтобы продолжить путь</p>
-
-                    <form className="auth-form" onSubmit={handleSignIn}>
-                        <div className="input-group">
-                            <input
-                                id="signin-email"
-                                type="text"
-                                className="input-field"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                autoComplete="email"
-                                aria-describedby={error ? "signin-error" : undefined}
-                            />
-                            <label htmlFor="signin-email">Электронная почта</label>
-                            <div className="glow-line"></div>
-                        </div>
-
-                        <div className="input-group" style={{ position: 'relative' }}>
-                            <input
-                                id="signin-password"
-                                type={showPassword ? "text" : "password"}
-                                className="input-field"
-                                style={{ paddingRight: '40px' }}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                autoComplete="current-password"
-                                aria-describedby={error ? "signin-error" : undefined}
-                            />
-                            <label htmlFor="signin-password">Пароль</label>
-                            <PasswordToggleButton show={showPassword} onToggle={() => setShowPassword(!showPassword)} />
-                            <div className="glow-line"></div>
-                        </div>
-
-                        <div className="remember-forgot">
-                            <div className="remember">
-                                <input
-                                    type="checkbox"
-                                    id="remember"
-                                    checked={rememberMe}
-                                    onChange={(e) => setRememberMe(e.target.checked)}
-                                />
-                                <label htmlFor="remember">Запомнить меня</label>
-                            </div>
-                            <Link to="/forgot-password" className="forgot">Забыли пароль?</Link>
-                        </div>
-
-                        {error && (
-                            <div id="signin-error" className="error-message" role="alert" aria-live="polite">
-                                {error}
-                            </div>
-                        )}
-
-                        <button
-                            type="submit"
-                            className="auth-btn"
-                            disabled={isLoading}
-                            aria-describedby={isLoading ? "loading-status" : undefined}
-                        >
-                            <div className="btn-glow"></div>
-                            <span>
-                                {isLoading ? (
-                                    <>
-                                        <Loader2 className="animate-spin" size={20} aria-hidden="true" />
-                                        <span id="loading-status" style={srOnlyStyle}>Выполняется вход...</span>
-                                    </>
-                                ) : (
-                                    "ВОЙТИ"
-                                )}
-                            </span>
-                        </button>
-                    </form>
-
-                    <div className="auth-link">
-                        Хотите попробовать? <Link to="/beta-test">Записаться на бета-тест</Link>
-                    </div>
-                </div>
-            </div>
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[var(--growth-bg,#0f0f10)] px-4">
+      <div className="w-full max-w-sm">
+        {/* Logo */}
+        <div className="mb-8 text-center">
+          <Link to="/" className="inline-block">
+            <h1 className="text-2xl font-bold tracking-tight text-white">Delёz</h1>
+          </Link>
+          <p className="mt-2 text-sm text-white/40">Бортовой журнал развития</p>
         </div>
-    );
+
+        {/* Form card */}
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-sm">
+          <h2 className="text-lg font-semibold text-white">Вход</h2>
+          <p className="mt-1 mb-6 text-sm text-white/40">Войдите, чтобы продолжить</p>
+
+          <form onSubmit={handleSignIn} className="space-y-4">
+            <div>
+              <label htmlFor="email" className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/40">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={inputCls}
+                placeholder="you@example.com"
+                autoComplete="email"
+                required
+              />
+            </div>
+
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label htmlFor="password" className="text-xs font-medium uppercase tracking-wider text-white/40">
+                  Пароль
+                </label>
+                <Link to="/forgot-password" className="text-xs text-white/30 transition hover:text-white/60">
+                  Забыли?
+                </Link>
+              </div>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={`${inputCls} pr-16`}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-white/30 transition hover:text-white/60"
+                  tabIndex={-1}
+                >
+                  {showPassword ? "Скрыть" : "Показать"}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-300" role="alert">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-white/[0.08] py-3 text-sm font-medium text-white transition hover:bg-white/[0.14] disabled:opacity-50"
+            >
+              {isLoading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <>
+                  Войти
+                  <ArrowRight className="size-4" />
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+
+        <p className="mt-5 text-center text-sm text-white/30">
+          Нет аккаунта?{" "}
+          <Link to="/beta-test" className="text-white/60 transition hover:text-white">
+            Записаться на бета-тест
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
 }

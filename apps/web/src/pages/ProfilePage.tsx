@@ -1,12 +1,23 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { authApi, importApi, type ProfileData } from "../lib/api-client";
+import { authApi, userApi, type ProfileData } from "../lib/api-client";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { toast } from "sonner";
+import {
+  User,
+  Shield,
+  Sparkles,
+  ChevronRight,
+  Mic,
+  MicOff,
+  LogOut,
+  Save,
+  Check,
+} from "lucide-react";
 
 type GenderValue = "male" | "female" | "other" | "";
-const AI_PERSONA_STORAGE_KEY = "delez_ai_persona_v1";
+type SectionId = "profile" | "security" | "assistant";
 
 const emptyProfile: ProfileData = {
   id: "",
@@ -17,13 +28,37 @@ const emptyProfile: ProfileData = {
   age: null,
 };
 
+const TONE_PRESETS = [
+  { id: "empathic", label: "Эмпатичный", desc: "Мягко, с пониманием и поддержкой" },
+  { id: "structured", label: "Структурный", desc: "Чётко, по делу, с планом" },
+  { id: "balanced", label: "Баланс", desc: "Эмпатия + структурность" },
+  { id: "coaching", label: "Коучинг", desc: "Вопросами к инсайтам" },
+  { id: "direct", label: "Прямой", desc: "Без воды, конкретные советы" },
+] as const;
+
+const ROLE_PRESETS = [
+  { id: "navigator", label: "Навигатор", desc: "Помогает определить направление" },
+  { id: "mentor", label: "Ментор", desc: "Делится опытом и подходами" },
+  { id: "analyst", label: "Аналитик", desc: "Раскладывает по полочкам" },
+  { id: "partner", label: "Партнёр", desc: "На равных, как друг-коллега" },
+] as const;
+
+const SECTIONS: { id: SectionId; label: string; icon: typeof User }[] = [
+  { id: "profile", label: "Профиль", icon: User },
+  { id: "security", label: "Безопасность", icon: Shield },
+  { id: "assistant", label: "Стиль ИИ", icon: Sparkles },
+];
+
+const inputCls =
+  "h-11 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white/90 outline-none transition placeholder:text-white/25 focus:border-white/25 focus:bg-white/[0.06]";
+
 export default function ProfilePage() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<ProfileData>(emptyProfile);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [securitySaving, setSecuritySaving] = useState(false);
-  const [section, setSection] = useState<"profile" | "security" | "support" | "import" | "assistant">("profile");
+  const [section, setSection] = useState<SectionId>("profile");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [securityError, setSecurityError] = useState<string | null>(null);
@@ -31,16 +66,12 @@ export default function ProfilePage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [importText, setImportText] = useState<string>("");
-  const [assistantPersona, setAssistantPersona] = useState<string>("Баланс: эмпатия + структурность");
-  const [assistantRole, setAssistantRole] = useState<string>("Навигатор изменений");
-  const [importSaving, setImportSaving] = useState<boolean>(false);
-  const [importCreateEntries, setImportCreateEntries] = useState<boolean>(true);
-  const [importCreateGoals, setImportCreateGoals] = useState<boolean>(true);
-  const [importCreateExperiments, setImportCreateExperiments] = useState<boolean>(true);
-  const [importResult, setImportResult] = useState<string | null>(null);
 
-  // Голосовой ввод для поля "О себе"
+  const [assistantTone, setAssistantTone] = useState("balanced");
+  const [assistantRole, setAssistantRole] = useState("navigator");
+  const [customTone, setCustomTone] = useState("");
+  const [customRole, setCustomRole] = useState("");
+
   const bioTextareaRef = useRef<HTMLTextAreaElement>(null);
   const {
     isListening: isBioListening,
@@ -52,26 +83,25 @@ export default function ProfilePage() {
   } = useSpeechRecognition();
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(AI_PERSONA_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as { persona?: string; role?: string };
-      if (typeof parsed.persona === "string" && parsed.persona.trim()) {
-        setAssistantPersona(parsed.persona);
+    userApi.getPersona().then((data) => {
+      if (data.ai_persona_tone) {
+        const found = TONE_PRESETS.find((p) => p.id === data.ai_persona_tone || p.desc === data.ai_persona_tone);
+        if (found) setAssistantTone(found.id);
+        else { setAssistantTone("custom"); setCustomTone(data.ai_persona_tone); }
       }
-      if (typeof parsed.role === "string" && parsed.role.trim()) {
-        setAssistantRole(parsed.role);
+      if (data.ai_persona_role) {
+        const found = ROLE_PRESETS.find((p) => p.id === data.ai_persona_role || p.label === data.ai_persona_role);
+        if (found) setAssistantRole(found.id);
+        else { setAssistantRole("custom"); setCustomRole(data.ai_persona_role); }
       }
-    } catch (error) {
-      console.error("Не удалось загрузить персону ИИ", error);
-    }
+    }).catch(() => { /* ignore */ });
   }, []);
 
   useEffect(() => {
     if (bioTranscript) {
       setProfile((prev) => {
-        const separator = prev.bio?.trim() ? ' ' : '';
-        return { ...prev, bio: (prev.bio ?? '') + separator + bioTranscript };
+        const sep = prev.bio?.trim() ? " " : "";
+        return { ...prev, bio: (prev.bio ?? "") + sep + bioTranscript };
       });
       resetTranscript();
     }
@@ -82,9 +112,8 @@ export default function ProfilePage() {
       toast.error("Голосовой ввод не поддерживается в вашем браузере");
       return;
     }
-    if (isBioListening) {
-      stopListening();
-    } else {
+    if (isBioListening) stopListening();
+    else {
       setTimeout(() => bioTextareaRef.current?.focus(), 0);
       startListening();
     }
@@ -103,20 +132,19 @@ export default function ProfilePage() {
         setLoading(false);
       }
     };
-
     void load();
   }, []);
 
   useEffect(() => {
     if (!success) return;
-    const timeoutId = globalThis.setTimeout(() => setSuccess(null), 5000);
-    return () => globalThis.clearTimeout(timeoutId);
+    const t = globalThis.setTimeout(() => setSuccess(null), 4000);
+    return () => globalThis.clearTimeout(t);
   }, [success]);
 
   useEffect(() => {
     if (!securitySuccess) return;
-    const timeoutId = globalThis.setTimeout(() => setSecuritySuccess(null), 5000);
-    return () => globalThis.clearTimeout(timeoutId);
+    const t = globalThis.setTimeout(() => setSecuritySuccess(null), 4000);
+    return () => globalThis.clearTimeout(t);
   }, [securitySuccess]);
 
   const ageInputValue = useMemo(() => {
@@ -137,43 +165,35 @@ export default function ProfilePage() {
         age: profile.age ?? null,
       });
       setProfile((prev) => ({ ...prev, ...updated, age: updated.age ?? prev.age }));
-      setSuccess("Профиль сохранен");
+      setSuccess("Профиль сохранён");
     } catch (err: any) {
-      setError(err?.message || "Не удалось сохранить профиль");
+      setError(err?.message || "Не удалось сохранить");
     } finally {
       setSaving(false);
     }
   };
 
-  const setGender = (value: GenderValue) => {
+  const setGender = (value: GenderValue) =>
     setProfile((prev) => ({ ...prev, gender: value || null }));
-  };
 
-  const setAgeValue = (nextValue: number | null) => {
-    if (nextValue == null) {
-      setProfile((prev) => ({ ...prev, age: null }));
-      return;
-    }
-    const safeValue = Math.min(120, Math.max(0, nextValue));
-    setProfile((prev) => ({ ...prev, age: safeValue }));
+  const setAgeValue = (v: number | null) => {
+    if (v == null) { setProfile((prev) => ({ ...prev, age: null })); return; }
+    setProfile((prev) => ({ ...prev, age: Math.min(120, Math.max(0, v)) }));
   };
-
-  const increaseAge = () => setAgeValue((profile.age ?? 0) + 1);
-  const decreaseAge = () => setAgeValue((profile.age ?? 0) - 1);
 
   const handleChangePassword = async () => {
     setSecurityError(null);
     setSecuritySuccess(null);
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setSecurityError("Заполните все поля пароля");
+      setSecurityError("Заполните все поля");
       return;
     }
     if (newPassword.length < 6) {
-      setSecurityError("Новый пароль должен быть минимум 6 символов");
+      setSecurityError("Минимум 6 символов");
       return;
     }
     if (newPassword !== confirmPassword) {
-      setSecurityError("Новый пароль и подтверждение не совпадают");
+      setSecurityError("Пароли не совпадают");
       return;
     }
     try {
@@ -182,7 +202,7 @@ export default function ProfilePage() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setSecuritySuccess("Пароль успешно изменен");
+      setSecuritySuccess("Пароль изменён");
     } catch (err: any) {
       setSecurityError(err?.message || "Не удалось сменить пароль");
     } finally {
@@ -191,247 +211,153 @@ export default function ProfilePage() {
   };
 
   const handleSignOut = async () => {
-    setSecurityError(null);
-    try {
-      await authApi.signOut();
-    } finally {
+    try { await authApi.signOut(); } finally {
       localStorage.removeItem("auth_token");
       navigate("/sign-in");
     }
   };
 
-  const handleMarkdownImport = async () => {
-    const markdown = importText.trim();
-    if (!markdown) {
-      setError("Добавь текст markdown для импорта");
-      setImportResult(null);
+  const resolvedTone = assistantTone === "custom"
+    ? customTone.trim()
+    : (TONE_PRESETS.find((p) => p.id === assistantTone)?.desc ?? "");
+  const resolvedRole = assistantRole === "custom"
+    ? customRole.trim()
+    : (ROLE_PRESETS.find((p) => p.id === assistantRole)?.label ?? "");
+
+  const handleSaveAssistant = async () => {
+    if (!resolvedTone || !resolvedRole) {
+      setError("Укажите стиль и роль ассистента");
       return;
     }
-
-    setImportSaving(true);
-    setError(null);
-    setImportResult(null);
     try {
-      const result = await importApi.importMarkdown({
-        markdown,
-        create_entries: importCreateEntries,
-        create_goals: importCreateGoals,
-        create_experiments: importCreateExperiments,
-        event_date: new Date().toISOString().slice(0, 10),
+      await userApi.patchPersona({
+        ai_persona_tone: resolvedTone,
+        ai_persona_role: resolvedRole,
       });
+      setError(null);
+      setSuccess("Настройки ИИ сохранены");
+    } catch {
+      setError("Не удалось сохранить настройки");
+    }
+  };
 
-      setImportResult(
-        `Импорт завершён: событий ${result.entries_created}, целей ${result.goals_created}, экспериментов ${result.experiments_created}.`,
-      );
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Импорт не выполнен";
-      setError(message);
-    } finally {
-      setImportSaving(false);
-    }
-  };
-  const handleSaveAssistantPersona = () => {
-    const persona = assistantPersona.trim();
-    const role = assistantRole.trim();
-    if (!persona || !role) {
-      setError("Заполни стиль и роль ассистента");
-      setSuccess(null);
-      return;
-    }
-    localStorage.setItem(AI_PERSONA_STORAGE_KEY, JSON.stringify({ persona, role }));
-    setError(null);
-    setSuccess("Персона ИИ сохранена и применяется в чате");
-  };
-  // Status content based on current section
-  const statusContent = (() => {
-    if (section === "profile") {
-      return (
-        <>
-          {error ? <span className="text-rose-300">{error}</span> : null}
-          {!error && success ? <span className="text-emerald-300">{success}</span> : null}
-        </>
-      );
-    }
-    if (section === "security") {
-      return (
-        <>
-          {securityError ? <span className="text-rose-300">{securityError}</span> : null}
-          {!securityError && securitySuccess ? <span className="text-emerald-300">{securitySuccess}</span> : null}
-        </>
-      );
-    }
-    if (section === "support" || section === "import" || section === "assistant") {
-      return (
-        <div className="pointer-events-none flex h-32 items-center justify-center rounded-xl border border-zinc-800/80 bg-white/5 px-6 text-sm text-white/50">
-          Delёz · рост и развитие
-        </div>
-      );
-    }
-    return null;
+  const statusMsg = (() => {
+    if (section === "profile") return error || success || null;
+    if (section === "security") return securityError || securitySuccess || null;
+    return error || success || null;
   })();
+  const statusIsError = section === "security" ? !!securityError : !!error;
+
   return (
-    <div className="growth-page h-screen overflow-hidden">
-      <div className="relative mx-auto h-full max-w-6xl px-6 py-6">
-        <div className="pointer-events-none absolute inset-0 opacity-35">
-          <svg viewBox="0 0 1200 760" className="h-full w-full">
-            <g stroke="rgba(255,255,255,0.10)" strokeWidth="1">
-              <line x1="80" y1="120" x2="260" y2="190" />
-              <line x1="260" y1="190" x2="420" y2="120" />
-              <line x1="420" y1="120" x2="610" y2="210" />
-              <line x1="610" y1="210" x2="810" y2="140" />
-              <line x1="810" y1="140" x2="1030" y2="220" />
-              <line x1="170" y1="510" x2="330" y2="430" />
-              <line x1="330" y1="430" x2="530" y2="520" />
-              <line x1="530" y1="520" x2="760" y2="430" />
-              <line x1="760" y1="430" x2="980" y2="520" />
-            </g>
-            <g fill="rgba(255,255,255,0.18)">
-              <circle cx="80" cy="120" r="2" />
-              <circle cx="260" cy="190" r="2" />
-              <circle cx="420" cy="120" r="2" />
-              <circle cx="610" cy="210" r="2" />
-              <circle cx="810" cy="140" r="2" />
-              <circle cx="1030" cy="220" r="2" />
-              <circle cx="170" cy="510" r="2" />
-              <circle cx="330" cy="430" r="2" />
-              <circle cx="530" cy="520" r="2" />
-              <circle cx="760" cy="430" r="2" />
-              <circle cx="980" cy="520" r="2" />
-            </g>
-          </svg>
-        </div>
-        <div className="pointer-events-none absolute left-0 top-0 h-72 w-72 rounded-full bg-violet-500/10 blur-3xl" />
-        <div className="pointer-events-none absolute bottom-0 right-0 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl" />
-
-        <div className="relative flex h-full flex-col">
-          <div className="mb-5 flex items-end justify-between">
-            <div>
-              <p className="text-sm text-slate-400">
-                <Link to="/navigation" className="transition hover:text-slate-200">Главная</Link> /{" "}
-                <span className="text-slate-100">Профиль</span>
-              </p>
-              <h1 className="mt-3 text-4xl font-semibold">Профиль</h1>
-            </div>
-            <Link
-              to="/report"
-              className="growth-btn-secondary text-sm"
-            >
-              Аналитика
-            </Link>
+    <div className="h-screen overflow-hidden bg-[var(--growth-bg)] text-[var(--growth-text)]">
+      <div className="relative mx-auto flex h-full max-w-5xl flex-col px-6 py-6">
+        {/* Header */}
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <p className="text-sm text-white/40">
+              <Link to="/navigation" className="transition hover:text-white/70">Главная</Link>
+              <span className="mx-1.5 text-white/20">/</span>
+              <span className="text-white/70">Профиль</span>
+            </p>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight">Настройки</h1>
           </div>
+        </div>
 
-          {loading ? (
-            <div className="flex h-full items-center justify-center rounded-3xl border border-zinc-800/80 bg-white/[0.04] backdrop-blur">
-              Загрузка профиля...
-            </div>
-          ) : (
-            <div className="flex h-full min-h-0 gap-4">
-              <aside className="w-[210px] shrink-0 rounded-2xl border border-zinc-800/80 bg-[#070b22]/60 p-3">
-                <div className="mb-2 px-2 text-xs uppercase tracking-widest text-slate-500">Разделы</div>
-                <div className="flex flex-col gap-2">
+        {loading ? (
+          <div className="flex flex-1 items-center justify-center text-white/40">
+            Загрузка...
+          </div>
+        ) : (
+          <div className="flex min-h-0 flex-1 gap-5">
+            {/* Sidebar */}
+            <nav className="w-[200px] shrink-0 space-y-1 pt-1">
+              {SECTIONS.map(({ id, label, icon: Icon }) => {
+                const active = section === id;
+                return (
                   <button
+                    key={id}
                     type="button"
-                    onClick={() => setSection("profile")}
-                    className={`rounded-xl border px-3 py-2 text-left text-sm transition ${
-                      section === "profile"
-                        ? "border-white/30 bg-white/[0.10] text-white"
-                        : "border-transparent bg-transparent text-slate-300 hover:bg-white/[0.06]"
+                    onClick={() => setSection(id)}
+                    className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm transition ${
+                      active
+                        ? "bg-white/[0.08] text-white font-medium"
+                        : "text-white/50 hover:bg-white/[0.04] hover:text-white/70"
                     }`}
                   >
-                    Профиль
+                    <Icon className="size-4 shrink-0" />
+                    {label}
+                    {active && <ChevronRight className="ml-auto size-3.5 text-white/30" />}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setSection("security")}
-                    className={`rounded-xl border px-3 py-2 text-left text-sm transition ${
-                      section === "security"
-                        ? "border-white/30 bg-white/[0.10] text-white"
-                        : "border-transparent bg-transparent text-slate-300 hover:bg-white/[0.06]"
-                    }`}
-                  >
-                    Безопасность
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSection("import")}
-                    className={`rounded-xl border px-3 py-2 text-left text-sm transition ${
-                      section === "import"
-                        ? "border-white/30 bg-white/[0.10] text-white"
-                        : "border-transparent bg-transparent text-slate-300 hover:bg-white/[0.06]"
-                    }`}
-                  >
-                    Импорт
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSection("assistant")}
-                    className={`rounded-xl border px-3 py-2 text-left text-sm transition ${
-                      section === "assistant"
-                        ? "border-white/30 bg-white/[0.10] text-white"
-                        : "border-transparent bg-transparent text-slate-300 hover:bg-white/[0.06]"
-                    }`}
-                  >
-                    Персона ИИ
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSection("support")}
-                    className={`rounded-xl border px-3 py-2 text-left text-sm transition ${
-                      section === "support"
-                        ? "border-white/30 bg-white/[0.10] text-white"
-                        : "border-transparent bg-transparent text-slate-300 hover:bg-white/[0.06]"
-                    }`}
-                  >
-                    Поддержка
-                  </button>
-                </div>
-              </aside>
+                );
+              })}
 
-              <div className="flex min-h-0 flex-1 flex-col rounded-3xl border border-white/12 bg-white/[0.035] p-6 shadow-[0_18px_64px_-42px_rgba(0,0,0,0.6)] backdrop-blur">
-                <div className="min-h-0 flex-1">
-                  {section === "profile" ? (
-                    <div className="grid min-h-0 h-full grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="!mt-6 border-t border-white/[0.06] pt-4">
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm text-white/40 transition hover:bg-rose-500/10 hover:text-rose-400"
+                >
+                  <LogOut className="size-4" />
+                  Выйти
+                </button>
+              </div>
+            </nav>
+
+            {/* Content */}
+            <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
+              <div className="delez-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
+                {section === "profile" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-5"
+                  >
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <label className="block">
-                        <span className="mb-2 block text-sm text-slate-300">Имя</span>
+                        <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/40">Имя</span>
                         <input
                           value={profile.name ?? ""}
-                          onChange={(e) => setProfile((prev) => ({ ...prev, name: e.target.value }))}
-                          className="h-12 w-full rounded-xl border border-white/15 bg-[#070b22]/90 px-4 text-sm outline-none transition focus:border-white/35"
+                          onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))}
+                          className={inputCls}
+                          placeholder="Ваше имя"
                         />
                       </label>
 
                       <label className="block">
-                        <span className="mb-2 block text-sm text-slate-300">Email</span>
+                        <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/40">Email</span>
                         <input
                           type="email"
                           value={profile.email ?? ""}
-                          onChange={(e) => setProfile((prev) => ({ ...prev, email: e.target.value }))}
-                          className="h-12 w-full rounded-xl border border-white/15 bg-[#070b22]/90 px-4 text-sm outline-none transition focus:border-white/35"
+                          onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))}
+                          className={inputCls}
+                          placeholder="email@example.com"
                         />
                       </label>
+                    </div>
 
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div>
-                        <span className="mb-2 block text-sm text-slate-300">Пол</span>
-                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/40">Пол</span>
+                        <div className="flex gap-1.5">
                           {[
-                            { value: "", label: "Не указан" },
-                            { value: "male", label: "Мужской" },
-                            { value: "female", label: "Женский" },
-                            { value: "other", label: "Другой" },
-                          ].map((option) => {
-                            const active = ((profile.gender as GenderValue) ?? "") === option.value;
+                            { value: "", label: "—" },
+                            { value: "male", label: "М" },
+                            { value: "female", label: "Ж" },
+                            { value: "other", label: "Др" },
+                          ].map((opt) => {
+                            const active = ((profile.gender as GenderValue) ?? "") === opt.value;
                             return (
                               <button
-                                key={option.value || "unknown"}
+                                key={opt.value || "none"}
                                 type="button"
-                                onClick={() => setGender(option.value as GenderValue)}
-                                className={`h-12 rounded-xl border px-3 text-sm transition ${
+                                onClick={() => setGender(opt.value as GenderValue)}
+                                className={`h-11 flex-1 rounded-xl border text-sm transition ${
                                   active
-                                    ? "border-white/35 bg-white/[0.10] text-white"
-                                    : "border-white/15 bg-[#070b22]/80 text-slate-300 hover:border-white/25"
+                                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-medium"
+                                    : "border-white/10 bg-white/[0.03] text-white/50 hover:border-white/20 hover:text-white/70"
                                 }`}
                               >
-                                {option.label}
+                                {opt.label}
                               </button>
                             );
                           })}
@@ -439,312 +365,325 @@ export default function ProfilePage() {
                       </div>
 
                       <div>
-                        <span className="mb-2 block text-sm text-slate-300">Возраст</span>
-                        <div className="flex h-12 items-center rounded-xl border border-white/15 bg-[#070b22]/90">
+                        <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/40">Возраст</span>
+                        <div className="flex h-11 items-center rounded-xl border border-white/10 bg-white/[0.04]">
                           <button
                             type="button"
-                            onClick={decreaseAge}
-                            className="h-full w-12 rounded-l-xl border-r border-zinc-800/80 text-xl text-slate-300 transition hover:bg-zinc-800/60"
-                            aria-label="Уменьшить возраст"
+                            onClick={() => setAgeValue((profile.age ?? 0) - 1)}
+                            className="h-full w-11 rounded-l-xl text-lg text-white/40 transition hover:bg-white/[0.06] hover:text-white/70"
                           >
-                            -
+                            −
                           </button>
                           <input
                             inputMode="numeric"
                             value={ageInputValue}
                             onChange={(e) => {
-                              const digitsOnly = e.target.value.replaceAll(/\D/g, "");
-                              if (!digitsOnly) {
-                                setAgeValue(null);
-                                return;
-                              }
-                              setAgeValue(Number(digitsOnly));
+                              const d = e.target.value.replaceAll(/\D/g, "");
+                              setAgeValue(d ? Number(d) : null);
                             }}
                             placeholder="—"
-                            className="h-full flex-1 bg-transparent px-3 text-center text-base outline-none"
+                            className="h-full flex-1 bg-transparent text-center text-sm outline-none"
                           />
                           <button
                             type="button"
-                            onClick={increaseAge}
-                            className="h-full w-12 rounded-r-xl border-l border-zinc-800/80 text-xl text-slate-300 transition hover:bg-zinc-800/60"
-                            aria-label="Увеличить возраст"
+                            onClick={() => setAgeValue((profile.age ?? 0) + 1)}
+                            className="h-full w-11 rounded-r-xl text-lg text-white/40 transition hover:bg-white/[0.06] hover:text-white/70"
                           >
                             +
                           </button>
                         </div>
                       </div>
+                    </div>
 
-                      <label className="block md:col-span-2">
-                        <span className="mb-2 block text-sm text-slate-300">О себе</span>
-                        <div className="relative">
-                          <textarea
-                            ref={bioTextareaRef}
-                            rows={5}
-                            value={profile.bio ?? ""}
-                            onChange={(e) => setProfile((prev) => ({ ...prev, bio: e.target.value }))}
-                            className="delez-scrollbar h-[calc(100%-1.75rem)] min-h-28 w-full resize-none rounded-xl border border-white/15 bg-[#070b22]/90 px-4 py-3 pr-10 text-sm outline-none transition focus:border-white/35"
-                          />
-                          <motion.button
-                            type="button"
-                            onClick={handleBioVoiceInput}
-                            title={isBioListening ? "Остановить запись" : "Голосовой ввод"}
-                            animate={{ scale: isBioListening ? 1.2 : 1 }}
-                            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                            className="absolute bottom-3 right-3 cursor-pointer border-none bg-transparent p-0 outline-none"
-                          >
-                            <img
-                              src="/image 3.png"
-                              alt="Voice Input"
-                              className={`h-5 w-auto transition-opacity duration-300 ${isBioListening ? "opacity-100" : "opacity-50 hover:opacity-100"}`}
-                            />
-                            <motion.div
-                              animate={{ opacity: isBioListening ? 1 : 0, scale: isBioListening ? 1 : 0 }}
-                              transition={{ duration: 0.3 }}
-                              className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-white"
-                            />
-                          </motion.button>
-                          {isBioListening && (
-                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 rounded-lg bg-white px-4 py-2 text-xs font-medium text-[#09090b] shadow-lg pointer-events-none">
-                              Говорите...
-                            </div>
-                          )}
-                        </div>
-                      </label>
-                    </div>
-                  ) : section === "security" ? (
-                    <div className="space-y-4">
-                      <h2 className="text-xl font-semibold">Безопасность</h2>
-                      <div className="grid grid-cols-1 gap-3">
-                        <label className="block">
-                          <span className="mb-2 block text-sm text-slate-300">Текущий пароль</span>
-                          <input
-                            type="password"
-                            value={currentPassword}
-                            onChange={(e) => setCurrentPassword(e.target.value)}
-                            className="h-12 w-full rounded-xl border border-white/15 bg-[#070b22]/90 px-4 text-sm outline-none transition focus:border-white/35"
-                          />
-                        </label>
-                        <label className="block">
-                          <span className="mb-2 block text-sm text-slate-300">Новый пароль</span>
-                          <input
-                            type="password"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            className="h-12 w-full rounded-xl border border-white/15 bg-[#070b22]/90 px-4 text-sm outline-none transition focus:border-white/35"
-                          />
-                        </label>
-                        <label className="block">
-                          <span className="mb-2 block text-sm text-slate-300">Подтвердите новый пароль</span>
-                          <input
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="h-12 w-full rounded-xl border border-white/15 bg-[#070b22]/90 px-4 text-sm outline-none transition focus:border-white/35"
-                          />
-                        </label>
-                      </div>
-                    </div>
-                  ) : section === "support" ? (
-                    <div className="space-y-4">
-                      <h2 className="text-xl font-semibold">Поддержка</h2>
-                      <p className="text-sm text-slate-400">Свяжитесь с нами любым удобным способом.</p>
-                      <div className="flex flex-col gap-3">
-                        {/* VKontakte */}
-                        <a
-                          href="https://vk.com/delez_app"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group flex items-center gap-4 rounded-xl border border-zinc-800/80 bg-zinc-900/50 px-5 py-4 transition hover:bg-white/[0.07] hover:border-zinc-800"
-                        >
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: "#0077FF" }}>
-                            <svg viewBox="0 0 24 24" fill="white" className="h-5 w-5">
-                              <path d="M15.684 0H8.316C1.592 0 0 1.592 0 8.316v7.368C0 22.408 1.592 24 8.316 24h7.368C22.408 24 24 22.408 24 15.684V8.316C24 1.592 22.408 0 15.684 0zm3.692 17.123h-1.744c-.66 0-.864-.525-2.05-1.727-1.033-1-1.49-1.135-1.744-1.135-.356 0-.458.102-.458.593v1.575c0 .424-.135.678-1.253.678-1.846 0-3.896-1.118-5.335-3.202C4.624 10.857 4.03 8.57 4.03 8.096c0-.254.102-.491.593-.491h1.744c.44 0 .61.203.78.677.863 2.49 2.303 4.675 2.896 4.675.22 0 .322-.102.322-.66V9.721c-.068-1.186-.695-1.287-.695-1.71 0-.203.17-.407.44-.407h2.744c.373 0 .508.203.508.643v3.473c0 .372.17.508.271.508.22 0 .407-.136.813-.542 1.254-1.406 2.151-3.574 2.151-3.574.119-.254.322-.491.762-.491h1.744c.525 0 .644.27.525.643-.22 1.017-2.354 4.031-2.354 4.031-.186.305-.254.44 0 .78.186.254.796.779 1.203 1.253.745.847 1.32 1.558 1.473 2.05.17.49-.085.745-.576.745z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-white">ВКонтакте</div>
-                            <div className="text-xs text-slate-500">vk.com/delez_app</div>
-                          </div>
-                          <svg className="ml-auto h-4 w-4 text-slate-600 transition group-hover:text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M9 18l6-6-6-6" />
-                          </svg>
-                        </a>
-                        {/* Telegram */}
-                        <a
-                          href="https://t.me/delez_support"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group flex items-center gap-4 rounded-xl border border-zinc-800/80 bg-zinc-900/50 px-5 py-4 transition hover:bg-white/[0.07] hover:border-zinc-800"
-                        >
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: "#2AABEE" }}>
-                            <svg viewBox="0 0 24 24" fill="white" className="h-5 w-5">
-                              <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-white">Telegram</div>
-                            <div className="text-xs text-slate-500">@delez_support</div>
-                          </div>
-                          <svg className="ml-auto h-4 w-4 text-slate-600 transition group-hover:text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M9 18l6-6-6-6" />
-                          </svg>
-                        </a>
-                        {/* Mail.ru */}
-                        <a
-                          href="mailto:support@delez.tech"
-                          className="group flex items-center gap-4 rounded-xl border border-zinc-800/80 bg-zinc-900/50 px-5 py-4 transition hover:bg-white/[0.07] hover:border-zinc-800"
-                        >
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: "#005FF9" }}>
-                            <svg viewBox="0 0 24 24" fill="white" className="h-5 w-5">
-                              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm6 8l-6 4-6-4h12zm0 8H6V9.5l6 4 6-4V16z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-white">Mail</div>
-                            <div className="text-xs text-slate-500">support@delez.tech</div>
-                          </div>
-                          <svg className="ml-auto h-4 w-4 text-slate-600 transition group-hover:text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M9 18l6-6-6-6" />
-                          </svg>
-                        </a>
-                      </div>
-                    </div>
-                  ) : section === "import" ? (
-                    <div className="space-y-4">
-                      <h2 className="text-xl font-semibold">Импорт записей</h2>
-                      <p className="text-sm text-slate-400">
-                        Вставьте текст из другого приложения или markdown-файла. На следующем шаге это будет разложено
-                        по сущностям Delёz (события, цели, эксперименты).
-                      </p>
-                      <label className="block">
-                        <span className="mb-2 block text-sm text-slate-300">Текст для импорта</span>
+                    <label className="block">
+                      <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/40">О себе</span>
+                      <div className="relative">
                         <textarea
-                          rows={8}
-                          value={importText}
-                          onChange={(e) => setImportText(e.target.value)}
-                          placeholder="Вставьте сюда записи в свободном формате..."
-                          className="delez-scrollbar w-full resize-none rounded-xl border border-white/15 bg-[#070b22]/90 px-4 py-3 text-sm outline-none transition focus:border-white/35"
+                          ref={bioTextareaRef}
+                          rows={4}
+                          value={profile.bio ?? ""}
+                          onChange={(e) => setProfile((p) => ({ ...p, bio: e.target.value }))}
+                          placeholder="Расскажите немного о себе — это поможет ИИ лучше понимать контекст"
+                          className="delez-scrollbar w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 pr-11 text-sm text-white/90 outline-none transition placeholder:text-white/25 focus:border-white/25 focus:bg-white/[0.06]"
                         />
-                      </label>
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                        {[
-                          { key: "entries", label: "Создать события", value: importCreateEntries, setValue: setImportCreateEntries },
-                          { key: "goals", label: "Создать цели", value: importCreateGoals, setValue: setImportCreateGoals },
-                          { key: "experiments", label: "Создать эксперименты", value: importCreateExperiments, setValue: setImportCreateExperiments },
-                        ].map((item) => (
-                          <button
-                            key={item.key}
-                            type="button"
-                            onClick={() => item.setValue(!item.value)}
-                            className="rounded-xl border px-3 py-2 text-xs transition"
-                            style={{
-                              borderColor: item.value ? "rgba(52,211,153,0.45)" : "rgba(255,255,255,0.18)",
-                              background: item.value ? "rgba(52,211,153,0.18)" : "rgba(255,255,255,0.03)",
-                            }}
+                        <button
+                          type="button"
+                          onClick={handleBioVoiceInput}
+                          title={isBioListening ? "Остановить запись" : "Голосовой ввод"}
+                          className={`absolute bottom-3 right-3 rounded-lg p-1.5 transition ${
+                            isBioListening
+                              ? "bg-emerald-500/20 text-emerald-400"
+                              : "text-white/30 hover:bg-white/[0.06] hover:text-white/60"
+                          }`}
+                        >
+                          {isBioListening ? <Mic className="size-4" /> : <MicOff className="size-4" />}
+                        </button>
+                        {isBioListening && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="absolute -top-8 left-1/2 -translate-x-1/2 rounded-lg bg-emerald-500 px-3 py-1 text-xs font-medium text-black shadow-lg"
                           >
-                            {item.label}
-                          </button>
-                        ))}
+                            Говорите...
+                          </motion.div>
+                        )}
                       </div>
-                      <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-4">
-                        <p className="text-xs text-slate-500">Предпросмотр</p>
-                        <p className="mt-2 text-sm text-slate-300">
-                          {importText.trim()
-                            ? `Символов: ${importText.trim().length}. После подтверждения данные будут подготовлены к импорту.`
-                            : "Нет данных для предпросмотра."}
-                        </p>
-                        {importResult ? <p className="mt-2 text-xs text-emerald-300">{importResult}</p> : null}
-                      </div>
+                    </label>
+                  </motion.div>
+                )}
+
+                {section === "security" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-5"
+                  >
+                    <div>
+                      <h2 className="text-lg font-semibold">Смена пароля</h2>
+                      <p className="mt-1 text-sm text-white/40">Минимум 6 символов</p>
                     </div>
-                  ) : section === "assistant" ? (
-                    <div className="space-y-4">
-                      <h2 className="text-xl font-semibold">Персона ИИ-ассистента</h2>
-                      <p className="text-sm text-slate-400">
-                        Настройте стиль и роль ИИ. Это влияет на тон, рекомендации и формат обратной связи.
+                    <div className="max-w-md space-y-3">
+                      <label className="block">
+                        <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/40">Текущий пароль</span>
+                        <input
+                          type="password"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          className={inputCls}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/40">Новый пароль</span>
+                        <input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className={inputCls}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/40">Подтверждение</span>
+                        <input
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className={inputCls}
+                        />
+                      </label>
+                    </div>
+                  </motion.div>
+                )}
+
+                {section === "assistant" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-6"
+                  >
+                    <div>
+                      <h2 className="text-lg font-semibold">Стиль ИИ-ассистента</h2>
+                      <p className="mt-1 text-sm text-white/40">
+                        Определите как ассистент будет общаться с вами в чате
                       </p>
-                      <label className="block">
-                        <span className="mb-2 block text-sm text-slate-300">Стиль общения</span>
-                        <input
-                          value={assistantPersona}
-                          onChange={(e) => setAssistantPersona(e.target.value)}
-                          className="h-12 w-full rounded-xl border border-white/15 bg-[#070b22]/90 px-4 text-sm outline-none transition focus:border-white/35"
-                        />
-                      </label>
-                      <label className="block">
-                        <span className="mb-2 block text-sm text-slate-300">Роль ассистента</span>
-                        <input
-                          value={assistantRole}
-                          onChange={(e) => setAssistantRole(e.target.value)}
-                          className="h-12 w-full rounded-xl border border-white/15 bg-[#070b22]/90 px-4 text-sm outline-none transition focus:border-white/35"
-                        />
-                      </label>
-                      <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-4">
-                        <p className="text-xs text-slate-500">Активная конфигурация</p>
-                        <p className="mt-2 text-sm text-slate-200">{assistantPersona}</p>
-                        <p className="mt-1 text-sm text-slate-400">{assistantRole}</p>
-                      </div>
                     </div>
-                  ) : null}
-                </div>
-                <div className="mt-4 flex items-center justify-between gap-3">
-                  <div className="min-h-6 text-sm">
-                    {statusContent}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {section === "security" ? (
-                      <>
+
+                    {/* Tone */}
+                    <div>
+                      <span className="mb-2.5 block text-xs font-medium uppercase tracking-wider text-white/40">Тон общения</span>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        {TONE_PRESETS.map((preset) => {
+                          const active = assistantTone === preset.id;
+                          return (
+                            <button
+                              key={preset.id}
+                              type="button"
+                              onClick={() => setAssistantTone(preset.id)}
+                              className={`group relative rounded-xl border px-3.5 py-3 text-left transition ${
+                                active
+                                  ? "border-emerald-500/30 bg-emerald-500/[0.08]"
+                                  : "border-white/[0.06] bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={`size-3.5 rounded-full border-2 transition ${
+                                  active ? "border-emerald-400 bg-emerald-400" : "border-white/20"
+                                }`}>
+                                  {active && <Check className="size-2.5 text-black" style={{ margin: "-1px" }} />}
+                                </div>
+                                <span className={`text-sm font-medium ${active ? "text-emerald-400" : "text-white/70"}`}>
+                                  {preset.label}
+                                </span>
+                              </div>
+                              <p className="mt-1 pl-5.5 text-xs text-white/35">{preset.desc}</p>
+                            </button>
+                          );
+                        })}
                         <button
                           type="button"
-                          onClick={handleSignOut}
-                          className="rounded-xl border border-zinc-800 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/[0.08]"
+                          onClick={() => setAssistantTone("custom")}
+                          className={`rounded-xl border px-3.5 py-3 text-left transition ${
+                            assistantTone === "custom"
+                              ? "border-emerald-500/30 bg-emerald-500/[0.08]"
+                              : "border-white/[0.06] bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
+                          }`}
                         >
-                          Выйти из профиля
+                          <div className="flex items-center gap-2">
+                            <div className={`size-3.5 rounded-full border-2 transition ${
+                              assistantTone === "custom" ? "border-emerald-400 bg-emerald-400" : "border-white/20"
+                            }`}>
+                              {assistantTone === "custom" && <Check className="size-2.5 text-black" style={{ margin: "-1px" }} />}
+                            </div>
+                            <span className={`text-sm font-medium ${assistantTone === "custom" ? "text-emerald-400" : "text-white/70"}`}>
+                              Свой
+                            </span>
+                          </div>
+                          <p className="mt-1 pl-5.5 text-xs text-white/35">Опишите свой стиль</p>
                         </button>
+                      </div>
+                      {assistantTone === "custom" && (
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-2">
+                          <input
+                            value={customTone}
+                            onChange={(e) => setCustomTone(e.target.value)}
+                            placeholder="Например: дружелюбный, но требовательный"
+                            className={inputCls}
+                          />
+                        </motion.div>
+                      )}
+                    </div>
+
+                    {/* Role */}
+                    <div>
+                      <span className="mb-2.5 block text-xs font-medium uppercase tracking-wider text-white/40">Роль</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        {ROLE_PRESETS.map((preset) => {
+                          const active = assistantRole === preset.id;
+                          return (
+                            <button
+                              key={preset.id}
+                              type="button"
+                              onClick={() => setAssistantRole(preset.id)}
+                              className={`group rounded-xl border px-3.5 py-3 text-left transition ${
+                                active
+                                  ? "border-emerald-500/30 bg-emerald-500/[0.08]"
+                                  : "border-white/[0.06] bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={`size-3.5 rounded-full border-2 transition ${
+                                  active ? "border-emerald-400 bg-emerald-400" : "border-white/20"
+                                }`}>
+                                  {active && <Check className="size-2.5 text-black" style={{ margin: "-1px" }} />}
+                                </div>
+                                <span className={`text-sm font-medium ${active ? "text-emerald-400" : "text-white/70"}`}>
+                                  {preset.label}
+                                </span>
+                              </div>
+                              <p className="mt-1 pl-5.5 text-xs text-white/35">{preset.desc}</p>
+                            </button>
+                          );
+                        })}
                         <button
                           type="button"
-                          onClick={handleChangePassword}
-                          disabled={securitySaving}
-                          className="rounded-xl border border-white/25 bg-white/[0.06] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-50"
+                          onClick={() => setAssistantRole("custom")}
+                          className={`rounded-xl border px-3.5 py-3 text-left transition col-span-2 sm:col-span-1 ${
+                            assistantRole === "custom"
+                              ? "border-emerald-500/30 bg-emerald-500/[0.08]"
+                              : "border-white/[0.06] bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
+                          }`}
                         >
-                          {securitySaving ? "Сохраняем..." : "Сменить пароль"}
+                          <div className="flex items-center gap-2">
+                            <div className={`size-3.5 rounded-full border-2 transition ${
+                              assistantRole === "custom" ? "border-emerald-400 bg-emerald-400" : "border-white/20"
+                            }`}>
+                              {assistantRole === "custom" && <Check className="size-2.5 text-black" style={{ margin: "-1px" }} />}
+                            </div>
+                            <span className={`text-sm font-medium ${assistantRole === "custom" ? "text-emerald-400" : "text-white/70"}`}>
+                              Своя роль
+                            </span>
+                          </div>
+                          <p className="mt-1 pl-5.5 text-xs text-white/35">Опишите роль свободно</p>
                         </button>
-                      </>
-                    ) : section === "profile" ? (
-                      <button
-                        type="button"
-                        onClick={saveProfile}
-                        disabled={saving}
-                        className="rounded-xl border border-white/25 bg-white/[0.06] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {saving ? "Сохраняем..." : "Сохранить профиль"}
-                      </button>
-                    ) : section === "support" ? null : section === "import" ? (
-                      <button
-                        type="button"
-                        onClick={handleMarkdownImport}
-                        disabled={importSaving}
-                        className="rounded-xl border border-white/25 bg-white/[0.06] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/[0.12]"
-                      >
-                        {importSaving ? "Импортируем..." : "Подготовить импорт"}
-                      </button>
-                    ) : section === "assistant" ? (
-                      <button
-                        type="button"
-                        onClick={handleSaveAssistantPersona}
-                        className="rounded-xl border border-white/25 bg-white/[0.06] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/[0.12]"
-                      >
-                        Сохранить персону
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
+                      </div>
+                      {assistantRole === "custom" && (
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-2">
+                          <input
+                            value={customRole}
+                            onChange={(e) => setCustomRole(e.target.value)}
+                            placeholder="Например: строгий трекер привычек"
+                            className={inputCls}
+                          />
+                        </motion.div>
+                      )}
+                    </div>
+
+                    {/* Preview */}
+                    {(resolvedTone || resolvedRole) && (
+                      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                        <p className="text-xs font-medium uppercase tracking-wider text-white/30">Итого</p>
+                        <p className="mt-2 text-sm text-white/70">
+                          <span className="text-white/90">{resolvedRole || "—"}</span>
+                          {" · "}
+                          <span className="text-white/50">{resolvedTone || "—"}</span>
+                        </p>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
               </div>
 
+              {/* Footer */}
+              <div className="mt-4 flex items-center justify-between border-t border-white/[0.06] pt-4">
+                <div className="min-h-5 text-sm">
+                  {statusMsg && (
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className={statusIsError ? "text-rose-400" : "text-emerald-400"}
+                    >
+                      {statusMsg}
+                    </motion.span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  {section === "profile" && (
+                    <button
+                      type="button"
+                      onClick={saveProfile}
+                      disabled={saving}
+                      className="flex items-center gap-2 rounded-xl bg-white/[0.08] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/[0.14] disabled:opacity-50"
+                    >
+                      <Save className="size-4" />
+                      {saving ? "Сохраняем..." : "Сохранить"}
+                    </button>
+                  )}
+                  {section === "security" && (
+                    <button
+                      type="button"
+                      onClick={handleChangePassword}
+                      disabled={securitySaving}
+                      className="flex items-center gap-2 rounded-xl bg-white/[0.08] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/[0.14] disabled:opacity-50"
+                    >
+                      <Shield className="size-4" />
+                      {securitySaving ? "Сохраняем..." : "Сменить пароль"}
+                    </button>
+                  )}
+                  {section === "assistant" && (
+                    <button
+                      type="button"
+                      onClick={handleSaveAssistant}
+                      className="flex items-center gap-2 rounded-xl bg-emerald-500/15 px-4 py-2.5 text-sm font-medium text-emerald-400 transition hover:bg-emerald-500/25"
+                    >
+                      <Sparkles className="size-4" />
+                      Сохранить стиль
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
-
     </div>
   );
 }

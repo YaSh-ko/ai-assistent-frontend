@@ -25,42 +25,10 @@ import ThreadHistory from "./history";
 import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
-import { useHints } from "@/hooks/useHints";
-import { ChatHints } from "./chat-hints";
 import { type ThreadContext } from "./context-banner";
 import { DetectorProposalChip } from "./detector-proposal-chip";
 import { chatApi } from "@/lib/api-client";
 import { useDetectorProposal } from "@/hooks/useDetectorProposal";
-
-const AI_PERSONA_STORAGE_KEY = "delez_ai_persona_v1";
-
-type AssistantPersonaConfig = {
-  persona: string;
-  role: string;
-};
-
-function readAssistantPersonaConfig(): AssistantPersonaConfig | null {
-  try {
-    const raw = localStorage.getItem(AI_PERSONA_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<AssistantPersonaConfig>;
-    if (!parsed.persona || !parsed.role) return null;
-    return { persona: parsed.persona, role: parsed.role };
-  } catch (error) {
-    console.error("Не удалось прочитать персону ИИ", error);
-    return null;
-  }
-}
-
-function buildHiddenPersonaMessage(): Message | null {
-  const cfg = readAssistantPersonaConfig();
-  if (!cfg) return null;
-  return {
-    id: `${DO_NOT_RENDER_ID_PREFIX}${uuidv4()}`,
-    type: "human",
-    content: `[Персона ассистента]\nСтиль: ${cfg.persona}\nРоль: ${cfg.role}\nСледуй этим настройкам в ответе.`,
-  };
-}
 
 function ScrollToBottom({ scrollRef, className }: Readonly<{ scrollRef: React.RefObject<HTMLDivElement | null>; className?: string }>) {
   const [show, setShow] = useState(false);
@@ -584,12 +552,9 @@ export function Thread() {
       type: "human",
       content: input,
     };
-    const hiddenPersona = buildHiddenPersonaMessage();
-    const personaMessages = hiddenPersona ? [hiddenPersona] : [];
-
     const toolMessages = ensureToolCallsHaveResponses(stream.messages);
     stream.submit(
-      { messages: [...toolMessages, ...personaMessages, newHumanMessage] },
+      { messages: [...toolMessages, newHumanMessage] },
       {
         streamMode: ["values"],
         optimisticValues: (prev) => ({
@@ -597,7 +562,6 @@ export function Thread() {
           messages: [
             ...(prev.messages ?? []),
             ...toolMessages,
-            ...personaMessages,
             newHumanMessage,
           ],
         }),
@@ -622,40 +586,6 @@ export function Thread() {
   const hasNoAIOrToolMessages = !messages.some(
     (m) => m.type === "ai" || m.type === "tool",
   );
-
-  // Подсказки — загружаем сразу и обновляем после каждого ответа AI
-  const { hints, isLoading: hintsLoading } = useHints(messages, !isLoading);
-
-  const handleHintSelect = useCallback((hint: string) => {
-    setInput(hint);
-    // Небольшая задержка, чтобы input успел обновиться в DOM
-    setTimeout(() => {
-      const newHumanMessage = {
-        id: uuidv4(),
-        type: "human" as const,
-        content: hint,
-      };
-      const hiddenPersona = buildHiddenPersonaMessage();
-      const personaMessages = hiddenPersona ? [hiddenPersona] : [];
-      const toolMessages = ensureToolCallsHaveResponses(stream.messages);
-      stream.submit(
-        { messages: [...toolMessages, ...personaMessages, newHumanMessage] },
-        {
-          streamMode: ["values"],
-          optimisticValues: (prev: any) => ({
-            ...prev,
-            messages: [
-              ...(prev.messages ?? []),
-              ...toolMessages,
-              ...personaMessages,
-              newHumanMessage,
-            ],
-          }),
-        },
-      );
-      setInput("");
-    }, 0);
-  }, [stream, setInput]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -738,11 +668,6 @@ export function Thread() {
                     chatStarted={false}
                   />
                   </div>
-                  <ChatHints
-                    hints={hints}
-                    isLoading={hintsLoading}
-                    onSelect={handleHintSelect}
-                  />
                 </div>
               </div>
             )}
@@ -760,19 +685,12 @@ export function Thread() {
                   />
                 </div>
                 {!isLoading && (
-                  <>
                     <div className="w-full max-w-3xl px-4 flex justify-end mb-1 sm:mb-2">
                       <ScrollToBottom
                         scrollRef={scrollRef}
                         className="animate-in fade-in-0 zoom-in-95"
                       />
                     </div>
-                  <ChatHints
-                    hints={hints}
-                    isLoading={hintsLoading}
-                    onSelect={handleHintSelect}
-                  />
-                  </>
                 )}
                 <ChatInput
                   input={input}

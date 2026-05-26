@@ -162,6 +162,25 @@ export interface ChangePasswordPayload {
     newPassword: string;
 }
 
+export const userApi = {
+    getPersona: async () => {
+        const response = await apiRequest('/v1/user/me/persona');
+        if (!response.ok) return { ai_persona_tone: null, ai_persona_role: null };
+        return response.json() as Promise<{ ai_persona_tone: string | null; ai_persona_role: string | null }>;
+    },
+
+    patchPersona: async (payload: { ai_persona_tone?: string; ai_persona_role?: string }) => {
+        const response = await apiRequest('/v1/user/me/persona', {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        });
+        if (!response.ok) {
+            throw new Error('Failed to save persona');
+        }
+        return response.json();
+    },
+};
+
 export const authApi = {
     getSession: async () => {
         const response = await apiRequest('/auth/get-session', { method: 'GET' });
@@ -408,6 +427,14 @@ export const graphApi = {
 
     search: async (query: string, limit = 50) => {
         const response = await apiRequest(`/v1/graph/search?query=${encodeURIComponent(query)}&limit=${limit}`);
+        return response.json();
+    },
+
+    backfill: async () => {
+        const response = await apiRequest('/v1/graph/backfill', { method: 'POST' });
+        if (!response.ok) {
+            throw new Error(`Backfill failed: ${response.status}`);
+        }
         return response.json();
     },
 
@@ -676,6 +703,11 @@ export const experimentsApi = {
         }
         return response.json();
     },
+
+    getAll: async () => {
+        const response = await apiRequest('/v1/experiments');
+        return response.json();
+    },
 };
 
 // Goals API (PostgreSQL + Neo4j graph)
@@ -851,24 +883,6 @@ export const chatApi = {
 
 export default authApi;
 
-// Hints API
-export const hintsApi = {
-    getSuggestions: async (messages: Array<{ type: string; content: string }>): Promise<string[]> => {
-        try {
-            const response = await apiRequest('/ai/api/v1/hints', {
-                method: 'POST',
-                body: JSON.stringify({ messages }),
-            });
-            if (!response.ok) return [];
-            const data = await response.json();
-            return Array.isArray(data.hints) ? data.hints : [];
-        } catch (error) {
-            logger.error('Failed to fetch hints', error);
-            return [];
-        }
-    },
-};
-
 export const virtualFieldsApi = {
     getBoard: async (boardId: string) => {
         const response = await apiRequest(`/v1/virtual-fields/board/${encodeURIComponent(boardId)}`);
@@ -1001,6 +1015,21 @@ export const insightsApi = {
             burnout_triggers: Array<{ label: string; count: number }>;
             repeating_patterns: Array<{ label: string; count: number }>;
         };
+    },
+    summarize: async (payload: {
+        entities: Array<{ id: string; type: string; title: string; description?: string; status?: string; created_at?: string }>;
+        context: 'day_summary' | 'cluster_analysis';
+        date?: string;
+    }) => {
+        const response = await apiRequest('/v1/insights/summarize', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+        const data = await parseResponseData(response);
+        if (!response.ok) {
+            throw new Error(data?.detail || data?.message || response.statusText || 'Не удалось сгенерировать сводку');
+        }
+        return data as { summary: string };
     },
 };
 

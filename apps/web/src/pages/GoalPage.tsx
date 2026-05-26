@@ -246,7 +246,7 @@ export default function GoalPage() {
 
             {/* Кнопка в чат */}
             {linkedThread && (
-              <Link to={`/?threadId=${linkedThread}`}
+              <Link to={`/chat?threadId=${linkedThread}`}
                 className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-medium transition-all hover:opacity-90"
                 style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)' }}>
                 <MessageSquare className="w-4 h-4" />

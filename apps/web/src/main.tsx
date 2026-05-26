@@ -22,8 +22,6 @@ import Experiment from "./pages/Experiment.tsx";
 import Privacy from "./pages/Privacy.tsx";
 import Terms from "./pages/Terms.tsx";
 import ProfilePage from "./pages/ProfilePage.tsx";
-import RecordsPage from "./pages/RecordsPage.tsx";
-import NotebookEntriesPage from "./pages/NotebookEntriesPage.tsx";
 import DevelopmentPage from "./pages/DevelopmentPage.tsx";
 import { NotFoundPage } from "./pages/NotFound.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
@@ -62,8 +60,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/event/:id" element={<ProtectedRoute><Event /></ProtectedRoute>} />
           <Route path="/event" element={<ProtectedRoute><Event /></ProtectedRoute>} />
           <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
-          <Route path="/records" element={<ProtectedRoute><RecordsPage /></ProtectedRoute>} />
-          <Route path="/records/notebook/:notebookId" element={<ProtectedRoute><NotebookEntriesPage /></ProtectedRoute>} />
+          <Route path="/records" element={<Navigate to="/report" replace />} />
+          <Route path="/records/notebook/:notebookId" element={<Navigate to="/report" replace />} />
           <Route path="/goals" element={<ProtectedRoute><GoalsPage /></ProtectedRoute>} />
           <Route path="/development" element={<ProtectedRoute><DevelopmentPage /></ProtectedRoute>} />
           <Route path="/goals/:id" element={<ProtectedRoute><GoalPage /></ProtectedRoute>} />

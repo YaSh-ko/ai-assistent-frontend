@@ -26,9 +26,11 @@ import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { type ThreadContext } from "./context-banner";
+import { GoalFocusChip } from "./goal-focus-chip";
 import { DetectorProposalChip } from "./detector-proposal-chip";
 import { chatApi } from "@/lib/api-client";
 import { useDetectorProposal } from "@/hooks/useDetectorProposal";
+import { useGoalFocus, type GoalFocusMetadata } from "@/hooks/useGoalFocus";
 
 function ScrollToBottom({ scrollRef, className }: Readonly<{ scrollRef: React.RefObject<HTMLDivElement | null>; className?: string }>) {
   const [show, setShow] = useState(false);
@@ -131,7 +133,9 @@ function ChatInput({
   onSubmit,
   isListening,
   onVoiceInput,
-  chatStarted
+  chatStarted,
+  goalFocus,
+  onClearGoalFocus,
 }: Readonly<{
   input: string;
   setInput: (value: string) => void;
@@ -139,6 +143,8 @@ function ChatInput({
   isListening: boolean;
   onVoiceInput: () => void;
   chatStarted?: boolean;
+  goalFocus?: ThreadContext | null;
+  onClearGoalFocus?: () => void;
 }>) {
   const isDesktop = useMediaQuery("(min-width: 640px)");
 
@@ -171,6 +177,11 @@ function ChatInput({
   }, [onSubmit]);
 
   const getPlaceholder = () => {
+    if (goalFocus) {
+      return chatStarted
+        ? "Шаг, уточнение цели или вопрос по плану…"
+        : "Обсудим цель и следующие шаги…";
+    }
     if (chatStarted) {
       return "Поделитесь мыслями…";
     }
@@ -186,6 +197,9 @@ function ChatInput({
         onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
         className="flex-1 relative z-10 rounded-2xl border border-zinc-800 bg-zinc-900/95 shadow-lg backdrop-blur-sm px-4 py-3 flex flex-col gap-2"
       >
+        {goalFocus && onClearGoalFocus && (
+          <GoalFocusChip context={goalFocus} onDismiss={onClearGoalFocus} />
+        )}
         <textarea
           ref={textareaRef}
           value={input}
@@ -414,8 +428,13 @@ function MessagesList({
   );
 }
 
+function buildStreamMetadata(goalMetadata: GoalFocusMetadata | null) {
+  return { thread_context: goalMetadata ?? null };
+}
+
 export function Thread() {
   const [threadId, setThreadId] = useQueryState("threadId");
+  const [goalId, setGoalId] = useQueryState("goalId");
   const [chatHistoryOpen, setChatHistoryOpen] = useQueryState(
     "chatHistoryOpen",
     parseAsBoolean.withDefault(true),
@@ -425,6 +444,41 @@ export function Thread() {
   const isLargeScreen = useMediaQuery("(min-width: 1024px)");
   const scrollRef = useRef<HTMLDivElement>(null);
   const [threadContext, setThreadContext] = useState<ThreadContext | null>(null);
+  const [goalFocusBanner, setGoalFocusBanner] = useState<ThreadContext | null>(null);
+  const [goalMetadata, setGoalMetadata] = useState<GoalFocusMetadata | null>(null);
+
+  useGoalFocus(goalId, setGoalFocusBanner, setGoalMetadata);
+
+  /** Чат, в котором включили фокус цели (сброс при переключении треда). */
+  const goalFocusThreadRef = useRef<string | null | undefined>(undefined);
+
+  const clearGoalFocus = useCallback(() => {
+    setGoalId(null);
+    setGoalFocusBanner(null);
+    setGoalMetadata(null);
+    goalFocusThreadRef.current = undefined;
+  }, [setGoalId]);
+
+  useEffect(() => {
+    if (goalId) {
+      goalFocusThreadRef.current = threadId ?? null;
+    } else {
+      goalFocusThreadRef.current = undefined;
+    }
+  }, [goalId]);
+
+  useEffect(() => {
+    if (!goalId || goalFocusThreadRef.current === undefined) return;
+
+    const bound = goalFocusThreadRef.current;
+    if (bound === null && threadId) {
+      goalFocusThreadRef.current = threadId;
+      return;
+    }
+    if (threadId !== bound) {
+      clearGoalFocus();
+    }
+  }, [threadId, goalId, clearGoalFocus]);
 
   // Голосовой ввод
   const {
@@ -510,17 +564,17 @@ export function Thread() {
     prevMessageLength.current = messages.length;
   }, [messages]);
 
-  // Загружаем контекст треда (используется в ThreadMoreMenu)
+  // Контекст треда из API (только без активного фокуса цели)
   useEffect(() => {
-    if (!threadId) {
-      setThreadContext(null);
+    if (goalId || !threadId) {
+      if (!goalId) setThreadContext(null);
       return;
     }
     chatApi.getThreadContext(threadId)
       .then((data) => {
-        if (data?.title) {
+        if (data?.title && data.type !== "general") {
           setThreadContext({
-            type: data.type ?? "general",
+            type: (data.type ?? "general") as ThreadContext["type"],
             title: data.title,
             description: data.description || undefined,
             entity_id: data.entity_id || data.entry_id || undefined,
@@ -530,7 +584,7 @@ export function Thread() {
         }
       })
       .catch(() => setThreadContext(null));
-  }, [threadId]);
+  }, [threadId, goalId]);
 
   const {
     proposal: detectorProposal,
@@ -538,7 +592,7 @@ export function Thread() {
     confirm: confirmDetector,
     decline: declineDetector,
     dismissChip: dismissDetectorChip,
-  } = useDetectorProposal(threadId);
+  } = useDetectorProposal(threadId, goalMetadata);
 
   const handleSubmit = useCallback((e?: FormEvent) => {
     e?.preventDefault();
@@ -557,6 +611,7 @@ export function Thread() {
       { messages: [...toolMessages, newHumanMessage] },
       {
         streamMode: ["values"],
+        metadata: buildStreamMetadata(goalMetadata) as Record<string, unknown>,
         optimisticValues: (prev) => ({
           ...prev,
           messages: [
@@ -569,7 +624,7 @@ export function Thread() {
     );
 
     setInput("");
-  }, [input, isLoading, stream, dismissDetectorChip]);
+  }, [input, isLoading, stream, dismissDetectorChip, goalMetadata]);
 
   const handleRegenerate = useCallback((
     parentCheckpoint: Checkpoint | null | undefined,
@@ -579,8 +634,9 @@ export function Thread() {
     stream.submit(undefined, {
       checkpoint: parentCheckpoint,
       streamMode: ["values"],
+      metadata: buildStreamMetadata(goalMetadata),
     });
-  }, [stream]);
+  }, [stream, goalMetadata]);
 
   const chatStarted = !!messages.length;
   const hasNoAIOrToolMessages = !messages.some(
@@ -651,10 +707,12 @@ export function Thread() {
               <div className="flex flex-col items-center gap-8 w-full px-4 -translate-y-[8vh]">
                 <div className="flex flex-col items-center gap-3 w-full max-w-lg">
                   <h2 className="text-zinc-100 text-2xl sm:text-3xl font-semibold text-center tracking-tight">
-                    Что развиваем сегодня?
+                    {goalFocusBanner ? "Обсудим шаги к цели" : "Что развиваем сегодня?"}
                   </h2>
                   <p className="text-zinc-500 text-sm sm:text-base text-center leading-relaxed">
-                    Цели, эксперименты и заметки — ассистент поможет связать их в графе знаний
+                    {goalFocusBanner
+                      ? "Пока плашка над полем ввода активна — ответы и подсказки сохранения идут в эту цель"
+                      : "Наблюдения и цели — ассистент свяжет их в графе знаний"}
                   </p>
                 </div>
                 <div className="flex flex-col items-center gap-3 w-full">
@@ -666,6 +724,8 @@ export function Thread() {
                     isListening={isListening}
                     onVoiceInput={handleVoiceInput}
                     chatStarted={false}
+                    goalFocus={goalFocusBanner}
+                    onClearGoalFocus={goalFocusBanner ? clearGoalFocus : undefined}
                   />
                   </div>
                 </div>
@@ -699,6 +759,8 @@ export function Thread() {
                   isListening={isListening}
                   onVoiceInput={handleVoiceInput}
                   chatStarted={true}
+                  goalFocus={goalFocusBanner}
+                  onClearGoalFocus={goalFocusBanner ? clearGoalFocus : undefined}
                 />
               </div>
             </div>

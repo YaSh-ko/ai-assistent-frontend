@@ -657,6 +657,10 @@ export const experimentsApi = {
         status?: string;
         success?: number;
         outcome?: string;
+        goal_id?: string;
+        phase?: string;
+        due_date?: string;
+        source?: string;
     }) => {
         const response = await apiRequest("/v1/experiments", {
             method: "POST",
@@ -708,6 +712,19 @@ export const experimentsApi = {
         const response = await apiRequest('/v1/experiments');
         return response.json();
     },
+};
+
+export type GoalTaskDto = {
+    id: string;
+    goal_id: string;
+    title: string;
+    description?: string;
+    status: 'pending' | 'completed';
+    phase: 'now' | 'next' | 'backlog';
+    due_date?: string;
+    source: string;
+    created_at?: string;
+    completed_at?: string;
 };
 
 // Goals API (PostgreSQL + Neo4j graph)
@@ -766,6 +783,97 @@ export const goalsApi = {
             throw new Error(parseFastApiDetail(err) || response.statusText);
         }
         return response.json();
+    },
+
+    delete: async (id: string) => {
+        const response = await apiRequest(`/v1/goals/${id}`, { method: 'DELETE' });
+        if (!response.ok && response.status !== 204) {
+            const err = await parseResponseData(response);
+            throw new Error(parseFastApiDetail(err) || response.statusText || 'Не удалось удалить цель');
+        }
+    },
+
+    getProgress: async () => {
+        const response = await apiRequest('/v1/goals/progress');
+        const data = await parseResponseData(response);
+        if (!response.ok) {
+            throw new Error(parseFastApiDetail(data) || response.statusText || 'Не удалось загрузить прогресс');
+        }
+        const items = (data as { items: Array<{ goal_id: string; total: number; completed: number; percent: number }> }).items ?? [];
+        const map: Record<string, { total: number; completed: number; percent: number }> = {};
+        for (const item of items) {
+            map[item.goal_id] = { total: item.total, completed: item.completed, percent: item.percent };
+        }
+        return map;
+    },
+
+    getTasks: async (goalId: string) => {
+        const response = await apiRequest(`/v1/goals/${encodeURIComponent(goalId)}/tasks`);
+        const data = await parseResponseData(response);
+        if (!response.ok) {
+            throw new Error(parseFastApiDetail(data) || response.statusText || 'Не удалось загрузить задачи');
+        }
+        return (data as { tasks: GoalTaskDto[] }).tasks ?? [];
+    },
+
+    suggestTasks: async (goalId: string) => {
+        const response = await apiRequest(
+            `/v1/goals/${encodeURIComponent(goalId)}/tasks/suggest`,
+            { method: 'POST' },
+        );
+        const data = await parseResponseData(response);
+        if (!response.ok) {
+            throw new Error(parseFastApiDetail(data) || response.statusText || 'Не удалось сгенерировать шаги');
+        }
+        return (data as {
+            tasks: Array<{ title: string; phase: 'now' | 'next' | 'backlog'; description?: string }>;
+        }).tasks ?? [];
+    },
+
+    createTask: async (goalId: string, body: {
+        title: string;
+        description?: string;
+        phase?: 'now' | 'next' | 'backlog';
+        due_date?: string;
+        source?: 'user' | 'ai';
+    }) => {
+        const response = await apiRequest(`/v1/goals/${encodeURIComponent(goalId)}/tasks`, {
+            method: 'POST',
+            body: JSON.stringify(body),
+        });
+        const data = await parseResponseData(response);
+        if (!response.ok) {
+            throw new Error(parseFastApiDetail(data) || response.statusText || 'Не удалось создать задачу');
+        }
+        return data as GoalTaskDto;
+    },
+
+    updateTask: async (goalId: string, taskId: string, body: {
+        title?: string;
+        status?: 'pending' | 'completed';
+        phase?: 'now' | 'next' | 'backlog';
+        due_date?: string;
+    }) => {
+        const response = await apiRequest(
+            `/v1/goals/${encodeURIComponent(goalId)}/tasks/${encodeURIComponent(taskId)}`,
+            { method: 'PATCH', body: JSON.stringify(body) },
+        );
+        const data = await parseResponseData(response);
+        if (!response.ok) {
+            throw new Error(parseFastApiDetail(data) || response.statusText || 'Не удалось обновить задачу');
+        }
+        return data as GoalTaskDto;
+    },
+
+    deleteTask: async (goalId: string, taskId: string) => {
+        const response = await apiRequest(
+            `/v1/goals/${encodeURIComponent(goalId)}/tasks/${encodeURIComponent(taskId)}`,
+            { method: 'DELETE' },
+        );
+        if (!response.ok && response.status !== 204) {
+            const err = await parseResponseData(response);
+            throw new Error(parseFastApiDetail(err) || response.statusText || 'Не удалось удалить задачу');
+        }
     },
 };
 

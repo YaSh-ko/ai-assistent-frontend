@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { chatApi, entriesApi, experimentsApi, goalsApi } from "@/lib/api-client";
+import { chatApi, entriesApi, goalsApi } from "@/lib/api-client";
+import type { GoalFocusMetadata } from "@/hooks/useGoalFocus";
 import type { DetectorProposal } from "@/lib/detector-types";
 import { useDetectorProposalStream } from "@/providers/Stream";
 import { toast } from "sonner";
@@ -20,6 +21,7 @@ function ensureIsoDate(raw: unknown): string {
 async function createEntityFromProposal(
   proposal: DetectorProposal,
   threadId?: string | null,
+  goalFocus?: GoalFocusMetadata | null,
 ): Promise<{ id: string; path: string }> {
   const preview = proposal.preview ?? {};
   const title = (preview.title as string) || "Без названия";
@@ -49,12 +51,32 @@ async function createEntityFromProposal(
     id = String(created.id);
     path = `/goals/${id}`;
   } else if (entityType === "task") {
-    const created = await experimentsApi.create({
-      title,
-      description,
-    });
-    id = String(created.id);
-    path = `/experiment/${id}`;
+    let goalId: string | undefined = goalFocus?.entity_id;
+    if (!goalId && threadId) {
+      const ctx = await chatApi.getThreadContext(threadId);
+      if (ctx?.type === "goal" && ctx.entity_id) {
+        goalId = String(ctx.entity_id);
+      }
+    }
+    if (goalId) {
+      const deadline =
+        typeof preview.deadline === "string" && /^\d{4}-\d{2}-\d{2}/.test(preview.deadline)
+          ? preview.deadline.slice(0, 10)
+          : undefined;
+      const created = await goalsApi.createTask(goalId, {
+        title,
+        description,
+        phase: "now",
+        ...(deadline ? { due_date: deadline } : {}),
+        source: "ai",
+      });
+      id = String(created.id);
+      path = `/goals/${goalId}`;
+    } else {
+      throw new Error(
+        "Шаги сохраняются в чате по цели. Открой цель → «Чат по цели» и обсуди шаги там.",
+      );
+    }
   } else {
     throw new Error(`Неизвестный тип: ${proposal.entity_type}`);
   }
@@ -69,6 +91,7 @@ async function createEntityFromProposal(
 async function updateEntityFromProposal(
   proposal: DetectorProposal,
   threadId?: string | null,
+  goalFocus?: GoalFocusMetadata | null,
 ): Promise<{ id: string; path: string }> {
   const existingId = proposal.existing_entity_id;
   if (!existingId) throw new Error("existing_entity_id is required for update");
@@ -101,13 +124,20 @@ async function updateEntityFromProposal(
   }
 
   if (entityType === "task") {
-    await experimentsApi.updateExperiment(existingId, {
-      ...(preview.description ? { outcome: preview.description } : {}),
-    });
-    if (threadId) {
-      void chatApi.linkThreadToEntity(threadId, entityType, existingId).catch(() => undefined);
+    let goalId: string | undefined = goalFocus?.entity_id;
+    if (!goalId && threadId) {
+      const ctx = await chatApi.getThreadContext(threadId);
+      if (ctx?.type === "goal" && ctx.entity_id) {
+        goalId = String(ctx.entity_id);
+      }
     }
-    return { id: existingId, path: `/experiment/${existingId}` };
+    if (goalId) {
+      await goalsApi.updateTask(goalId, existingId, {
+        ...(preview.title ? { title: preview.title as string } : {}),
+      });
+      return { id: existingId, path: `/goals/${goalId}` };
+    }
+    throw new Error("Обновление шага доступно только в чате по цели.");
   }
 
   throw new Error(`Неизвестный тип: ${proposal.entity_type}`);
@@ -116,7 +146,10 @@ async function updateEntityFromProposal(
 /**
  * Shows detector chip from SSE custom event only (StreamProvider → streamProposal).
  */
-export function useDetectorProposal(threadId?: string | null) {
+export function useDetectorProposal(
+  threadId?: string | null,
+  goalFocus?: GoalFocusMetadata | null,
+) {
   const { streamProposal, clearStreamProposal } = useDetectorProposalStream();
   const [proposal, setProposal] = useState<DetectorProposal | null>(null);
   const [visible, setVisible] = useState(false);
@@ -177,11 +210,17 @@ export function useDetectorProposal(threadId?: string | null) {
 
     try {
       const { path } = isUpdate
-        ? await updateEntityFromProposal(proposal, threadId)
-        : await createEntityFromProposal(proposal, threadId);
+        ? await updateEntityFromProposal(proposal, threadId, goalFocus)
+        : await createEntityFromProposal(proposal, threadId, goalFocus);
 
       dismissChip();
-      toast.success(isUpdate ? "Обновлено" : "Сохранено", {
+      const savedLabel =
+        !isUpdate && proposal.entity_type === "task" && path.startsWith("/goals/")
+          ? "Задача добавлена к цели"
+          : isUpdate
+            ? "Обновлено"
+            : "Сохранено";
+      toast.success(savedLabel, {
         description: "Открыть страницу?",
         action: {
           label: "Открыть",
@@ -198,7 +237,7 @@ export function useDetectorProposal(threadId?: string | null) {
     } finally {
       setIsSaving(false);
     }
-  }, [proposal, isSaving, clearHideTimer, dismissChip, scheduleAutoHide, threadId]);
+  }, [proposal, isSaving, clearHideTimer, dismissChip, scheduleAutoHide, threadId, goalFocus]);
 
   const decline = useCallback(() => {
     dismissChip();

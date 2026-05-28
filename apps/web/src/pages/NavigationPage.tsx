@@ -26,7 +26,7 @@ const sections: NavSection[] = [
   },
   {
     title: 'Рост',
-    subtitle: 'Цели и эксперименты',
+    subtitle: 'Цели, задачи, привычки',
     icon: <Target strokeWidth={1.5} />,
     to: '/development',
   },

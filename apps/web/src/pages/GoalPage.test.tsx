@@ -8,8 +8,16 @@ import { goalsApi } from '@/lib/api-client';
 vi.mock('@/lib/api-client', () => ({
   goalsApi: {
     getById: vi.fn(),
+    getTasks: vi.fn().mockResolvedValue([]),
     getRelatedEntries: vi.fn(),
     getConcepts: vi.fn(),
+    suggestTasks: vi.fn().mockResolvedValue([]),
+    createTask: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
+  chatApi: {
+    getEntityThreads: vi.fn().mockResolvedValue([]),
   },
 }));
 
@@ -53,11 +61,11 @@ describe('GoalPage', () => {
     });
   });
 
-  it('renders goal details and SMART sections', async () => {
+  it('renders goal details and tasks section', async () => {
     vi.mocked(goalsApi.getById).mockResolvedValue({
       id: 'g1',
       title: 'Выучить TS',
-      description: 'S: Писать типы\nM: 20 задач',
+      description: 'Освоить generics и utility types',
       status: 'active',
       priority: 'high',
       target_date: '2026-03-01T00:00:00Z',
@@ -71,8 +79,8 @@ describe('GoalPage', () => {
     await waitFor(() => {
       expect(screen.getAllByText('Выучить TS')[0]).toBeInTheDocument();
     });
-    expect(screen.getByText('Писать типы')).toBeInTheDocument();
-    expect(screen.getByText('20 задач')).toBeInTheDocument();
+    expect(screen.getByText('Задачи')).toBeInTheDocument();
+    expect(screen.getByText('Освоить generics и utility types')).toBeInTheDocument();
     expect(screen.getByText('Сделал практику')).toBeInTheDocument();
     expect(screen.getByText('Type System')).toBeInTheDocument();
   });

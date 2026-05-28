@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState, useCallback, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Eye, Target, Zap, Sparkles, Loader2 } from 'lucide-react';
-import { entriesApi, goalsApi, experimentsApi, insightsApi } from '@/lib/api-client';
+import { entriesApi, goalsApi, insightsApi } from '@/lib/api-client';
 import RadialPulseLoader from '@/components/ui/loading-animation';
 import Breadcrumbs from '@/components/Breadcrumbs';
 
@@ -53,8 +53,7 @@ export default function ReportPage() {
     Promise.all([
       entriesApi.getAll().catch(() => ({ entries: [] })),
       goalsApi.getAll().catch(() => ({ goals: [] })),
-      experimentsApi.getAll().catch(() => ({ experiments: [] })),
-    ]).then(([ed, gd, xd]) => {
+    ]).then(async ([ed, gd]) => {
       const items: EntityItem[] = [];
       for (const e of (ed.entries ?? []) as any[]) {
         items.push({
@@ -70,12 +69,21 @@ export default function ReportPage() {
           created_at: g.created_at || '',
         });
       }
-      for (const x of (xd.experiments ?? []) as any[]) {
-        items.push({
-          id: x.id, type: 'task', title: x.title || '',
-          description: x.description || '', status: x.status || '',
-          created_at: x.created_at || '',
-        });
+      const goalIds = ((gd.goals ?? []) as { id: string }[]).map((g) => g.id);
+      for (const goalId of goalIds) {
+        try {
+          const tasks = await goalsApi.getTasks(goalId);
+          for (const t of tasks) {
+            items.push({
+              id: t.id, type: 'task', title: t.title || '',
+              description: t.description || '', status: t.status === 'completed' ? 'completed' : 'active',
+              created_at: t.created_at || '',
+              event_date: t.completed_at?.slice(0, 10) || t.created_at?.slice(0, 10) || '',
+            });
+          }
+        } catch {
+          /* skip */
+        }
       }
       setEntities(items);
     }).finally(() => setLoading(false));

@@ -1,7 +1,8 @@
 ﻿import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import ForceGraph3D from 'react-force-graph-3d';
 import * as THREE from 'three';
-import { Eye, Target, Zap, Search, RefreshCw } from 'lucide-react';
+import { Eye, Target, Search, RefreshCw, GitBranch, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import RadialPulseLoader from '@/components/ui/loading-animation';
@@ -12,15 +13,14 @@ import { graphApi } from '@/lib/api-client';
 const NODE_COLORS: Record<string, string> = {
   Entry: '#34d399',
   Goal: '#f59e0b',
-  Experiment: '#60a5fa',
 };
 
-const ENTITY_TYPES = ['Entry', 'Goal', 'Experiment'] as const;
+/** На графе только устойчивые сущности; шаги цели — на странице цели. */
+const ENTITY_TYPES = ['Entry', 'Goal'] as const;
 
 const ENTITY_META: Record<string, { label: string; icon: React.ElementType }> = {
   Entry: { label: 'Наблюдения', icon: Eye },
   Goal: { label: 'Цели', icon: Target },
-  Experiment: { label: 'Задачи', icon: Zap },
 };
 
 interface GraphNode {
@@ -61,32 +61,142 @@ function extractLinkCoords(link: unknown) {
   return { start: normalizePoint(src), end: normalizePoint(tgt) };
 }
 
-function buildTextSprite(message: string, color: string): THREE.Sprite {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d')!;
-  const fontSize = 36;
-  const pad = 16;
-  ctx.font = `${fontSize}px Inter, Arial, sans-serif`;
-  const tw = Math.ceil(ctx.measureText(message).width);
-  canvas.width = tw + pad * 2;
-  canvas.height = fontSize + pad * 2;
+const REL_TYPE_LABELS: Record<string, string> = {
+  RELATES_TO: 'Связано',
+  DOCUMENTS: 'Описывает',
+  DECOMPOSED_INTO: 'Шаг цели',
+  BASED_ON: 'Основано на',
+  SUPPORTS: 'Поддерживает',
+  RELATED: 'Связь',
+};
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = 'rgba(8,8,18,0.75)';
+function shortenTitle(text: string, maxLen = 36): string {
+  const t = text.replace(/\s+/g, ' ').trim();
+  if (!t) return '';
+  if (t.length <= maxLen) return t;
+  return `${t.slice(0, maxLen - 1)}…`;
+}
+
+function nodeDisplayTitle(end: string | GraphNode | undefined): string {
+  if (typeof end !== 'object' || end == null) return '';
+  const raw = (end.title || end.description || '').trim();
+  return raw;
+}
+
+/** Тема связи из reason (семантика) или заголовков узлов. */
+function extractLinkTheme(link: GraphLink, nodes?: GraphNode[]): string {
+  const reason = typeof link.reason === 'string' ? link.reason.trim() : '';
+  if (reason) {
+    const parts = reason.split(/\s*[↔→←|]\s*/u).map((p) => p.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      const a = shortenTitle(parts[0], 24);
+      const b = shortenTitle(parts[1], 24);
+      if (a && b && a.toLowerCase() !== b.toLowerCase()) {
+        const combined = `${a} · ${b}`;
+        return combined.length <= 38 ? combined : shortenTitle(b || a, 36);
+      }
+      return shortenTitle(parts[0], 36);
+    }
+    return shortenTitle(reason, 36);
+  }
+
+  const srcId = typeof link.source === 'string' ? link.source : link.source?.id;
+  const tgtId = typeof link.target === 'string' ? link.target : link.target?.id;
+  let src = nodeDisplayTitle(typeof link.source === 'object' ? link.source : undefined);
+  let tgt = nodeDisplayTitle(typeof link.target === 'object' ? link.target : undefined);
+  if (nodes?.length) {
+    if (!src && srcId) src = nodeDisplayTitle(nodes.find((n) => n.id === srcId));
+    if (!tgt && tgtId) tgt = nodeDisplayTitle(nodes.find((n) => n.id === tgtId));
+  }
+
+  if (tgt && src && tgt.toLowerCase() !== src.toLowerCase()) {
+    return shortenTitle(tgt, 36);
+  }
+  return shortenTitle(tgt || src, 36);
+}
+
+function getLinkTypeHint(link: GraphLink): string {
+  const type = String(link.type ?? 'RELATED').toUpperCase();
+  return REL_TYPE_LABELS[type] ?? 'Связь';
+}
+
+function getLinkDisplayLabel(link: GraphLink, nodes?: GraphNode[]): string {
+  return extractLinkTheme(link, nodes) || getLinkTypeHint(link);
+}
+
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+) {
   ctx.beginPath();
-  ctx.roundRect(0, 0, canvas.width, canvas.height, 12);
-  ctx.fill();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
 
-  ctx.font = `${fontSize}px Inter, Arial, sans-serif`;
+function buildTextSprite(message: string, color: string): THREE.Sprite {
+  const dpr = Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 2);
+  const fontSize = 26;
+  const padX = 18;
+  const padY = 12;
+  const maxTextWidth = 280;
+
+  const measureCanvas = document.createElement('canvas');
+  const measureCtx = measureCanvas.getContext('2d')!;
+  measureCtx.font = `600 ${fontSize}px Inter, system-ui, Arial, sans-serif`;
+
+  let text = message.trim();
+  if (!text) text = '…';
+  while (text.length > 2 && measureCtx.measureText(`${text}…`).width > maxTextWidth) {
+    text = text.slice(0, -1);
+  }
+  if (measureCtx.measureText(text).width > maxTextWidth) {
+    text = `${text.slice(0, 20)}…`;
+  }
+
+  const textWidth = measureCtx.measureText(text).width;
+  const logicalW = textWidth + padX * 2;
+  const logicalH = fontSize + padY * 2;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.ceil(logicalW * dpr);
+  canvas.height = Math.ceil(logicalH * dpr);
+  const ctx = canvas.getContext('2d')!;
+  ctx.scale(dpr, dpr);
+
+  roundRect(ctx, 0.5, 0.5, logicalW - 1, logicalH - 1, 10);
+  ctx.fillStyle = 'rgba(9, 11, 18, 0.96)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.font = `600 ${fontSize}px Inter, system-ui, Arial, sans-serif`;
   ctx.fillStyle = color;
   ctx.textBaseline = 'middle';
-  ctx.fillText(message, pad, canvas.height / 2);
+  ctx.fillText(text, padX, logicalH / 2);
 
   const tex = new THREE.CanvasTexture(canvas);
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
   tex.needsUpdate = true;
+
   const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false });
   const sprite = new THREE.Sprite(mat);
-  sprite.scale.set(18, 6, 1);
+  const aspect = logicalW / logicalH;
+  const worldH = 5.5;
+  sprite.scale.set(worldH * aspect, worldH, 1);
   return sprite;
 }
 
@@ -144,15 +254,49 @@ const GraphPage: React.FC = () => {
       setHighlightIds(new Set());
       return;
     }
+    if (!graphData?.nodes.length) {
+      toast.info('Граф пустой — нечего искать');
+      return;
+    }
+    const visibleIds = new Set(graphData.nodes.map(n => n.id));
+    const qLower = q.toLowerCase();
+
+    const filterVisible = (ids: Iterable<string>) =>
+      new Set([...ids].filter(id => visibleIds.has(id)));
+
+    const localMatch = () =>
+      filterVisible(
+        graphData.nodes
+          .filter(n => {
+            const text = `${n.title ?? ''} ${n.description ?? ''} ${String(n.content ?? '')}`.toLowerCase();
+            return text.includes(qLower);
+          })
+          .map(n => n.id),
+      );
+
     try {
       const result = await graphApi.search(q, 20);
-      const ids = new Set<string>((result.nodes ?? []).map((n: GraphNode) => n.id));
+      let ids = filterVisible((result.nodes ?? []).map((n: GraphNode) => n.id));
+      if (ids.size === 0) {
+        ids = localMatch();
+      }
       setHighlightIds(ids);
 
-      if (ids.size > 0 && graphRef.current && graphData) {
-        const firstId = [...ids][0];
-        const targetNode = graphData.nodes.find(n => n.id === firstId);
-        if (targetNode && 'x' in targetNode) {
+      if (ids.size === 0) {
+        toast.info('Ничего не найдено');
+        return;
+      }
+
+      toast.success(`Найдено: ${ids.size}`);
+
+      const firstId = [...ids][0];
+      const simNodes = graphRef.current?.graphData?.()?.nodes as GraphNode[] | undefined;
+      const targetNode = simNodes?.find(n => n.id === firstId) ?? graphData.nodes.find(n => n.id === firstId);
+
+      if (graphRef.current) {
+        if (typeof graphRef.current.zoomToFit === 'function') {
+          graphRef.current.zoomToFit(800, 120, (node: { id?: string }) => ids.has(node.id ?? ''));
+        } else if (targetNode) {
           const p = normalizePoint(targetNode);
           const dist = 200;
           graphRef.current.cameraPosition(
@@ -163,7 +307,14 @@ const GraphPage: React.FC = () => {
         }
       }
     } catch {
-      toast.error('Ошибка поиска');
+      const ids = localMatch();
+      setHighlightIds(ids);
+      if (ids.size === 0) {
+        toast.error('Ошибка поиска');
+      } else {
+        toast.success(`Найдено локально: ${ids.size}`);
+        graphRef.current?.zoomToFit?.(800, 120, (node: { id?: string }) => ids.has(node.id ?? ''));
+      }
     }
   }, [searchQuery, graphData]);
 
@@ -172,7 +323,7 @@ const GraphPage: React.FC = () => {
     try {
       const result = await graphApi.backfill();
       const s = result.synced;
-      toast.success(`Синхронизировано: ${s.entries} наблюдений, ${s.goals} целей, ${s.experiments} задач, ${s.links} связей`);
+      toast.success(`Синхронизировано: ${s.entries} наблюдений, ${s.goals} целей, ${s.links} связей`);
       await loadGraph();
     } catch {
       toast.error('Ошибка синхронизации');
@@ -188,6 +339,8 @@ const GraphPage: React.FC = () => {
       links: graphData.links.map(l => ({ ...l })),
     };
   }, [graphData]);
+
+  const isEmpty = (displayData?.nodes.length ?? 0) === 0;
 
   if (loading) {
     return (
@@ -241,12 +394,20 @@ const GraphPage: React.FC = () => {
           />
           {searchQuery && (
             <button
+              type="button"
               onClick={() => { setSearchQuery(''); setHighlightIds(new Set()); }}
               className="mr-1 rounded px-1.5 py-0.5 text-[10px] text-white/40 hover:text-white/60"
             >
               ✕
             </button>
           )}
+          <button
+            type="button"
+            onClick={handleSearch}
+            className="mr-1.5 rounded-md px-2 py-1 text-[10px] font-medium text-emerald-400/80 transition hover:bg-emerald-500/10 hover:text-emerald-400"
+          >
+            Найти
+          </button>
         </div>
         <button
           onClick={handleSync}
@@ -290,9 +451,54 @@ const GraphPage: React.FC = () => {
         {highlightIds.size > 0 && <span className="text-emerald-400/70">{highlightIds.size} найдено</span>}
       </div>
 
-      {/* Graph canvas */}
-      <div ref={containerRef} className="absolute inset-0 z-0">
-        <ForceGraph3D
+      {/* Graph canvas or empty state */}
+      {isEmpty ? (
+        <div className="absolute inset-0 z-[1] flex items-center justify-center px-6">
+          <div
+            className="flex max-w-md flex-col items-center gap-4 rounded-2xl px-8 py-10 text-center"
+            style={{
+              background: 'rgba(25, 22, 29, 0.92)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              backdropFilter: 'blur(12px)',
+              boxShadow: '0 24px 48px rgba(0,0,0,0.35)',
+            }}
+          >
+            <div
+              className="flex h-14 w-14 items-center justify-center rounded-2xl"
+              style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}
+            >
+              <GitBranch size={28} style={{ color: '#34d399' }} />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-base font-semibold text-white/90">Граф пустой</h2>
+              <p className="text-sm leading-relaxed text-white/45">
+                Здесь появятся наблюдения и цели из чата, а также связи между ними.
+                Начни с разговора — система сама соберёт карту.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+              <Link
+                to="/chat"
+                className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-medium transition hover:opacity-90"
+                style={{ background: 'rgba(52,211,153,0.15)', color: '#34d399', border: '1px solid rgba(52,211,153,0.3)' }}
+              >
+                <MessageSquare size={13} />
+                Перейти в чат
+              </Link>
+              <button
+                onClick={handleSync}
+                disabled={syncing}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/12 bg-white/5 px-4 py-2 text-xs text-white/55 transition hover:bg-white/10 hover:text-white/75 disabled:opacity-50"
+              >
+                <RefreshCw size={12} className={syncing ? 'animate-spin' : ''} />
+                {syncing ? 'Синхронизация…' : 'Синхронизировать из БД'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div ref={containerRef} className="absolute inset-0 z-0">
+          <ForceGraph3D
           ref={graphRef}
           graphData={displayData}
           backgroundColor="rgba(0,0,0,0)"
@@ -314,10 +520,15 @@ const GraphPage: React.FC = () => {
             </div>`;
           }}
           linkLabel={(link: any) => {
-            const reason = link.reason ?? '';
-            if (!reason) return '';
-            return `<div style="background:rgba(10,10,10,0.92);padding:6px 10px;border-radius:6px;font-size:11px;max-width:240px;border:1px solid rgba(255,255,255,0.1)">
-              <span style="color:#a1a1aa">${reason}</span>
+            const rel = link as GraphLink;
+            const theme = extractLinkTheme(rel, graphData?.nodes);
+            const hint = getLinkTypeHint(rel);
+            const reason = typeof rel.reason === 'string' ? rel.reason.trim() : '';
+            const showReason = reason && reason !== theme;
+            return `<div style="background:rgba(12,14,22,0.96);padding:8px 12px;border-radius:10px;font-size:12px;max-width:280px;border:1px solid rgba(255,255,255,0.14);box-shadow:0 8px 24px rgba(0,0,0,0.45)">
+              <div style="color:#e4e4e7;font-weight:600;font-size:12px;line-height:1.35">${theme || hint}</div>
+              <div style="color:#34d399;font-size:10px;margin-top:4px;text-transform:uppercase;letter-spacing:0.04em">${hint}</div>
+              ${showReason ? `<div style="color:#a1a1aa;line-height:1.4;font-size:10px;margin-top:6px">${reason}</div>` : ''}
             </div>`;
           }}
           linkColor={() => 'rgba(255,255,255,0.12)'}
@@ -329,9 +540,9 @@ const GraphPage: React.FC = () => {
           linkThreeObject={(link: unknown) => {
             if (typeof link !== 'object' || link == null) return new THREE.Object3D();
             const rel = link as GraphLink;
-            const text = typeof rel.reason === 'string' ? rel.reason.trim() : '';
-            if (!text) return new THREE.Object3D();
-            return buildTextSprite(text, '#a1a1aa');
+            const label = getLinkDisplayLabel(rel, graphData?.nodes);
+            if (!label || label === '…') return new THREE.Object3D();
+            return buildTextSprite(label, '#e4e4e7');
           }}
           linkPositionUpdate={(sprite, link) => {
             const coords = extractLinkCoords(link);
@@ -345,10 +556,11 @@ const GraphPage: React.FC = () => {
             if (node?.id) setSelectedNode(node as GraphNodeData);
           }}
         />
-      </div>
+        </div>
+      )}
 
       {/* Node detail panel */}
-      {selectedNode && (
+      {selectedNode && !isEmpty && (
         <div
           className="absolute top-0 right-0 z-20 h-full w-80 border-l border-white/10"
           style={{ background: 'rgba(10,10,10,0.95)', backdropFilter: 'blur(16px)' }}
@@ -363,11 +575,13 @@ const GraphPage: React.FC = () => {
       )}
 
       {/* Controls hint */}
+      {!isEmpty && (
       <div className="pointer-events-none absolute bottom-4 left-4 z-10 flex gap-3 text-[10px] text-white/30">
         <span>ЛКМ — вращение</span>
         <span>ПКМ — перемещение</span>
         <span>Скролл — масштаб</span>
       </div>
+      )}
     </div>
   );
 };

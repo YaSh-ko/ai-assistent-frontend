@@ -6,7 +6,7 @@ export default function Landing() {
     <div className="flex min-h-screen flex-col bg-[var(--growth-bg,#0f0f10)] text-white">
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-5 sm:px-10">
-        <h1 className="text-xl font-bold tracking-tight">Delёz</h1>
+        <h1 className="text-xl font-bold tracking-tight">Impulse</h1>
         <Link
           to="/sign-in"
           className="rounded-xl bg-white/[0.08] px-5 py-2.5 text-sm font-medium transition hover:bg-white/[0.14]"
@@ -68,7 +68,7 @@ export default function Landing() {
 
       {/* Footer */}
       <footer className="px-6 py-6 text-center text-xs text-white/20">
-        Delёz &copy; {new Date().getFullYear()}
+        Impulse &copy; {new Date().getFullYear()}
       </footer>
     </div>
   );

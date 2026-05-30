@@ -109,7 +109,7 @@ interface GifSearchResult {
   originalUrl: string;
 }
 
-const NOTEBOOK_ENTRIES_STORAGE_KEY = "delez_notebook_entries_v1";
+const NOTEBOOK_ENTRIES_STORAGE_KEY = "impulse_notebook_entries_v1";
 const GIPHY_PAGE_SIZE = 18;
 const GIF_MIN_SIZE = 64;
 const GIF_MAX_SIZE = 280;

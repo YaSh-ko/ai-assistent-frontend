@@ -18,7 +18,7 @@ export default function Privacy() {
                 <div className="container">
                     <div className="logo">
                         <Link to="/">
-                            <h1>Delёz</h1>
+                            <h1>Impulse</h1>
                         </Link>
                     </div>
                     <nav className="nav">

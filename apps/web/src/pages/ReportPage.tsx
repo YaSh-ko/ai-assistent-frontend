@@ -30,6 +30,36 @@ function toDateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+function getWeekStart(d: Date): Date {
+  const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const day = (date.getDay() + 6) % 7;
+  date.setDate(date.getDate() - day);
+  return date;
+}
+
+function getWeekEnd(weekStart: Date): Date {
+  const end = new Date(weekStart);
+  end.setDate(end.getDate() + 6);
+  return end;
+}
+
+function formatWeekRange(weekStart: Date): string {
+  const end = getWeekEnd(weekStart);
+  const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+  const startStr = weekStart.toLocaleDateString('ru-RU', opts);
+  const endStr = end.toLocaleDateString('ru-RU', { ...opts, year: weekStart.getFullYear() !== end.getFullYear() ? 'numeric' : undefined });
+  if (weekStart.getMonth() === end.getMonth() && weekStart.getFullYear() === end.getFullYear()) {
+    return `${weekStart.getDate()}–${end.getDate()} ${end.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}`;
+  }
+  return `${startStr} — ${endStr}`;
+}
+
+function isDateInWeek(dateKey: string, weekStart: Date): boolean {
+  const startKey = toDateKey(weekStart);
+  const endKey = toDateKey(getWeekEnd(weekStart));
+  return dateKey >= startKey && dateKey <= endKey;
+}
+
 function getMonthDays(year: number, month: number) {
   const first = new Date(year, month, 1);
   const startDay = (first.getDay() + 6) % 7;
@@ -48,6 +78,9 @@ export default function ReportPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [weekStart, setWeekStart] = useState(() => getWeekStart(new Date()));
+  const [weekSummary, setWeekSummary] = useState<string | null>(null);
+  const [weekSummaryLoading, setWeekSummaryLoading] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -121,9 +154,61 @@ export default function ReportPage() {
     const key = toDateKey(new Date(year, month, day));
     setSelectedDate(prev => prev === key ? null : key);
     setSummary(null);
+    setWeekStart(getWeekStart(new Date(year, month, day)));
+    setWeekSummary(null);
   }, [year, month]);
 
   const selectedEntities = selectedDate ? (entitiesByDate[selectedDate] || []) : [];
+
+  const weekEntities = useMemo(() => {
+    const startKey = toDateKey(weekStart);
+    const endKey = toDateKey(getWeekEnd(weekStart));
+    return entities.filter(e => {
+      const raw = e.event_date || e.created_at?.slice(0, 10);
+      if (!raw) return false;
+      const key = raw.slice(0, 10);
+      return key >= startKey && key <= endKey;
+    });
+  }, [entities, weekStart]);
+
+  const weekStats = useMemo(() => ({
+    observations: weekEntities.filter(e => e.type === 'observation').length,
+    goals: weekEntities.filter(e => e.type === 'goal').length,
+    tasks: weekEntities.filter(e => e.type === 'task').length,
+    completedTasks: weekEntities.filter(e => e.type === 'task' && e.status === 'completed').length,
+    activeDays: new Set(
+      weekEntities.map(e => (e.event_date || e.created_at?.slice(0, 10) || '').slice(0, 10)).filter(Boolean),
+    ).size,
+  }), [weekEntities]);
+
+  const prevWeek = useCallback(() => {
+    setWeekStart(prev => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() - 7);
+      return d;
+    });
+    setWeekSummary(null);
+    setSelectedDate(null);
+    setSummary(null);
+  }, []);
+
+  const nextWeek = useCallback(() => {
+    setWeekStart(prev => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() + 7);
+      return d;
+    });
+    setWeekSummary(null);
+    setSelectedDate(null);
+    setSummary(null);
+  }, []);
+
+  const goToCurrentWeek = useCallback(() => {
+    setWeekStart(getWeekStart(new Date()));
+    setWeekSummary(null);
+    setSelectedDate(null);
+    setSummary(null);
+  }, []);
 
   const handleGenerateSummary = useCallback(async () => {
     if (!selectedDate || selectedEntities.length === 0) return;
@@ -147,7 +232,34 @@ export default function ReportPage() {
     }
   }, [selectedDate, selectedEntities]);
 
+  const handleGenerateWeekSummary = useCallback(async () => {
+    if (weekEntities.length === 0) return;
+    setWeekSummaryLoading(true);
+    setWeekSummary(null);
+    const weekEnd = toDateKey(getWeekEnd(weekStart));
+    const weekStartKey = toDateKey(weekStart);
+    try {
+      const result = await insightsApi.summarize({
+        entities: weekEntities.map(e => ({
+          id: e.id, type: e.type, title: e.title,
+          description: e.description, status: e.status,
+          created_at: e.created_at,
+        })),
+        context: 'week_summary',
+        date: weekStartKey,
+        week_end: weekEnd,
+      });
+      setWeekSummary(result.summary);
+    } catch {
+      setWeekSummary('Не удалось сгенерировать анализ недели.');
+    } finally {
+      setWeekSummaryLoading(false);
+    }
+  }, [weekEntities, weekStart]);
+
   const today = toDateKey(new Date());
+  const currentWeekStart = toDateKey(getWeekStart(new Date()));
+  const isCurrentWeek = toDateKey(weekStart) === currentWeekStart;
 
   const totalEntries = entities.filter(e => e.type === 'observation').length;
   const totalGoals = entities.filter(e => e.type === 'goal').length;
@@ -188,6 +300,84 @@ export default function ReportPage() {
         ))}
       </div>
 
+      {/* Weekly AI analysis */}
+      <div className="px-6 pb-4">
+        <div
+          className="rounded-2xl p-5"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Sparkles size={14} className="text-violet-400" />
+                <span className="text-sm font-medium text-white/80">Анализ недели</span>
+                {isCurrentWeek && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400">Текущая</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <button onClick={prevWeek} className="p-1 rounded-lg hover:bg-white/10 text-white/50 transition">
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="text-xs text-white/60 min-w-[140px] text-center">{formatWeekRange(weekStart)}</span>
+                <button onClick={nextWeek} className="p-1 rounded-lg hover:bg-white/10 text-white/50 transition">
+                  <ChevronRight size={16} />
+                </button>
+                {!isCurrentWeek && (
+                  <button
+                    onClick={goToCurrentWeek}
+                    className="text-[10px] text-white/35 hover:text-white/60 transition ml-1"
+                  >
+                    Сегодня
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3 text-[11px] text-white/40">
+              <span>{weekStats.observations} наблюд.</span>
+              <span>{weekStats.goals} целей</span>
+              <span>{weekStats.tasks} задач</span>
+              {weekStats.completedTasks > 0 && (
+                <span className="text-emerald-400/70">{weekStats.completedTasks} выполнено</span>
+              )}
+              <span>{weekStats.activeDays} активных дней</span>
+            </div>
+          </div>
+
+          {weekEntities.length === 0 ? (
+            <p className="text-xs text-white/30 mt-4">За эту неделю пока нет записей</p>
+          ) : (
+            <>
+              <button
+                onClick={handleGenerateWeekSummary}
+                disabled={weekSummaryLoading}
+                className="mt-4 w-full sm:w-auto flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-xs font-medium transition-all disabled:opacity-50"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(167,139,250,0.15), rgba(96,165,250,0.15))',
+                  border: '1px solid rgba(167,139,250,0.25)',
+                  color: '#a78bfa',
+                }}
+              >
+                {weekSummaryLoading ? (
+                  <><Loader2 size={14} className="animate-spin" /> Анализируем неделю...</>
+                ) : (
+                  <><Sparkles size={14} /> Анализ недели от ИИ</>
+                )}
+              </button>
+
+              {weekSummary && (
+                <div
+                  className="mt-4 rounded-lg p-4 text-sm leading-relaxed text-white/75"
+                  style={{ background: 'rgba(167,139,250,0.06)', border: '1px solid rgba(167,139,250,0.15)' }}
+                >
+                  {weekSummary}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
       <div className="px-6 pb-8 flex gap-4 flex-col lg:flex-row">
         {/* Calendar */}
         <div
@@ -222,6 +412,7 @@ export default function ReportPage() {
               const dayEntities = entitiesByDate[key] || [];
               const isSelected = selectedDate === key;
               const isToday = key === today;
+              const inWeek = isDateInWeek(key, weekStart);
               const hasObs = dayEntities.some(e => e.type === 'observation');
               const hasGoal = dayEntities.some(e => e.type === 'goal');
               const hasTask = dayEntities.some(e => e.type === 'task');
@@ -232,8 +423,12 @@ export default function ReportPage() {
                   onClick={() => handleDayClick(day)}
                   className="relative flex flex-col items-center justify-center rounded-lg py-2 transition-all"
                   style={{
-                    background: isSelected ? 'rgba(255,255,255,0.12)' : 'transparent',
-                    border: isToday ? '1px solid rgba(52,211,153,0.4)' : '1px solid transparent',
+                    background: isSelected
+                      ? 'rgba(255,255,255,0.12)'
+                      : inWeek
+                        ? 'rgba(167,139,250,0.08)'
+                        : 'transparent',
+                    border: isToday ? '1px solid rgba(52,211,153,0.4)' : inWeek ? '1px solid rgba(167,139,250,0.2)' : '1px solid transparent',
                   }}
                 >
                   <span className={`text-sm ${dayEntities.length > 0 ? 'text-white font-medium' : 'text-white/30'}`}>

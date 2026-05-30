@@ -156,7 +156,7 @@ export default function GoalPage() {
 
   const handleDeleteGoal = async () => {
     if (!id) return;
-    const confirmed = globalThis.confirm('Удалить эту цель? Все связанные задачи тоже будут удалены.');
+    const confirmed = globalThis.confirm('Удалить эту цель? Все связанные задачи тоже будут удалены. Цель исчезнет из графа.');
     if (!confirmed) return;
     setDeleting(true);
     try {

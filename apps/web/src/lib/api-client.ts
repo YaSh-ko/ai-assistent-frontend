@@ -427,6 +427,10 @@ export const graphApi = {
 
     search: async (query: string, limit = 50) => {
         const response = await apiRequest(`/v1/graph/search?query=${encodeURIComponent(query)}&limit=${limit}`);
+        if (!response.ok) {
+            const err = await parseResponseData(response);
+            throw new Error(parseFastApiDetail(err) || response.statusText || 'Ошибка поиска');
+        }
         return response.json();
     },
 
@@ -610,6 +614,14 @@ export const entriesApi = {
             throw new Error(parseFastApiDetail(err) || response.statusText);
         }
         return response.json();
+    },
+
+    delete: async (id: string) => {
+        const response = await apiRequest(`/v1/entries/${id}`, { method: 'DELETE' });
+        if (!response.ok && response.status !== 204) {
+            const err = await parseResponseData(response);
+            throw new Error(parseFastApiDetail(err) || response.statusText || 'Не удалось удалить наблюдение');
+        }
     },
 
     getAnalysis: async (id: string) => {
@@ -1126,8 +1138,9 @@ export const insightsApi = {
     },
     summarize: async (payload: {
         entities: Array<{ id: string; type: string; title: string; description?: string; status?: string; created_at?: string }>;
-        context: 'day_summary' | 'cluster_analysis';
+        context: 'day_summary' | 'week_summary' | 'cluster_analysis';
         date?: string;
+        week_end?: string;
     }) => {
         const response = await apiRequest('/v1/insights/summarize', {
             method: 'POST',

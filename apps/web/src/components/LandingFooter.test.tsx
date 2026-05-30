@@ -9,7 +9,7 @@ describe('LandingFooter', () => {
 
   it('renders brand name', () => {
     renderFooter();
-    expect(screen.getByText('Delёz')).toBeInTheDocument();
+    expect(screen.getByText('Impulse')).toBeInTheDocument();
     expect(screen.getByText('Персональный ИИ-ассистент на всю жизнь')).toBeInTheDocument();
   });
 
@@ -32,6 +32,6 @@ describe('LandingFooter', () => {
 
   it('renders copyright', () => {
     renderFooter();
-    expect(screen.getByText(/2026 Delёz/)).toBeInTheDocument();
+    expect(screen.getByText(/2026 Impulse/)).toBeInTheDocument();
   });
 });

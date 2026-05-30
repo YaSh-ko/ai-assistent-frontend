@@ -6,7 +6,7 @@ export default function LandingFooter() {
       <div className="container">
         <div className="footer-content">
           <div className="footer-logo">
-            <h3>Delёz</h3>
+            <h3>Impulse</h3>
             <p>Персональный ИИ-ассистент на всю жизнь</p>
           </div>
           <div className="footer-links">
@@ -31,7 +31,7 @@ export default function LandingFooter() {
           <p>ИП: Котельникова Екатерина Андреевна</p>
           <p>ИНН: 254009911186</p>
           <p>ОРГНИП: 325784700387792</p>
-          <p>&copy; 2026 Delёz. Все права защищены.</p>
+          <p>&copy; 2026 Impulse. Все права защищены.</p>
         </div>
       </div>
     </footer>

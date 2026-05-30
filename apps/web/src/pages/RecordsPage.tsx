@@ -121,8 +121,8 @@ const notebooks: NotebookMeta[] = [
   { id: "hobby", title: "Хобби", subtitle: "Творчество и интересы", sphere: "Хобби", coverClassName: "bg-gradient-to-br from-[#8ac4ff] to-[#6f98c7]" },
 ];
 
-const NOTEBOOKS_STORAGE_KEY = "delez_notebooks_drafts_v1";
-const NOTEBOOK_ENTRIES_STORAGE_KEY = "delez_notebook_entries_v1";
+const NOTEBOOKS_STORAGE_KEY = "impulse_notebooks_drafts_v1";
+const NOTEBOOK_ENTRIES_STORAGE_KEY = "impulse_notebook_entries_v1";
 
 function loadNotebookDrafts(): Record<string, NotebookDraft> {
   try {
@@ -638,7 +638,7 @@ export default function RecordsPage() {
                     value={selectedDraft.content}
                     onChange={(event) => updateSelectedDraft({ content: event.target.value })}
                     placeholder="Пиши как в творческом дневнике: мысли, события, инсайты..."
-                    className="delez-scrollbar w-full resize-y rounded-xl border border-white/15 bg-[#070b22]/90 px-4 py-3 text-sm text-white outline-none placeholder:text-white/40"
+                    className="impulse-scrollbar w-full resize-y rounded-xl border border-white/15 bg-[#070b22]/90 px-4 py-3 text-sm text-white outline-none placeholder:text-white/40"
                   />
 
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

@@ -17,8 +17,6 @@ import EventsPage from "./pages/EventsPage.tsx";
 import GoalsPage from "./pages/GoalsPage.tsx";
 import GoalPage from "./pages/GoalPage.tsx";
 import ReportPage from "./pages/ReportPage.tsx";
-import ExperimentsPage from "./pages/ExperimentsPage.tsx";
-import Experiment from "./pages/Experiment.tsx";
 import Privacy from "./pages/Privacy.tsx";
 import Terms from "./pages/Terms.tsx";
 import ProfilePage from "./pages/ProfilePage.tsx";
@@ -66,10 +64,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/development" element={<ProtectedRoute><DevelopmentPage /></ProtectedRoute>} />
           <Route path="/goals/:id" element={<ProtectedRoute><GoalPage /></ProtectedRoute>} />
           <Route path="/report" element={<ProtectedRoute><ReportPage /></ProtectedRoute>} />
-          <Route path="/experiments" element={<ProtectedRoute><ExperimentsPage /></ProtectedRoute>} />
+          <Route path="/experiments" element={<Navigate to="/development" replace />} />
           <Route path="/virtual-fields" element={<Navigate to="/navigation" replace />} />
-          <Route path="/experiment/:id" element={<ProtectedRoute><Experiment /></ProtectedRoute>} />
-          <Route path="/experiment" element={<ProtectedRoute><Experiment /></ProtectedRoute>} />
+          <Route path="/experiment/:id" element={<Navigate to="/development" replace />} />
+          <Route path="/experiment" element={<Navigate to="/development" replace />} />
           <Route path="/memoirs" element={<Navigate to="/report" replace />} />
           <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           {/* /mbti-test убран — редирект на профиль */}

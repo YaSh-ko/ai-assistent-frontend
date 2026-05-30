@@ -305,7 +305,7 @@ export default function ProfilePage() {
 
             {/* Content */}
             <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
-              <div className="delez-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
+              <div className="impulse-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
                 {section === "profile" && (
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
@@ -404,7 +404,7 @@ export default function ProfilePage() {
                           value={profile.bio ?? ""}
                           onChange={(e) => setProfile((p) => ({ ...p, bio: e.target.value }))}
                           placeholder="Расскажите немного о себе — это поможет ИИ лучше понимать контекст"
-                          className="delez-scrollbar w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 pr-11 text-sm text-white/90 outline-none transition placeholder:text-white/25 focus:border-white/25 focus:bg-white/[0.06]"
+                          className="impulse-scrollbar w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 pr-11 text-sm text-white/90 outline-none transition placeholder:text-white/25 focus:border-white/25 focus:bg-white/[0.06]"
                         />
                         <button
                           type="button"

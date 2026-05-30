@@ -31,13 +31,11 @@ interface NodeDetailPanelProps {
 const TYPE_META: Record<string, { label: string; color: string; route: string }> = {
   Entry: { label: 'Наблюдение', color: '#34d399', route: '/event' },
   Goal: { label: 'Цель', color: '#f59e0b', route: '/goals' },
-  Experiment: { label: 'Задача', color: '#60a5fa', route: '/experiment' },
 };
 
 const ENTITY_TYPE_MAP: Record<string, string> = {
   Entry: 'observation',
   Goal: 'goal',
-  Experiment: 'task',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -145,16 +143,29 @@ export default function NodeDetailPanel({ node, onClose, allNodes = [], allLinks
         {/* Related nodes */}
         {relatedNodes.length > 0 && (
           <div className="mb-4">
-            <div className="text-[10px] uppercase tracking-wider text-white/30 mb-2">
+            <div className="text-[10px] uppercase tracking-wider text-white/40 mb-2 font-medium">
               Связи ({relatedNodes.length})
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {relatedNodes.slice(0, 8).map(rn => {
                 const rm = TYPE_META[rn.type] ?? { label: rn.type, color: '#a1a1aa' };
+                const name = rn.title || rn.description || rn.id;
                 return (
-                  <div key={rn.id} className="flex items-center gap-2 text-[11px]">
-                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: rm.color }} />
-                    <span className="text-white/60 truncate">{rn.title || rn.description || rn.id}</span>
+                  <div
+                    key={rn.id}
+                    className="flex items-start gap-2.5 rounded-lg px-2.5 py-2"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                  >
+                    <span className="mt-1.5 w-2 h-2 rounded-full shrink-0" style={{ background: rm.color }} />
+                    <div className="min-w-0 flex-1">
+                      <span
+                        className="text-[10px] font-medium uppercase tracking-wide"
+                        style={{ color: rm.color }}
+                      >
+                        {rm.label}
+                      </span>
+                      <p className="text-[11px] text-white/75 leading-snug line-clamp-2 mt-0.5">{name}</p>
+                    </div>
                   </div>
                 );
               })}

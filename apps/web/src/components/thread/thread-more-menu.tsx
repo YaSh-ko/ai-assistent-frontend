@@ -78,7 +78,7 @@ function exportToPdf(messages: Message[], title: string, _threadId: string) {
     .filter((m) => m.type === "human" || m.type === "ai")
     .map((m) => {
       const isHuman = m.type === "human";
-      const role = isHuman ? "Вы" : "Delёz";
+      const role = isHuman ? "Вы" : "Impulse";
       const body = escapeHtml(getContentString(m.content).trim() || "(пусто)");
       const roleColor = isHuman ? "#4a90d9" : "#5aaa6a";
       return `
@@ -151,7 +151,7 @@ async function exportToDocx(messages: Message[], title: string, threadId: string
 
   const doc = new Document({ sections: [{ children }] });
   const blob = await Packer.toBlob(doc);
-  downloadBlob(`delez-${threadId.slice(0, 8)}.docx`, blob);
+  downloadBlob(`impulse-${threadId.slice(0, 8)}.docx`, blob);
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -219,7 +219,7 @@ export function ThreadMoreMenu({
     const md = buildMarkdownExport(messages);
     if (!md) { toast.message("Нет сообщений для экспорта"); return; }
     const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
-    downloadBlob(`delez-${threadId.slice(0, 8)}.md`, blob);
+    downloadBlob(`impulse-${threadId.slice(0, 8)}.md`, blob);
     toast.success("Файл MarkDown сохранён");
     setOpen(false);
   }, [threadId, messages]);

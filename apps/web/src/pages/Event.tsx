@@ -1,9 +1,11 @@
 ﻿import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { ChevronRight, ChevronLeft, MessageSquare } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { ChevronRight, ChevronLeft, MessageSquare, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { chatApi, entriesApi } from "@/lib/api-client";
 import RadialPulseLoader from "@/components/ui/loading-animation";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import { GrowthButtonDanger } from "@/components/ui/growth-field";
 
 interface EntryData {
   id: string;
@@ -76,8 +78,10 @@ function buildIntensityPath(metrics: IntensityMetric[], width = 600, height = 20
 
 export default function Event() {
   const { id } = useParams<{ id?: string }>();
+  const navigate = useNavigate();
   const [data, setData] = useState<AnalysisData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [linkedThread, setLinkedThread] = useState<string | null>(null);
 
@@ -91,6 +95,21 @@ export default function Event() {
       .then(ids => setLinkedThread(ids[0] ?? null))
       .catch(() => undefined);
   }, [id]);
+
+  const handleDeleteEntry = async () => {
+    if (!id) return;
+    const confirmed = globalThis.confirm('Удалить это наблюдение? Оно также исчезнет из графа.');
+    if (!confirmed) return;
+    setDeleting(true);
+    try {
+      await entriesApi.delete(id);
+      toast.success('Наблюдение удалено');
+      navigate('/events');
+    } catch {
+      toast.error('Не удалось удалить наблюдение');
+      setDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -316,6 +335,15 @@ export default function Event() {
                 </>
               )}
             </div>
+
+            <GrowthButtonDanger
+              onClick={handleDeleteEntry}
+              disabled={deleting}
+              className="w-full"
+            >
+              <Trash2 size={14} />
+              {deleting ? 'Удаление…' : 'Удалить наблюдение'}
+            </GrowthButtonDanger>
           </div>
         </div>
       </div>

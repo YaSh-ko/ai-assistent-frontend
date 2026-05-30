@@ -86,7 +86,7 @@ export default function SignIn() {
         {/* Logo */}
         <div className="mb-8 text-center">
           <Link to="/" className="inline-block">
-            <h1 className="text-2xl font-bold tracking-tight text-white">Delёz</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Impulse</h1>
           </Link>
           <p className="mt-2 text-sm text-white/40">Бортовой журнал развития</p>
         </div>

@@ -64,7 +64,7 @@ export default function NavigationPage() {
       <div className="navpage__inner">
         {/* Хедер */}
         <header className="navpage__header">
-          <div className="navpage__logo">Delёz</div>
+          <div className="navpage__logo">Impulse</div>
           <Link to="/profile" className="navpage__profile-btn">
             <User strokeWidth={1.5} className="navpage__profile-icon" />
           </Link>

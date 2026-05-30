@@ -24,7 +24,7 @@ interface HabitItem {
   streak: number;
 }
 
-const HABITS_STORAGE_KEY = "delez_habits_tracker";
+const HABITS_STORAGE_KEY = "impulse_habits_tracker";
 
 function loadHabits(): HabitItem[] {
   try {

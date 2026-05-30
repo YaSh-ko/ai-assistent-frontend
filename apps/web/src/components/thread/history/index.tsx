@@ -593,7 +593,7 @@ function SidebarChrome({
       <div className="thread-sidebar__panel">
         <header className="thread-sidebar__header">
           <Link to="/navigation" className="thread-sidebar__brand">
-            Delёz
+            Impulse
           </Link>
           <button
             type="button"
@@ -623,7 +623,7 @@ function SidebarChrome({
           </div>
         </div>
 
-        <div className="thread-sidebar__scroll delez-scrollbar">
+        <div className="thread-sidebar__scroll impulse-scrollbar">
           {threadsLoading ? (
             <ThreadHistoryLoading />
           ) : (

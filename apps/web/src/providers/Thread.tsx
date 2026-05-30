@@ -11,7 +11,7 @@ import {
 } from "react";
 import { chatApi } from "@/lib/api-client";
 
-const FAVORITES_STORAGE_KEY = "delez-favorite-thread-ids";
+const FAVORITES_STORAGE_KEY = "impulse-favorite-thread-ids";
 
 function readFavoriteIds(): string[] {
   try {

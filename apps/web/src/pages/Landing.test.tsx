@@ -3,24 +3,13 @@ import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, expect } from 'vitest';
 import Landing from './Landing';
 
-vi.mock('@/components/ParticlesBackground', () => ({ default: () => null }));
-vi.mock('@/components/LandingFooter', () => ({ default: () => <footer>Footer</footer> }));
-
-vi.mock('@/assets/memory.png', () => ({ default: 'memory.png' }));
-vi.mock('@/assets/overtime.png', () => ({ default: 'overtime.png' }));
-vi.mock('@/assets/history.png', () => ({ default: 'history.png' }));
-vi.mock('@/assets/padlock.png', () => ({ default: 'padlock.png' }));
-vi.mock('@/assets/shield.png', () => ({ default: 'shield.png' }));
-vi.mock('@/assets/configuration.png', () => ({ default: 'configuration.png' }));
-vi.mock('@/assets/Macbook Air M2 Silver Flatten.png', () => ({ default: 'macbook.png' }));
-
 describe('Landing', () => {
   const renderLanding = () =>
     render(<MemoryRouter><Landing /></MemoryRouter>);
 
   it('renders brand name', () => {
     renderLanding();
-    expect(screen.getAllByText(/Delёz/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Impulse/i).length).toBeGreaterThan(0);
   });
 
   it('renders hero section', () => {
@@ -31,54 +20,20 @@ describe('Landing', () => {
 
   it('renders navigation links', () => {
     renderLanding();
-    const loginLinks = screen.getAllByText('Войти');
-    expect(loginLinks.length).toBeGreaterThan(0);
-    const betaLinks = screen.getAllByText('Бета-тестирование');
-    expect(betaLinks.length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Войти').length).toBeGreaterThan(0);
+    expect(screen.getByText('Записаться на бета-тест')).toBeInTheDocument();
   });
 
-  it('renders problem section', () => {
+  it('renders feature cards', () => {
     renderLanding();
-    expect(screen.getByText('Планы есть, прогресс — нет?')).toBeInTheDocument();
-    expect(screen.getByText('Цели и гипотезы теряются')).toBeInTheDocument();
+    expect(screen.getByText('Наблюдения')).toBeInTheDocument();
+    expect(screen.getByText('Цели и задачи')).toBeInTheDocument();
+    expect(screen.getByText('Аналитика')).toBeInTheDocument();
   });
 
-  it('renders how it works section', () => {
+  it('renders CTA with beta-test link', () => {
     renderLanding();
-    expect(screen.getByText('Delёz собирает, связывает и показывает прогресс')).toBeInTheDocument();
-    expect(screen.getByText('Фиксируешь шаг в чате')).toBeInTheDocument();
-  });
-
-  it('renders security section', () => {
-    renderLanding();
-    expect(screen.getByText('Данные под вашим контролем')).toBeInTheDocument();
-    expect(screen.getByText('HTTPS между клиентом и API')).toBeInTheDocument();
-  });
-
-  it('renders tech stack section', () => {
-    renderLanding();
-    expect(screen.getByText('Технологии под капотом')).toBeInTheDocument();
-    expect(screen.getByText('Граф знаний Neo4j')).toBeInTheDocument();
-  });
-
-  it('renders CTA section with beta-test links', () => {
-    renderLanding();
-    const betaTestLinks = screen.getAllByRole('link', { name: 'Записаться на бета-тест' });
-    expect(betaTestLinks.length).toBeGreaterThan(0);
-    betaTestLinks.forEach(link => {
-      expect(link).toHaveAttribute('href', '/beta-test');
-    });
-  });
-
-  it('renders target audience section', () => {
-    renderLanding();
-    expect(screen.getByText('Для кого это?')).toBeInTheDocument();
-    expect(screen.getByText('Студенты и стажёры')).toBeInTheDocument();
-    expect(screen.getByText('Саморазвитие')).toBeInTheDocument();
-  });
-
-  it('renders footer', () => {
-    renderLanding();
-    expect(screen.getByText('Footer')).toBeInTheDocument();
+    const betaTestLink = screen.getByRole('link', { name: 'Записаться на бета-тест' });
+    expect(betaTestLink).toHaveAttribute('href', '/beta-test');
   });
 });

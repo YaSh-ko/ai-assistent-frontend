@@ -195,7 +195,7 @@ function ChatInput({
       <VoiceInputIndicator isListening={isListening} />
       <form
         onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
-        className="flex-1 relative z-10 rounded-2xl border border-zinc-800 bg-zinc-900/95 shadow-lg backdrop-blur-sm px-4 py-3 flex flex-col gap-2"
+        className="flex-1 relative rounded-2xl border border-zinc-800 bg-zinc-900/95 shadow-lg backdrop-blur-sm px-4 py-3 flex flex-col gap-2"
       >
         {goalFocus && onClearGoalFocus && (
           <GoalFocusChip context={goalFocus} onDismiss={onClearGoalFocus} />
@@ -736,7 +736,7 @@ export function Thread() {
           {chatStarted && (
             <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center gap-2 sm:gap-4 bg-gradient-to-t from-zinc-950 from-75% via-zinc-950/80 to-transparent pt-8 pb-0 w-full z-10">
               <div className="flex flex-col items-center gap-2 pb-6 sm:pb-0 sm:-mb-[40px] w-full sm:-translate-y-[60px]">
-                <div className="w-full max-w-3xl px-4 mb-1">
+                <div className="relative z-20 w-full max-w-3xl px-4 mb-1">
                   <DetectorProposalChip
                     proposal={detectorProposal}
                     isSaving={detectorSaving}

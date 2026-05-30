@@ -587,7 +587,12 @@ export const detectorApi = {
 
 // Entries API
 export const entriesApi = {
-    create: async (body: { title?: string; description: string; event_date: string }) => {
+    create: async (body: {
+        title?: string;
+        description: string;
+        event_date: string;
+        valence?: number;
+    }) => {
         const response = await apiRequest("/v1/entries", {
             method: "POST",
             body: JSON.stringify(body),
@@ -647,7 +652,28 @@ export const entriesApi = {
     getTransformations: async (id: string) => {
         const response = await apiRequest(`/v1/entries/${id}/transformations`);
         return response.json();
-    }
+    },
+
+    addNote: async (id: string, body: { content: string; source?: string; valence?: number }) => {
+        const response = await apiRequest(`/v1/entries/${id}/notes`, {
+            method: "POST",
+            body: JSON.stringify(body),
+        });
+        const data = await parseResponseData(response);
+        if (!response.ok) {
+            throw new Error(parseFastApiDetail(data) || response.statusText || "Не удалось добавить дополнение");
+        }
+        return data;
+    },
+
+    getNotes: async (id: string) => {
+        const response = await apiRequest(`/v1/entries/${id}/notes`);
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(parseFastApiDetail(err) || response.statusText);
+        }
+        return response.json();
+    },
 };
 
 function parseFastApiDetail(body: unknown): string {

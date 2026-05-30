@@ -14,6 +14,8 @@ export type DetectorProposal = {
     priority?: string;
     measurable?: string;
     area?: string;
+    /** Emotional tone from detector: -1 (heavy) .. +1 (positive) */
+    valence?: number;
     [key: string]: unknown;
   };
   revived?: boolean;

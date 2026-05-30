@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import ForceGraph3D from 'react-force-graph-3d';
 import * as THREE from 'three';
 import { Eye, Target, Search, RefreshCw, GitBranch, MessageSquare } from 'lucide-react';
@@ -201,6 +201,8 @@ function buildTextSprite(message: string, color: string): THREE.Sprite {
 }
 
 const GraphPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const focusNodeId = searchParams.get('node');
   const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -235,6 +237,32 @@ const GraphPage: React.FC = () => {
   }, [activeTypes]);
 
   useEffect(() => { loadGraph(); }, [loadGraph]);
+
+  useEffect(() => {
+    if (!focusNodeId || !graphData?.nodes.length) return;
+    const node = graphData.nodes.find(n => n.id === focusNodeId);
+    if (!node) return;
+    setSelectedNode(node as GraphNodeData);
+    const neighborIds = new Set<string>([focusNodeId]);
+    graphData.links.forEach(link => {
+      const sId = typeof link.source === 'string' ? link.source : link.source?.id;
+      const tId = typeof link.target === 'string' ? link.target : link.target?.id;
+      if (sId === focusNodeId && tId) neighborIds.add(tId);
+      if (tId === focusNodeId && sId) neighborIds.add(sId);
+    });
+    setHighlightIds(neighborIds);
+    const simNodes = graphRef.current?.graphData?.()?.nodes as GraphNode[] | undefined;
+    const targetNode = simNodes?.find(n => n.id === focusNodeId) ?? node;
+    if (graphRef.current && targetNode) {
+      const p = normalizePoint(targetNode);
+      const dist = 200;
+      graphRef.current.cameraPosition(
+        { x: p.x + dist, y: p.y + dist, z: p.z + dist },
+        { x: p.x, y: p.y, z: p.z },
+        1000,
+      );
+    }
+  }, [focusNodeId, graphData]);
 
   const toggleType = (type: string) => {
     setActiveTypes(prev => {

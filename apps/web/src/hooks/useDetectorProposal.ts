@@ -18,6 +18,11 @@ function ensureIsoDate(raw: unknown): string {
   return todayIsoDate();
 }
 
+function parseValence(raw: unknown): number | undefined {
+  if (typeof raw !== "number" || Number.isNaN(raw)) return undefined;
+  return Math.max(-1, Math.min(1, raw));
+}
+
 async function createEntityFromProposal(
   proposal: DetectorProposal,
   threadId?: string | null,
@@ -32,10 +37,12 @@ async function createEntityFromProposal(
   const entityType = proposal.entity_type as "observation" | "goal" | "task";
 
   if (entityType === "observation") {
+    const valence = parseValence(preview.valence);
     const entry = await entriesApi.create({
       title,
       description,
       event_date: ensureIsoDate(preview.event_date),
+      ...(valence !== undefined ? { valence } : {}),
     });
     id = String(entry.id);
     path = `/event/${id}`;
@@ -101,9 +108,13 @@ async function updateEntityFromProposal(
   const entityType = proposal.entity_type as "observation" | "goal" | "task";
 
   if (entityType === "observation") {
-    await entriesApi.patch(existingId, {
-      ...(description ? { description } : {}),
-      ...(preview.title ? { title: preview.title } : {}),
+    const noteText = (description || (preview.title as string) || "").trim();
+    if (!noteText) throw new Error("Пустое дополнение");
+    const valence = parseValence(preview.valence);
+    await entriesApi.addNote(existingId, {
+      content: noteText,
+      source: "chat",
+      ...(valence !== undefined ? { valence } : {}),
     });
     if (threadId) {
       void chatApi.linkThreadToEntity(threadId, entityType, existingId).catch(() => undefined);
@@ -217,6 +228,8 @@ export function useDetectorProposal(
       const savedLabel =
         !isUpdate && proposal.entity_type === "task" && path.startsWith("/goals/")
           ? "Задача добавлена к цели"
+          : isUpdate && proposal.entity_type === "observation"
+            ? "Дополнение добавлено"
           : isUpdate
             ? "Обновлено"
             : "Сохранено";

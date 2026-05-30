@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ChevronRight, ChevronLeft, MessageSquare, Trash2 } from "lucide-react";
+import { ChevronRight, ChevronLeft, MessageSquare, Trash2, GitBranch, Eye, Target } from "lucide-react";
 import { toast } from "sonner";
 import { chatApi, entriesApi } from "@/lib/api-client";
 import RadialPulseLoader from "@/components/ui/loading-animation";
@@ -43,13 +43,64 @@ interface Transformation {
   category?: string | null;
 }
 
+interface GraphRelation {
+  id: string;
+  entity_type: string;
+  title: string;
+  description?: string | null;
+  relation_type: string;
+  score?: number | null;
+  reason?: string | null;
+}
+
+interface EntryNote {
+  id: string;
+  entry_id: string;
+  content: string;
+  source: string;
+  created_at: string;
+}
+
 interface AnalysisData {
   entry: EntryData;
   intensity_metrics: IntensityMetric[];
   related_situations: RelatedSituation[];
+  graph_relations?: GraphRelation[];
+  entry_notes?: EntryNote[];
   negative_impacts: NegativeImpact[];
   transformations: Transformation[];
   related_concepts?: { id: string; name: string; relevance?: number | null }[];
+}
+
+function formatNoteDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString("ru-RU", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+const NOTE_SOURCE_LABELS: Record<string, string> = {
+  chat: "из чата",
+  manual: "вручную",
+};
+
+const ENTITY_TYPE_LABELS: Record<string, string> = {
+  observation: "Наблюдение",
+  goal: "Цель",
+};
+
+const ENTITY_TYPE_STYLES: Record<string, { bg: string; color: string; icon: typeof Eye }> = {
+  observation: { bg: "rgba(52,211,153,0.12)", color: "#34d399", icon: Eye },
+  goal: { bg: "rgba(245,158,11,0.12)", color: "#f59e0b", icon: Target },
+};
+
+function relatedEntityPath(entityType: string, entityId: string): string {
+  return entityType === "goal" ? `/goals/${entityId}` : `/event/${entityId}`;
 }
 
 function buildIntensityPath(metrics: IntensityMetric[], width = 600, height = 200): string {
@@ -130,13 +181,14 @@ export default function Event() {
     );
   }
 
-  const { entry, intensity_metrics, related_situations, negative_impacts, transformations } = data;
+  const { entry, intensity_metrics, graph_relations = [], entry_notes = [], negative_impacts, transformations } = data;
   const avgIntensity = intensity_metrics.length
     ? intensity_metrics.reduce((s, m) => s + m.intensity_value, 0) / intensity_metrics.length
     : null;
   const intensityPath = buildIntensityPath(intensity_metrics);
-  const influenced = related_situations.filter(s => s.relation_type === "influenced");
-  const related = related_situations.filter(s => s.relation_type !== "influenced");
+  const relatedGraphItems = graph_relations.filter(
+    r => r.entity_type === "observation" || r.entity_type === "goal",
+  );
 
   return (
     <div className="min-h-screen" style={{ background: '#09090b', color: '#e4e4e7' }}>
@@ -197,7 +249,7 @@ export default function Event() {
                 style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.06)' }}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-sm font-semibold" style={{ color: '#ffffff' }}>Описание</h2>
+                  <h2 className="text-sm font-semibold" style={{ color: '#ffffff' }}>Первичная запись</h2>
                   {linkedThread && (
                     <Link
                       to={`/chat?threadId=${linkedThread}`}
@@ -216,62 +268,102 @@ export default function Event() {
                 </p>
               </div>
 
-              {/* Связанные */}
-              <div className="flex flex-col gap-4">
-                <div
-                  className="rounded-xl p-4 md:p-5 flex-1 flex flex-col"
-                  style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.06)' }}
-                >
-                  <h2 className="text-sm font-semibold mb-3" style={{ color: '#ffffff' }}>
-                    Что повлияло потом
+              {/* Связанные элементы графа */}
+              <div
+                className="rounded-xl p-4 md:p-5 flex-1 flex flex-col"
+                style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-semibold" style={{ color: '#ffffff' }}>
+                    Связанные записи
                   </h2>
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginBottom: '10px' }} />
-                  <div className="space-y-1 grow">
-                    {influenced.length ? influenced.map(s => (
-                      <Link
-                        key={s.id}
-                        to={`/event/${s.target_id}`}
-                        className="flex items-center justify-between p-2 rounded-lg transition-all group"
-                        style={{ border: '1px solid transparent' }}
-                      >
-                        <span className="text-xs" style={{ color: '#e4e4e7' }}>
-                          {s.target_title ?? "Ситуация"}
-                        </span>
-                        <ChevronRight className="w-3 h-3" style={{ color: '#A1A1AA' }} />
-                      </Link>
-                    )) : (
-                      <p className="text-xs" style={{ color: 'rgba(161,161,170,0.4)' }}>Нет данных</p>
-                    )}
-                  </div>
+                  {relatedGraphItems.length > 0 && (
+                    <Link
+                      to={`/graph?node=${id}`}
+                      className="text-xs flex items-center gap-1 transition-colors hover:text-white"
+                      style={{ color: '#A1A1AA' }}
+                    >
+                      <GitBranch className="w-3 h-3" />
+                      На графе
+                    </Link>
+                  )}
                 </div>
-
-                <div
-                  className="rounded-xl p-4 md:p-5 flex-1 flex flex-col"
-                  style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.06)' }}
-                >
-                  <h2 className="text-sm font-semibold mb-3" style={{ color: '#ffffff' }}>
-                    Связанные ситуации
-                  </h2>
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginBottom: '10px' }} />
-                  <div className="space-y-1 grow">
-                    {related.length ? related.map(s => (
-                      <Link
-                        key={s.id}
-                        to={`/event/${s.target_id}`}
-                        className="flex items-center justify-between p-2 rounded-lg transition-all"
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginBottom: '10px' }} />
+                <div className="space-y-2 grow">
+                  {relatedGraphItems.length ? relatedGraphItems.map(r => {
+                    const typeStyle = ENTITY_TYPE_STYLES[r.entity_type] ?? ENTITY_TYPE_STYLES.observation;
+                    const TypeIcon = typeStyle.icon;
+                    return (
+                    <Link
+                      key={`${r.entity_type}-${r.id}`}
+                      to={relatedEntityPath(r.entity_type, r.id)}
+                      className="block p-2.5 rounded-lg transition-all hover:bg-white/[0.04]"
+                      style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+                    >
+                      <span
+                        className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded mb-1.5"
+                        style={{ background: typeStyle.bg, color: typeStyle.color }}
                       >
-                        <span className="text-xs" style={{ color: '#e4e4e7' }}>
-                          {s.target_title ?? "Ситуация"}
+                        <TypeIcon className="w-3 h-3" />
+                        {ENTITY_TYPE_LABELS[r.entity_type] ?? r.entity_type}
+                      </span>
+                      <span className="text-xs font-medium block" style={{ color: '#e4e4e7' }}>
+                        {r.title}
+                      </span>
+                      {r.description && r.description !== r.title && (
+                        <span className="text-[11px] mt-1 block line-clamp-2" style={{ color: 'rgba(161,161,170,0.7)' }}>
+                          {r.description}
                         </span>
-                        <ChevronRight className="w-3 h-3" style={{ color: '#A1A1AA' }} />
-                      </Link>
-                    )) : (
-                      <p className="text-xs" style={{ color: 'rgba(161,161,170,0.4)' }}>Нет данных</p>
-                    )}
-                  </div>
+                      )}
+                      {typeof r.score === "number" && (
+                        <span className="text-[10px] mt-1.5 block" style={{ color: 'rgba(52,211,153,0.6)' }}>
+                          Схожесть {Math.round(r.score * 100)}%
+                        </span>
+                      )}
+                    </Link>
+                    );
+                  }) : (
+                    <p className="text-xs leading-relaxed" style={{ color: 'rgba(161,161,170,0.4)' }}>
+                      Появятся, когда система найдёт наблюдения или цели на ту же тему.
+                      Запишите ещё пару заметок про одну ситуацию — связь создастся автоматически.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
+
+            {entry_notes.length > 0 && (
+              <div
+                className="rounded-xl p-4 md:p-5"
+                style={{ background: '#211D25', border: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                <h2 className="text-sm font-semibold mb-3" style={{ color: '#ffffff' }}>
+                  Дополнения
+                </h2>
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginBottom: '12px' }} />
+                <div className="space-y-3">
+                  {entry_notes.map((note) => (
+                    <div
+                      key={note.id}
+                      className="rounded-lg px-3 py-3"
+                      style={{
+                        background: 'rgba(52,211,153,0.04)',
+                        border: '1px solid rgba(52,211,153,0.12)',
+                      }}
+                    >
+                      <p className="text-[10px] mb-1.5" style={{ color: 'rgba(161,161,170,0.7)' }}>
+                        {formatNoteDate(note.created_at)}
+                        {" · "}
+                        {NOTE_SOURCE_LABELS[note.source] ?? note.source}
+                      </p>
+                      <p className="text-xs md:text-sm leading-relaxed" style={{ color: '#e4e4e7' }}>
+                        {note.content}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Правая колонка: инсайты + действия */}

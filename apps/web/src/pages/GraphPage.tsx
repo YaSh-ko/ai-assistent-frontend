@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import ForceGraph3D from 'react-force-graph-3d';
 import * as THREE from 'three';
@@ -39,6 +39,10 @@ interface GraphLink {
   target: string | GraphNode;
   type?: string | null;
   reason?: string | null;
+  curvature?: number;
+  curveRotation?: number;
+  _parallelIndex?: number;
+  _parallelCount?: number;
 }
 
 interface GraphData {
@@ -83,21 +87,11 @@ function nodeDisplayTitle(end: string | GraphNode | undefined): string {
   return raw;
 }
 
-/** Тема связи из reason (семантика) или заголовков узлов. */
+/** Короткая подпись одного ребра (без склейки тем разных связей). */
 function extractLinkTheme(link: GraphLink, nodes?: GraphNode[]): string {
   const reason = typeof link.reason === 'string' ? link.reason.trim() : '';
   if (reason) {
-    const parts = reason.split(/\s*[↔→←|]\s*/u).map((p) => p.trim()).filter(Boolean);
-    if (parts.length >= 2) {
-      const a = shortenTitle(parts[0], 24);
-      const b = shortenTitle(parts[1], 24);
-      if (a && b && a.toLowerCase() !== b.toLowerCase()) {
-        const combined = `${a} · ${b}`;
-        return combined.length <= 38 ? combined : shortenTitle(b || a, 36);
-      }
-      return shortenTitle(parts[0], 36);
-    }
-    return shortenTitle(reason, 36);
+    return shortenTitle(reason.replace(/\s*[↔→←]\s*/gu, ' · '), 36);
   }
 
   const srcId = typeof link.source === 'string' ? link.source : link.source?.id;
@@ -109,10 +103,57 @@ function extractLinkTheme(link: GraphLink, nodes?: GraphNode[]): string {
     if (!tgt && tgtId) tgt = nodeDisplayTitle(nodes.find((n) => n.id === tgtId));
   }
 
-  if (tgt && src && tgt.toLowerCase() !== src.toLowerCase()) {
-    return shortenTitle(tgt, 36);
+  if (src && tgt && src.toLowerCase() !== tgt.toLowerCase()) {
+    return shortenTitle(`${src} · ${tgt}`, 36);
   }
   return shortenTitle(tgt || src, 36);
+}
+
+function linkEndpointId(end: string | GraphNode | undefined): string {
+  if (typeof end === 'string') return end;
+  return end?.id ?? '';
+}
+
+/** Развести параллельные рёбра между одной парой узлов. */
+function enrichGraphLinks(links: GraphLink[]): GraphLink[] {
+  const pairGroups = new Map<string, number[]>();
+  links.forEach((l, i) => {
+    const key = [linkEndpointId(l.source), linkEndpointId(l.target)].sort().join('|');
+    if (!pairGroups.has(key)) pairGroups.set(key, []);
+    pairGroups.get(key)!.push(i);
+  });
+
+  const enriched = links.map((l) => ({ ...l }));
+  for (const indices of pairGroups.values()) {
+    const count = indices.length;
+    indices.forEach((idx, parallelIdx) => {
+      const spread = 0.24;
+      enriched[idx] = {
+        ...enriched[idx],
+        curvature: count <= 1 ? 0.14 : (parallelIdx - (count - 1) / 2) * spread,
+        curveRotation: count <= 1 ? 0.25 : (parallelIdx / Math.max(count, 1)) * Math.PI,
+        _parallelIndex: parallelIdx,
+        _parallelCount: count,
+      };
+    });
+  }
+  return enriched;
+}
+
+/** Точка подписи вдоль ребра — ближе к наблюдению, не в геометрический центр сцены. */
+function linkLabelPositionT(link: GraphLink): number {
+  const srcType =
+    typeof link.source === 'object' && link.source != null ? String(link.source.type) : '';
+  const tgtType =
+    typeof link.target === 'object' && link.target != null ? String(link.target.type) : '';
+  let t = 0.4;
+  if (srcType === 'Entry' && tgtType === 'Goal') t = 0.36;
+  else if (srcType === 'Goal' && tgtType === 'Entry') t = 0.64;
+  const count = link._parallelCount ?? 1;
+  if (count > 1) {
+    t += ((link._parallelIndex ?? 0) - (count - 1) / 2) * 0.1;
+  }
+  return Math.min(0.78, Math.max(0.22, t));
 }
 
 function getLinkTypeHint(link: GraphLink): string {
@@ -364,7 +405,7 @@ const GraphPage: React.FC = () => {
     if (!graphData) return null;
     return {
       nodes: graphData.nodes.map(n => ({ ...n })),
-      links: graphData.links.map(l => ({ ...l })),
+      links: enrichGraphLinks(graphData.links.map(l => ({ ...l }))),
     };
   }, [graphData]);
 
@@ -561,6 +602,8 @@ const GraphPage: React.FC = () => {
           }}
           linkColor={() => 'rgba(255,255,255,0.12)'}
           linkWidth={1}
+          linkCurvature={(link: GraphLink) => link.curvature ?? 0.14}
+          linkCurveRotation={(link: GraphLink) => link.curveRotation ?? 0.25}
           linkDirectionalParticles={1}
           linkDirectionalParticleWidth={2}
           linkDirectionalParticleColor={() => 'rgba(52,211,153,0.6)'}
@@ -572,12 +615,31 @@ const GraphPage: React.FC = () => {
             if (!label || label === '…') return new THREE.Object3D();
             return buildTextSprite(label, '#e4e4e7');
           }}
-          linkPositionUpdate={(sprite, link) => {
-            const coords = extractLinkCoords(link);
+          linkPositionUpdate={(sprite, coords, link) => {
+            const rel = link as GraphLink;
+            const start =
+              coords && typeof coords === 'object' && 'start' in coords
+                ? (coords as { start: { x: number; y: number; z: number } }).start
+                : extractLinkCoords(link).start;
+            const end =
+              coords && typeof coords === 'object' && 'end' in coords
+                ? (coords as { end: { x: number; y: number; z: number } }).end
+                : extractLinkCoords(link).end;
+            const t = linkLabelPositionT(rel);
+            const dx = end.x - start.x;
+            const dy = end.y - start.y;
+            const dz = end.z - start.z;
+            const len = Math.hypot(dx, dy, dz) || 1;
+            const nx = -dy / len;
+            const ny = dx / len;
+            const parallelOff =
+              (rel._parallelCount ?? 1) > 1
+                ? ((rel._parallelIndex ?? 0) - ((rel._parallelCount ?? 1) - 1) / 2) * 16
+                : 0;
             sprite.position.set(
-              (coords.start.x + coords.end.x) / 2,
-              (coords.start.y + coords.end.y) / 2,
-              (coords.start.z + coords.end.z) / 2,
+              start.x + dx * t + nx * parallelOff,
+              start.y + dy * t + ny * parallelOff,
+              start.z + dz * t,
             );
           }}
           onNodeClick={(node: any) => {

@@ -592,6 +592,7 @@ export const entriesApi = {
         description: string;
         event_date: string;
         valence?: number;
+        life_area?: string;
     }) => {
         const response = await apiRequest("/v1/entries", {
             method: "POST",
@@ -773,6 +774,7 @@ export const goalsApi = {
         status?: string;
         priority?: string;
         target_date?: string;
+        life_area?: string;
     }) => {
         const response = await apiRequest("/v1/goals", {
             method: "POST",
@@ -967,7 +969,8 @@ export const chatApi = {
                 body: JSON.stringify({ entity_type: entityType, entity_id: entityId }),
             },
         );
-        return response.ok || response.status === 201;
+        // Idempotent: API returns 201; legacy 409 = link already present
+        return response.ok || response.status === 201 || response.status === 409;
     },
 
     getEntityThreads: async (

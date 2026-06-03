@@ -43,6 +43,7 @@ async function createEntityFromProposal(
       description,
       event_date: ensureIsoDate(preview.event_date),
       ...(valence !== undefined ? { valence } : {}),
+      ...(typeof preview.area === "string" && preview.area ? { life_area: preview.area } : {}),
     });
     id = String(entry.id);
     path = `/event/${id}`;
@@ -54,6 +55,7 @@ async function createEntityFromProposal(
       ...(typeof preview.target_date === "string" && /^\d{4}-\d{2}-\d{2}/.test(preview.target_date)
         ? { target_date: preview.target_date.slice(0, 10) }
         : {}),
+      ...(typeof preview.area === "string" && preview.area ? { life_area: preview.area } : {}),
     });
     id = String(created.id);
     path = `/goals/${id}`;
